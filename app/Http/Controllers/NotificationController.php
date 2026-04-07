@@ -38,7 +38,7 @@ class NotificationController extends Controller
             if ($request->hasFile('image')) {
                 $path = $request->file('image')->store('notifications', 'public');
                 $data['image'] = $path;
-                $imageUrl = asset('storage/' . ltrim($path, '/'));
+                $imageUrl = asset('media/' . ltrim($path, '/'));
             }
 
             // Create notification as pending

@@ -18,7 +18,7 @@ class NotificationResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'message' => $this->message,
-            'image_url' => $this->image ? asset('storage/' . ltrim($this->image, '/')) : null,
+            'image_url' => $this->image ? asset('media/' . ltrim($this->image, '/')) : null,
             'delivery_status' => $this->delivery_status,
             'failure_reason' => $this->failure_reason,
             'sent_at' => $this->sent_at ? $this->sent_at->format('Y-m-d H:i:s') : null,

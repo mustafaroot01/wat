@@ -16,7 +16,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => (float) $this->price,
-            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => $this->image ? asset('media/' . $this->image) : null,
             'is_active' => (bool) $this->is_active,
             'sort_order' => (int) $this->sort_order,
             'created_at' => $this->created_at?->toDateTimeString(),

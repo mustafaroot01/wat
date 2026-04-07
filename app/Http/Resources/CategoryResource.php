@@ -18,7 +18,7 @@ class CategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'image_url' => $this->image ? asset('storage/' . ltrim($this->image, '/')) : null,
+            'image_url' => $this->image ? asset('media/' . ltrim($this->image, '/')) : null,
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
         ];

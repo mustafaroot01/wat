@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 
-// جسر الصور (Storage Proxy) لحل مشكلة عدم عمل الروابط التلقائية في السيرفر
-Route::get('storage/{path}', function ($path) {
+// جسر الصور (Media Proxy) لحل مشكلة 403 مع البادئة /storage/ في السيرفر
+Route::get('media/{path}', function ($path) {
     try {
         $fullPath = storage_path('app/public/' . $path);
         

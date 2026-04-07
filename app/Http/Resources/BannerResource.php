@@ -22,7 +22,7 @@ class BannerResource extends JsonResource
             'product_id' => $this->product_id,
             'duration_type' => $this->duration_type,
             'duration_value' => $this->duration_value,
-            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => $this->image ? asset('media/' . $this->image) : null,
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
         ];
