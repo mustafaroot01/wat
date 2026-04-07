@@ -76,7 +76,7 @@ const saveCategory = async () => {
   const payload = new FormData()
   payload.append('name', formData.value.name)
   payload.append('sort_order', formData.value.sort_order.toString())
-  payload.append('is_active', formData.value.is_active ? 'true' : 'false')
+  payload.append('is_active', formData.value.is_active ? '1' : '0')
   
   if (formData.value.image instanceof File) {
     payload.append('image', formData.value.image)
