@@ -9,45 +9,51 @@ Route::get('/user', function (Request $request) {
 
 // مسارات لوحة التحكم للإدارة
 Route::prefix('admin')->group(function () {
-    Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
-    Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
-    
-    // Banners
-    Route::apiResource('banners', \App\Http\Controllers\BannerController::class);
-    Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\BannerController::class, 'toggle']);
-    // Notifications
-    Route::apiResource('notifications', \App\Http\Controllers\NotificationController::class)->only(['index', 'store', 'destroy']);
-    
-    // Firebase Settings
-    Route::get('firebase-settings', [\App\Http\Controllers\FirebaseSettingsController::class, 'index']);
-    Route::post('firebase-settings/save', [\App\Http\Controllers\FirebaseSettingsController::class, 'storeSettings']);
-    Route::post('firebase-settings/upload', [\App\Http\Controllers\FirebaseSettingsController::class, 'uploadJson']);
-    Route::post('firebase-settings/test', [\App\Http\Controllers\FirebaseSettingsController::class, 'sendTest']);
+    // Admin Login
+    Route::post('login', [\App\Http\Controllers\Api\AdminAuthController::class, 'login']);
 
-    // Districts & Areas
-    Route::apiResource('districts', \App\Http\Controllers\DistrictController::class);
-    Route::patch('districts/{district}/toggle', [\App\Http\Controllers\DistrictController::class, 'toggleActive']);
-    Route::apiResource('areas', \App\Http\Controllers\AreaController::class);
-    Route::patch('areas/{area}/toggle', [\App\Http\Controllers\AreaController::class, 'toggleActive']);
+    // محمية بصلاحيات الدخول
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
+        Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
+        
+        // Banners
+        Route::apiResource('banners', \App\Http\Controllers\BannerController::class);
+        Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\BannerController::class, 'toggle']);
+        // Notifications
+        Route::apiResource('notifications', \App\Http\Controllers\NotificationController::class)->only(['index', 'store', 'destroy']);
+        
+        // Firebase Settings
+        Route::get('firebase-settings', [\App\Http\Controllers\FirebaseSettingsController::class, 'index']);
+        Route::post('firebase-settings/save', [\App\Http\Controllers\FirebaseSettingsController::class, 'storeSettings']);
+        Route::post('firebase-settings/upload', [\App\Http\Controllers\FirebaseSettingsController::class, 'uploadJson']);
+        Route::post('firebase-settings/test', [\App\Http\Controllers\FirebaseSettingsController::class, 'sendTest']);
 
-    // Brands
-    Route::apiResource('brands', \App\Http\Controllers\BrandController::class);
-    Route::patch('brands/{brand}/toggle', [\App\Http\Controllers\BrandController::class, 'toggleActive']);
+        // Districts & Areas
+        Route::apiResource('districts', \App\Http\Controllers\DistrictController::class);
+        Route::patch('districts/{district}/toggle', [\App\Http\Controllers\DistrictController::class, 'toggleActive']);
+        Route::apiResource('areas', \App\Http\Controllers\AreaController::class);
+        Route::patch('areas/{area}/toggle', [\App\Http\Controllers\AreaController::class, 'toggleActive']);
 
-    // Products
-    Route::apiResource('products', \App\Http\Controllers\ProductController::class);
-    Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
+        // Brands
+        Route::apiResource('brands', \App\Http\Controllers\BrandController::class);
+        Route::patch('brands/{brand}/toggle', [\App\Http\Controllers\BrandController::class, 'toggleActive']);
 
-    // Customers
-    Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);
-    Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
-    Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
-    Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
-    Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
+        // Products
+        Route::apiResource('products', \App\Http\Controllers\ProductController::class);
+        Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
 
-    // General Settings
-    Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
-    Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
+        // Customers
+        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);
+        Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
+        Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
+        Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
+        Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
+
+        // General Settings
+        Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
+        Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
+    });
 });
 
 // مسارات واجهات الموبايل (Front API)

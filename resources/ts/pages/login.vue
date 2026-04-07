@@ -23,11 +23,45 @@ const authThemeMask = computed(() => {
 const isPasswordVisible = ref(false)
 const isLoading = ref(false)
 
-const handleLogin = () => {
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const errorMsg = ref('')
+
+const handleLogin = async () => {
   isLoading.value = true
-  setTimeout(() => {
+  errorMsg.value = ''
+
+  try {
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        email: form.value.email,
+        password: form.value.password,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (response.ok && data.success) {
+      // حفظ بيانات الدخول
+      localStorage.setItem('accessToken', data.token)
+      localStorage.setItem('userData', JSON.stringify(data.user))
+      
+      // التوجيه إلى الصفحة الرئيسية
+      router.push('/')
+    } else {
+      errorMsg.value = data.message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
+    }
+  } catch (error) {
+    errorMsg.value = 'حدث خطأ في الاتصال بالسيرفر.'
+  } finally {
     isLoading.value = false
-  }, 1500)
+  }
 }
 </script>
 
@@ -75,6 +109,17 @@ const handleLogin = () => {
       <VCardText>
         <VForm @submit.prevent="handleLogin">
           <VRow>
+            <!-- Alert Error -->
+            <VCol cols="12" v-if="errorMsg">
+              <VAlert
+                type="error"
+                variant="tonal"
+                density="compact"
+              >
+                {{ errorMsg }}
+              </VAlert>
+            </VCol>
+
             <!-- Email -->
             <VCol cols="12">
               <VTextField
