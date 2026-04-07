@@ -14,7 +14,7 @@ class BrandResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'image_url' => $this->image_url,
+            'image_url' => $this->image ? asset('media/' . ltrim($this->image, '/')) : null,
             'is_active' => (bool) $this->is_active,
             'sort_order' => (int) $this->sort_order,
             'created_at' => $this->created_at?->toDateTimeString(),
