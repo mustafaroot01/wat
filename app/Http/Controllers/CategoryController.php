@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -46,6 +47,9 @@ class CategoryController extends Controller
             $category = Category::create($data);
 
             DB::commit();
+
+            // تنظيف الكاش الخاص بالموبايل لضمان ظهور البيانات الجديدة
+            Cache::forget('api_active_categories');
 
             return response()->json([
                 'success' => true,
@@ -101,6 +105,9 @@ class CategoryController extends Controller
 
             DB::commit();
 
+            // تنظيف الكاش الخاص بالموبايل
+            Cache::forget('api_active_categories');
+
             return response()->json([
                 'success' => true,
                 'data' => new CategoryResource($category)
@@ -128,12 +135,17 @@ class CategoryController extends Controller
         }
         $category->delete();
 
+        Cache::forget('api_active_categories');
+
         return response()->json(['success' => true, 'message' => 'Category deleted successfully']);
     }
 
     public function toggleActive(Category $category)
     {
         $category->update(['is_active' => !$category->is_active]);
+        
+        Cache::forget('api_active_categories');
+
         return response()->json(['success' => true, 'is_active' => $category->is_active]);
     }
 }
