@@ -13,13 +13,10 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        // استخدام الكاش (الذاكرة المؤقتة) للإسراع الفائق في نقل البيانات
-        $categories = Cache::rememberForever('api_active_categories', function () {
-            return Category::where('is_active', true)
-                ->orderBy('sort_order', 'asc')
-                ->orderBy('id', 'desc')
-                ->get();
-        });
+        $categories = Category::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
