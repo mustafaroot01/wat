@@ -26,15 +26,6 @@ Route::get('storage/{path}', function ($path) {
     }
 })->where('path', '.*');
 
-// رابط اختبار للتأكد من أن الكود الجديد وصل للسيرفر
-Route::get('api-test', function() {
-    return response()->json([
-        'status' => 'online',
-        'time' => now()->toDateTimeString(),
-        'storage_path_exists' => File::exists(storage_path('app/public')),
-    ]);
-});
-
 Route::get('{any?}', function() {
     return view('application');
 })->where('any', '.*');
