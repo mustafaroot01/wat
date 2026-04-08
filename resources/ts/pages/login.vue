@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 
 import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
@@ -6,13 +7,13 @@ import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
 
+const router = useRouter()
+const vuetifyTheme = useTheme()
+
 const form = ref({
   email: '',
   password: '',
-  remember: false,
 })
-
-const vuetifyTheme = useTheme()
 
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light'
@@ -22,13 +23,19 @@ const authThemeMask = computed(() => {
 
 const isPasswordVisible = ref(false)
 const isLoading = ref(false)
-
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 const errorMsg = ref('')
 
+const rules = {
+  required: (v: string) => !!v || 'هذا الحقل مطلوب',
+  email: (v: string) => /.+@.+\..+/.test(v) || 'البريد الإلكتروني غير صحيح',
+}
+
+const formRef = ref()
+
 const handleLogin = async () => {
+  const { valid } = await formRef.value.validate()
+  if (!valid) return
+
   isLoading.value = true
   errorMsg.value = ''
 
@@ -48,16 +55,13 @@ const handleLogin = async () => {
     const data = await response.json()
 
     if (response.ok && data.success) {
-      // حفظ بيانات الدخول
       localStorage.setItem('accessToken', data.token)
-      localStorage.setItem('userData', JSON.stringify(data.user))
-      
-      // التوجيه إلى الصفحة الرئيسية
+      localStorage.setItem('userData', JSON.stringify(data.admin))
       router.push('/')
     } else {
       errorMsg.value = data.message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
     }
-  } catch (error) {
+  } catch {
     errorMsg.value = 'حدث خطأ في الاتصال بالسيرفر.'
   } finally {
     isLoading.value = false
@@ -107,10 +111,10 @@ const handleLogin = async () => {
 
       <!-- Form -->
       <VCardText>
-        <VForm @submit.prevent="handleLogin">
+        <VForm ref="formRef" @submit.prevent="handleLogin">
           <VRow>
             <!-- Alert Error -->
-            <VCol cols="12" v-if="errorMsg">
+            <VCol v-if="errorMsg" cols="12">
               <VAlert
                 type="error"
                 variant="tonal"
@@ -131,6 +135,7 @@ const handleLogin = async () => {
                 variant="outlined"
                 density="comfortable"
                 dir="ltr"
+                :rules="[rules.required, rules.email]"
               />
             </VCol>
 
@@ -147,30 +152,16 @@ const handleLogin = async () => {
                 variant="outlined"
                 density="comfortable"
                 dir="ltr"
+                :rules="[rules.required]"
                 @click:append-inner="isPasswordVisible = !isPasswordVisible"
               />
-
-              <!-- Remember me + Forgot Password -->
-              <div class="d-flex align-center justify-space-between flex-wrap mt-2 mb-6">
-                <VCheckbox
-                  v-model="form.remember"
-                  label="تذكرني"
-                  density="compact"
-                  hide-details
-                />
-                <a
-                  class="text-primary text-body-2"
-                  href="javascript:void(0)"
-                >
-                  نسيت كلمة المرور؟
-                </a>
-              </div>
 
               <!-- Login Button -->
               <VBtn
                 block
                 type="submit"
                 size="large"
+                class="mt-4"
                 :loading="isLoading"
                 prepend-icon="ri-login-box-line"
               >
