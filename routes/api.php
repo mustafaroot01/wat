@@ -68,6 +68,9 @@ Route::prefix('admin')->group(function () {
         Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
         Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);
 
+        // Dashboard
+        Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
+
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
