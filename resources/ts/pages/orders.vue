@@ -108,148 +108,24 @@ const openInvoice = async (order: Order) => {
   invoiceLoading.value = true
   invoiceDialog.value  = true
   try {
-    const res  = await apiFetch(`/api/admin/orders/${order.id}`)
-    const data = await res.json()
-    invoiceOrder.value    = data.order
-    invoiceSettings.value = data.settings
-  } finally {
-    invoiceLoading.value = false
-  }
-}
-
-const printInvoice = () => {
+    cconst printInvoice = () => {
   const o = invoiceOrder.value
-  const s = invoiceSettings.value
   if (!o) return
-
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(invoiceUrl(o.invoice_token))}`
-  const logo = s.logo
-    ? `<img src="${window.location.origin}/storage/${s.logo}" style="max-height:50px;">`
-    : `<span style="font-size:14pt;font-weight:700;">معمل امواج ديالى</span>`
-
-  const rows = o.items.map((it, i) => `
-    <tr style="background:${i%2?'#f9f9f9':'#fff'}">
-      <td style="text-align:center;color:#888">${i+1}</td>
-      <td>${it.product_name}${(it.sku || it.product?.sku)?`<br><small style="color:#aaa">${it.sku || it.product?.sku}</small>`:''}</td>
-      <td style="text-align:center">${formatIQD(it.unit_price)}</td>
-      <td style="text-align:center;font-weight:700">×${it.quantity}</td>
-      <td style="text-align:center;font-weight:700;color:#1b5e20">${formatIQD(it.total_price)}</td>
-    </tr>`).join('')
-
-  const discount = parseFloat(o.discount_amount) > 0
-    ? `<tr><td style="color:#777">الخصم${o.coupon?` (${o.coupon.code})`:''}</td><td style="color:#2e7d32;font-weight:700">- ${formatIQD(o.discount_amount)}</td></tr>`
-    : `<tr><td style="color:#bbb">الخصم</td><td style="color:#bbb;font-style:italic">لا يوجد خصم</td></tr>`
-
-  const html = `<!DOCTYPE html><html lang="ar" dir="rtl">
-<head><meta charset="UTF-8">
-<title>فاتورة ${o.invoice_code}</title>
-<style>
-@page{size:A5 portrait;margin:7mm}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Tahoma,Arial,sans-serif;font-size:10.5pt;color:#111;background:#fff}
-.hd{display:flex;justify-content:space-between;align-items:center;
-    background:linear-gradient(135deg,#0d47a1,#1565c0 60%,#1b7a3e);
-    color:#fff;padding:10px 14px;border-radius:8px 8px 0 0}
-.hd-r{text-align:start}
-.hd-code{font-size:13pt;font-weight:700;font-family:monospace}
-.hd-date{font-size:8pt;color:rgba(255,255,255,.7);margin-top:3px}
-.info{display:flex;gap:10px;padding:10px 14px;border:1px solid #e0e0e0;
-      border-top:none;background:#fafafa}
-.info table{flex:1;border-collapse:collapse;font-size:9.5pt}
-.info td{padding:3px 5px;vertical-align:top}
-.lbl{color:#888;width:110px;white-space:nowrap}
-.val{font-weight:600}
-.sec{font-size:9pt;font-weight:700;color:#1565c0;border-bottom:2px solid #dde8ff;
-     padding:6px 14px 4px;background:#f5f8ff}
-table.items{width:100%;border-collapse:collapse;font-size:9.5pt}
-table.items thead tr{background:#1565c0;color:#fff}
-table.items th{padding:7px 8px;font-size:8.5pt}
-table.items td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
-.totals{padding:10px 14px}
-.totals table{border-collapse:collapse;min-width:220px;border:1px solid #dde8ff}
-.totals td{padding:5px 12px;font-size:9.5pt}
-.final td{font-size:11pt;font-weight:800;color:#1565c0;border-top:2px solid #dde8ff}
-.foot{background:linear-gradient(135deg,#0d47a1,#1565c0 60%,#1b7a3e);
-      color:#fff;text-align:center;padding:9px;margin-top:10px;
-      border-radius:0 0 8px 8px;font-size:9pt}
-.foot-sub{color:rgba(255,255,255,.6);font-size:7.5pt;margin-top:3px}
-</` + `style></` + `head>
-<body>
-<div class="hd">
-  <div style="display:flex;align-items:center;gap:10px">
-    ${logo}
-    <div>
-      <div style="font-size:13pt;font-weight:700">معمل امواج ديالى</div>
-      <div style="font-size:8pt;color:rgba(255,255,255,.7)">لإنتاج وتعبئة المياه</div>
-      ${s.store_phone?`<div style="font-size:8pt;color:rgba(255,255,255,.7)" dir="ltr">${s.store_phone}</div>`:''}
-    </div>
-  </div>
-  <div class="hd-r">
-    <div class="hd-code">${o.invoice_code}</div>
-    <div class="hd-date">${formatDate(o.created_at)}</div>
-  </div>
-</div>
-<div class="info">
-  <table>
-    <tr><td class="lbl">الزبون</td><td class="val">${o.customer_name}</td></tr>
-    <tr><td class="lbl">الهاتف</td><td class="val" dir="ltr">${o.customer_phone}</td></tr>
-    <tr><td class="lbl">المحافظة</td><td class="val">${o.province}</td></tr>
-    <tr><td class="lbl">القضاء / المنطقة</td><td class="val">${o.district}</td></tr>
-    <tr><td class="lbl">أقرب نقطة دالة</td><td class="val">${o.nearest_landmark||'—'}</td></tr>
-    ${o.notes?`<tr><td class="lbl">ملاحظات</td><td class="val">${o.notes}</td></tr>`:''}
-  </table>
-  <div style="text-align:center;flex-shrink:0">
-    <img src="${qr}" width="85" height="85" style="border:2px solid #e0e0e0;border-radius:5px">
-    <div style="font-size:7pt;color:#aaa;margin-top:3px">مسح للفاتورة</div>
-  </div>
-</div>
-<div class="sec">تفاصيل الطلب</div>
-<table class="items">
-  <thead><tr>
-    <th style="width:28px">#</th>
-    <th style="text-align:right">المنتج</th>
-    <th style="width:90px">سعر الوحدة</th>
-    <th style="width:50px">الكمية</th>
-    <th style="width:100px">المجموع</th>
-  </tr></thead>
-  <tbody>${rows}</tbody>
-</table>
-<div class="totals">
-  <table>
-    <tr><td>المجموع</td><td style="font-weight:600;text-align:center">${formatIQD(o.total_amount)}</td></tr>
-    ${discount}
-    <tr class="final"><td>الإجمالي النهائي</td><td style="text-align:center">${formatIQD(o.final_amount)}</td></tr>
-  </table>
-</div>
-<div class="foot">
-  <div>${s.thank_you_message||'شكراً لثقتكم بمعمل امواج ديالى'}</div>
-  <div class="foot-sub">معمل امواج ديالى — ديالى، العراق</div>
-</div>
-</` + `body></` + `html>`
 
   const iframe = document.createElement('iframe')
   iframe.style.position = 'absolute'
   iframe.style.width = '0'
   iframe.style.height = '0'
   iframe.style.border = 'none'
+  iframe.src = invoiceUrl(o.invoice_token) + '?print=1'
   document.body.appendChild(iframe)
 
-  const frameDoc = iframe.contentWindow?.document
-  if (!frameDoc) return
-
-  frameDoc.open()
-  frameDoc.write(html)
-  frameDoc.close()
-
+  // Clean up iframe after 10 seconds to give it plenty of time to load and trigger the print dialog.
   setTimeout(() => {
-    iframe.contentWindow?.focus()
-    iframe.contentWindow?.print()
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe)
-      }
-    }, 5000)
-  }, 500)
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe)
+    }
+  }, 10000)
 }
 
 const invoiceUrl = (token: string) =>

@@ -10,7 +10,12 @@ const router = createRouter({
 
 // === Navigation Guards (Route Protection) === //
 router.beforeEach(async (to, from, next) => {
-  const isLoggedIn = !!localStorage.getItem('accessToken')
+  let isLoggedIn = false
+  try {
+    isLoggedIn = !!localStorage.getItem('accessToken')
+  } catch (e) {
+    console.warn('localStorage is not available')
+  }
 
   // Public routes that don't require auth
   const isPublic = to.path === '/login' || to.path === '/register' || to.path === '/403'

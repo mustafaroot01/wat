@@ -81,10 +81,22 @@ const loadInvoice = async () => {
   }
 }
 
-onMounted(loadInvoice)
+onMounted(() => {
+  loadInvoice().then(() => {
+    if (route.query.print && order.value) {
+      setTimeout(() => window.print(), 500)
+    }
+  })
+})
 
 // ── Admin status change (only if admin token present) ───────────────
-const isAdmin = computed(() => !!localStorage.getItem('accessToken'))
+const isAdmin = computed(() => {
+  try {
+    return !!localStorage.getItem('accessToken')
+  } catch (e) {
+    return false
+  }
+})
 
 const statusDialog    = ref(false)
 const newStatus       = ref('')
@@ -103,7 +115,10 @@ const openStatusDialog = () => {
 const saveStatus = async () => {
   statusSaving.value = true
   statusError.value  = ''
-  const adminToken   = localStorage.getItem('accessToken')
+  let adminToken = ''
+  try {
+    adminToken = localStorage.getItem('accessToken') || ''
+  } catch(e) {}
   try {
     const res = await fetch(`/api/admin/invoice/${token}/status`, {
       method:  'PATCH',
