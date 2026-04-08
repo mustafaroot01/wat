@@ -28,11 +28,16 @@ router.beforeEach(async (to, from, next) => {
 
   // Permission check for protected routes
   if (isLoggedIn && to.meta?.permission) {
-    const { can, permissionsLoaded, fetchPermissions } = useAdminPermissions()
+    const { can, permissionsLoaded, fetchPermissions, adminInfo } = useAdminPermissions()
 
     // Load permissions if not yet loaded
     if (!permissionsLoaded.value) {
       await fetchPermissions()
+    }
+
+    // If still no data after fetch (API error), allow access to avoid full lockout
+    if (!adminInfo.value) {
+      return next()
     }
 
     if (!can(to.meta.permission as string)) {
