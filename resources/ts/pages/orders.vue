@@ -108,7 +108,16 @@ const openInvoice = async (order: Order) => {
   invoiceLoading.value = true
   invoiceDialog.value  = true
   try {
-    cconst printInvoice = () => {
+    const res  = await apiFetch(`/api/admin/orders/${order.id}`)
+    const data = await res.json()
+    invoiceOrder.value    = data.order
+    invoiceSettings.value = data.settings
+  } finally {
+    invoiceLoading.value = false
+  }
+}
+
+const printInvoice = () => {
   const o = invoiceOrder.value
   if (!o) return
 
