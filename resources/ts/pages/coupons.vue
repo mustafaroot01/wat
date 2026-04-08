@@ -223,100 +223,152 @@ onMounted(() => fetchCoupons(1))
   </VRow>
 
   <!-- Add/Edit Dialog -->
-  <VDialog v-model="showDialog" max-width="540" persistent>
+  <VDialog v-model="showDialog" max-width="520" persistent>
     <VCard rounded="lg" elevation="0">
+      <!-- Header -->
       <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
-        <span class="font-weight-bold text-h6">{{ dialogMode === 'add' ? 'إضافة كود خصم' : 'تعديل كود الخصم' }}</span>
+        <div class="d-flex align-center gap-2">
+          <VAvatar color="primary" variant="tonal" size="36" rounded="lg">
+            <VIcon icon="ri-coupon-3-line" size="20" />
+          </VAvatar>
+          <span class="font-weight-bold text-h6">
+            {{ dialogMode === 'add' ? 'إضافة كود خصم' : 'تعديل كود الخصم' }}
+          </span>
+        </div>
         <VBtn icon="ri-close-line" variant="text" size="small" @click="showDialog = false" />
       </VCardTitle>
 
-      <VCardText class="pa-6">
-        <VRow>
-          <VCol cols="12">
-            <VTextField
-              v-model="formData.code"
-              label="كود الخصم"
-              placeholder="مثال: SUMMER20 أو خصم_صيف"
-              hint="يمكن استخدام حروف عربية أو إنجليزية وأرقام"
-              persistent-hint
-              variant="outlined"
-              color="primary"
-              style="font-family: monospace;"
-            />
-          </VCol>
+      <VCardText class="pa-5">
 
-          <VCol cols="12" md="6">
+        <!-- Preview Banner -->
+        <VCard
+          v-if="formData.value > 0"
+          variant="tonal"
+          :color="formData.type === 'percentage' ? 'primary' : 'warning'"
+          rounded="lg"
+          class="pa-4 mb-5 d-flex align-center gap-3"
+        >
+          <VIcon :icon="formData.type === 'percentage' ? 'ri-percent-line' : 'ri-money-dollar-circle-line'" size="28" />
+          <div>
+            <p class="text-body-2 mb-0 font-weight-medium">معاينة الخصم</p>
+            <p class="text-h6 font-weight-bold mb-0">
+              {{ formData.type === 'percentage' ? formData.value + '% خصم' : formData.value.toLocaleString() + ' د.ع خصم ثابت' }}
+            </p>
+          </div>
+        </VCard>
+
+        <!-- Code Field -->
+        <VTextField
+          v-model="formData.code"
+          label="كود الخصم"
+          placeholder="مثال: SUMMER20 أو خصم_صيف"
+          hint="عربي أو إنجليزي — بلا مسافات"
+          persistent-hint
+          variant="outlined"
+          color="primary"
+          prepend-inner-icon="ri-key-2-line"
+          class="mb-4"
+        />
+
+        <!-- Type + Value -->
+        <VRow dense class="mb-1">
+          <VCol cols="12" sm="6">
             <VSelect
               v-model="formData.type"
-              :items="[{title: 'نسبة مئوية (%)', value: 'percentage'}, {title: 'مبلغ ثابت (د.ع)', value: 'fixed'}]"
+              :items="[
+                { title: 'نسبة مئوية (%)', value: 'percentage' },
+                { title: 'مبلغ ثابت (د.ع)', value: 'fixed' }
+              ]"
               label="نوع الخصم"
               variant="outlined"
               color="primary"
+              prepend-inner-icon="ri-price-tag-3-line"
             />
           </VCol>
-
-          <VCol cols="12" md="6">
+          <VCol cols="12" sm="6">
             <VTextField
               v-model.number="formData.value"
-              :label="formData.type === 'percentage' ? 'نسبة الخصم (%)' : 'مقدار الخصم (د.ع)'"
+              :label="formData.type === 'percentage' ? 'النسبة (%)' : 'المبلغ (د.ع)'"
               type="number"
               :suffix="formData.type === 'percentage' ? '%' : 'د.ع'"
               variant="outlined"
               color="primary"
-              :hint="formData.type === 'percentage' ? 'بين 1 و 100' : 'مبلغ ثابت يُخصم'"
-              persistent-hint
+              :rules="formData.type === 'percentage' ? [v => v <= 100 || 'الحد الأقصى 100%'] : []"
             />
           </VCol>
+        </VRow>
 
-          <VCol cols="12" md="6">
+        <VDivider class="my-4" />
+
+        <!-- Limits -->
+        <p class="text-caption text-medium-emphasis font-weight-medium mb-3 d-flex align-center gap-1">
+          <VIcon icon="ri-settings-3-line" size="14" />
+          القيود والحدود
+        </p>
+        <VRow dense class="mb-1">
+          <VCol cols="12" sm="6">
             <VTextField
               v-model.number="formData.max_uses"
               label="الحد الأقصى للاستخدام"
               type="number"
               variant="outlined"
-              color="primary"
-              hint="اتركه فارغاً = غير محدود"
-              persistent-hint
+              color="secondary"
+              prepend-inner-icon="ri-group-line"
+              placeholder="∞ غير محدود"
               clearable
+              hide-details
             />
           </VCol>
-
-          <VCol cols="12" md="6">
+          <VCol cols="12" sm="6">
             <VTextField
               v-model.number="formData.min_order_amount"
-              label="الحد الأدنى للطلب (د.ع)"
+              label="الحد الأدنى للطلب"
               type="number"
+              suffix="د.ع"
               variant="outlined"
-              color="primary"
-              hint="اتركه فارغاً = بلا حد أدنى"
-              persistent-hint
+              color="secondary"
+              prepend-inner-icon="ri-shopping-bag-line"
+              placeholder="بلا حد أدنى"
               clearable
+              hide-details
             />
-          </VCol>
-
-          <VCol cols="12">
-            <VTextField
-              v-model="formData.expires_at"
-              label="تاريخ الانتهاء"
-              type="datetime-local"
-              variant="outlined"
-              color="primary"
-              hint="اتركه فارغاً = بلا انتهاء"
-              persistent-hint
-              clearable
-            />
-          </VCol>
-
-          <VCol cols="12">
-            <VSwitch v-model="formData.is_active" label="الكود مفعّل" color="success" hide-details />
           </VCol>
         </VRow>
+
+        <VDivider class="my-4" />
+
+        <!-- Expiry -->
+        <VTextField
+          v-model="formData.expires_at"
+          label="تاريخ ووقت الانتهاء"
+          type="datetime-local"
+          variant="outlined"
+          color="warning"
+          prepend-inner-icon="ri-time-line"
+          hint="اتركه فارغاً = الكود لا ينتهي"
+          persistent-hint
+          clearable
+          class="mb-4"
+        />
+
+        <!-- Active Toggle -->
+        <VCard variant="tonal" :color="formData.is_active ? 'success' : 'secondary'" rounded="lg" class="pa-3 d-flex align-center justify-space-between">
+          <div class="d-flex align-center gap-2">
+            <VIcon :icon="formData.is_active ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'" size="20" />
+            <span class="text-body-2 font-weight-medium">
+              {{ formData.is_active ? 'الكود مفعّل ومتاح للاستخدام' : 'الكود معطّل' }}
+            </span>
+          </div>
+          <VSwitch v-model="formData.is_active" color="success" hide-details density="compact" />
+        </VCard>
+
       </VCardText>
 
       <VCardActions class="pa-5 border-t">
         <VSpacer />
         <VBtn color="secondary" variant="tonal" rounded="lg" @click="showDialog = false">إلغاء</VBtn>
         <VBtn color="primary" variant="elevated" rounded="lg" class="px-8" @click="saveCoupon">
+          <VIcon icon="ri-save-line" start size="18" />
           {{ dialogMode === 'add' ? 'إضافة الكود' : 'حفظ التعديلات' }}
         </VBtn>
       </VCardActions>
