@@ -10,6 +10,7 @@ interface OrderItem {
   unit_price: string
   quantity: number
   total_price: string
+  product?: { sku: string | null }
 }
 
 interface Order {
@@ -129,7 +130,7 @@ const printInvoice = () => {
   const rows = o.items.map((it, i) => `
     <tr style="background:${i%2?'#f9f9f9':'#fff'}">
       <td style="text-align:center;color:#888">${i+1}</td>
-      <td>${it.product_name}${it.sku?`<br><small style="color:#aaa">${it.sku}</small>`:''}</td>
+      <td>${it.product_name}${(it.sku || it.product?.sku)?`<br><small style="color:#aaa">${it.sku || it.product?.sku}</small>`:''}</td>
       <td style="text-align:center">${formatIQD(it.unit_price)}</td>
       <td style="text-align:center;font-weight:700">×${it.quantity}</td>
       <td style="text-align:center;font-weight:700;color:#1b5e20">${formatIQD(it.total_price)}</td>
@@ -614,7 +615,7 @@ const copyPhone = async (phone: string) => {
               <tr v-for="(item, i) in invoiceOrder.items" :key="item.id">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.product_name }}</td>
-                <td class="text-muted">{{ item.sku || '—' }}</td>
+                <td class="text-muted">{{ item.sku || item.product?.sku || '—' }}</td>
                 <td>{{ formatIQD(item.unit_price) }}</td>
                 <td>{{ item.quantity }}</td>
                 <td class="font-weight-bold">{{ formatIQD(item.total_price) }}</td>
