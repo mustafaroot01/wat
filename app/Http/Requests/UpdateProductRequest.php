@@ -14,6 +14,7 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'sku' => 'nullable|string|max:100|unique:products,sku,' . $this->route('product')->id,
             'category_id' => 'sometimes|required|exists:categories,id',
             'filter_id'   => 'nullable|exists:category_filters,id',
             'brand_id' => 'sometimes|nullable|exists:brands,id',

@@ -177,6 +177,7 @@ const openEditDialog = (item: Product) => {
 
 const saveProduct = async () => {
   const payload = new FormData()
+  if (formData.value.sku) payload.append('sku', formData.value.sku)
   payload.append('category_id', String(formData.value.category_id || ''))
   if (formData.value.filter_id) payload.append('filter_id', String(formData.value.filter_id))
   payload.append('brand_id', String(formData.value.brand_id || ''))
