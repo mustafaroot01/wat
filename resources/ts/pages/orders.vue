@@ -571,11 +571,14 @@ const copyPhone = async (phone: string) => {
           </span>
           <div class="d-flex gap-2">
             <VBtn
+              v-if="invoiceOrder"
               color="primary" variant="elevated" rounded="lg"
               prepend-icon="ri-printer-line"
-              @click="printInvoice"
+              :href="invoiceUrl(invoiceOrder.invoice_token)"
+              target="_blank"
+              rel="noopener"
             >
-              طباعة / PDF
+              فتح وطباعة
             </VBtn>
             <VBtn icon variant="text" @click="invoiceDialog = false"><VIcon>ri-close-line</VIcon></VBtn>
           </div>
