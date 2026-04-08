@@ -508,7 +508,15 @@ const printPage = () => window.print()
 @media print {
   @page { size: A5 portrait; margin: 6mm; }
 
-  .invoice-page { background: #fff !important; padding: 0 !important; }
+  html, body, #app, .v-application, .v-application__wrap, .layout-wrapper.layout-blank {
+    display: block !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .invoice-page { background: #fff !important; padding: 0 !important; min-height: auto !important; }
   .invoice-wrapper { max-width: 100% !important; margin: 0 !important; }
   .no-print { display: none !important; }
 

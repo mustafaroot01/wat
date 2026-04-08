@@ -121,20 +121,8 @@ const printInvoice = () => {
   const o = invoiceOrder.value
   if (!o) return
 
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'absolute'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = 'none'
-  iframe.src = invoiceUrl(o.invoice_token) + '?print=1'
-  document.body.appendChild(iframe)
-
-  // Clean up iframe after 10 seconds to give it plenty of time to load and trigger the print dialog.
-  setTimeout(() => {
-    if (document.body.contains(iframe)) {
-      document.body.removeChild(iframe)
-    }
-  }, 10000)
+  // Open the Vue public invoice page in a new print-ready tab
+  window.open(invoiceUrl(o.invoice_token) + '?print=1', '_blank')
 }
 
 const invoiceUrl = (token: string) =>
