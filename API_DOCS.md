@@ -22,6 +22,8 @@
    - [تغيير كلمة المرور](#33-تغيير-كلمة-المرور)
    - [حذف الحساب](#34-حذف-الحساب-ذاتياً)
 4. [التصنيفات — Categories](#4-التصنيفات--categories)
+   - [قائمة التصنيفات](#41-قائمة-التصنيفات)
+   - [فلاتر التصنيف](#42-فلاتر-التصنيف)
 5. [العلامات التجارية — Brands](#5-العلامات-التجارية--brands)
 6. [المنتجات — Products](#6-المنتجات--products)
 7. [البنرات — Banners](#7-البنرات--banners)
@@ -498,6 +500,39 @@ Authorization: Bearer {token}
 
 > مرتّبة تصاعدياً حسب `sort_order`.  
 > تُرجع التصنيفات النشطة فقط.
+
+---
+
+### 4.2 فلاتر التصنيف
+
+**GET** `/api/app/categories/{category_id}/filters`  
+🔓 **لا يتطلب Token**
+
+> يُرجع قائمة الفلاتر النشطة لتصنيف محدد — استخدمها لعرض Chips الفلترة في صفحة التصنيف.
+
+**✅ نجاح (200):**
+```json
+[
+  { "id": 1, "category_id": 1, "name": "180 مل", "sort_order": 1, "is_active": true },
+  { "id": 2, "category_id": 1, "name": "200 مل", "sort_order": 2, "is_active": true },
+  { "id": 3, "category_id": 1, "name": "330 مل", "sort_order": 3, "is_active": true }
+]
+```
+
+**مثال عملي:**
+```
+GET /api/app/categories/1/filters
+→ يُرجع فلاتر قسم "كاسات" (180 مل، 200 مل، 330 مل)
+
+GET /api/app/categories/2/filters
+→ يُرجع فلاتر قسم "عبوات" (500 مل، 1 لتر، 1.5 لتر)
+```
+
+**ربط الفلاتر بالمنتجات:**
+```
+GET /api/app/products?category_id=1              → كل منتجات القسم
+GET /api/app/products?category_id=1&filter_id=2  → منتجات القسم بفلتر "200 مل" فقط
+```
 
 ---
 
