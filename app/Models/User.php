@@ -24,6 +24,7 @@ class User extends Authenticatable
         'district_id',
         'area_id',
         'is_active',
+        'is_admin',
     ];
 
     protected $hidden = [
