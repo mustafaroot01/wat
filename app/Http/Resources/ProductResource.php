@@ -12,6 +12,7 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'category_id' => (int) $this->category_id,
+            'filter_id'   => $this->filter_id ? (int) $this->filter_id : null,
             'brand_id' => $this->brand_id ? (int) $this->brand_id : null,
             'name' => $this->name,
             'description' => $this->description,
@@ -21,6 +22,7 @@ class ProductResource extends JsonResource
             'sort_order' => (int) $this->sort_order,
             'created_at' => $this->created_at?->toDateTimeString(),
             'category' => new CategoryResource($this->whenLoaded('category')),
+            'filter'   => new CategoryFilterResource($this->whenLoaded('filter')),
             'brand' => new BrandResource($this->whenLoaded('brand')),
         ];
     }

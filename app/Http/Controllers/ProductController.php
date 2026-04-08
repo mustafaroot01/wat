@@ -13,10 +13,14 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'brand']);
+        $query = Product::with(['category', 'brand', 'filter']);
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('filter_id')) {
+            $query->where('filter_id', $request->filter_id);
         }
 
         if ($request->filled('brand_id')) {
@@ -43,10 +47,14 @@ class ProductController extends Controller
 
     public function indexPublic(Request $request)
     {
-        $query = Product::with(['category', 'brand'])->active();
+        $query = Product::with(['category', 'brand', 'filter'])->active();
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('filter_id')) {
+            $query->where('filter_id', $request->filter_id);
         }
 
         if ($request->filled('brand_id')) {
@@ -77,12 +85,12 @@ class ProductController extends Controller
 
         $product = Product::create($data);
 
-        return new ProductResource($product->load(['category', 'brand']));
+        return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
     public function show(Product $product)
     {
-        return new ProductResource($product->load(['category', 'brand']));
+        return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
     public function update(UpdateProductRequest $request, Product $product)
@@ -98,7 +106,7 @@ class ProductController extends Controller
 
         $product->update($data);
 
-        return new ProductResource($product->load(['category', 'brand']));
+        return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
     public function destroy(Product $product)
@@ -113,6 +121,6 @@ class ProductController extends Controller
     public function toggleActive(Product $product)
     {
         $product->update(['is_active' => !$product->is_active]);
-        return new ProductResource($product->load(['category', 'brand']));
+        return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 }

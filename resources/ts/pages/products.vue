@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { usePagination } from '@/composables/usePagination'
 import { apiFetch } from '@/utils/apiFetch'
 
 interface Product {
   id: number | null;
   category_id: number | null;
+  filter_id: number | null;
   brand_id: number | null;
   name: string;
   description: string;
@@ -16,6 +17,7 @@ interface Product {
   image_url: string | null;
   category?: { name: string };
   brand?: { name: string };
+  filter?: { name: string };
 }
 
 // Using Composable
@@ -30,7 +32,24 @@ const {
 
 // Options for selects
 const categories = ref<any[]>([])
-const brands = ref<any[]>([])
+const brands     = ref<any[]>([])
+const filters    = ref<any[]>([])
+const filtersLoading = ref(false)
+
+const loadFiltersForCategory = async (categoryId: number | null) => {
+  filters.value = []
+  if (!categoryId) return
+  filtersLoading.value = true
+  try {
+    const res = await apiFetch(`/api/admin/category-filters?category_id=${categoryId}`)
+    if (res.ok) {
+      const data = await res.json()
+      filters.value = data.data || data
+    }
+  } catch (e) { console.error(e) } finally {
+    filtersLoading.value = false
+  }
+}
 
 // Dialog variables
 const showDialog = ref(false)
@@ -45,6 +64,7 @@ const fileInputRef = ref<HTMLElement | null>(null)
 const formData = ref<Product>({
   id: null,
   category_id: null,
+  filter_id: null,
   brand_id: null,
   name: '',
   description: '',
@@ -53,6 +73,11 @@ const formData = ref<Product>({
   sort_order: 0,
   image: null,
   image_url: null,
+})
+
+watch(() => formData.value.category_id, (newId) => {
+  formData.value.filter_id = null
+  loadFiltersForCategory(newId)
 })
 
 const fetchOptions = async () => {
@@ -88,10 +113,11 @@ const removeImage = () => {
 const openAddDialog = () => {
   dialogMode.value = 'add'
   formData.value = { 
-    id: null, category_id: null, brand_id: null, name: '', 
+    id: null, category_id: null, filter_id: null, brand_id: null, name: '', 
     description: '', price: 0, is_active: true, sort_order: 0, 
     image: null, image_url: null 
   }
+  filters.value = []
   imagePreviewUrl.value = null
   showDialog.value = true
 }
@@ -100,12 +126,14 @@ const openEditDialog = (item: Product) => {
   dialogMode.value = 'edit'
   formData.value = { ...item, image: null }
   imagePreviewUrl.value = item.image_url
+  if (item.category_id) loadFiltersForCategory(item.category_id)
   showDialog.value = true
 }
 
 const saveProduct = async () => {
   const payload = new FormData()
   payload.append('category_id', String(formData.value.category_id || ''))
+  if (formData.value.filter_id) payload.append('filter_id', String(formData.value.filter_id))
   payload.append('brand_id', String(formData.value.brand_id || ''))
   payload.append('name', formData.value.name)
   payload.append('description', formData.value.description || '')
@@ -334,6 +362,24 @@ onMounted(() => {
               placeholder="اختر التصنيف"
               variant="outlined"
               color="primary"
+            />
+          </VCol>
+
+          <VCol cols="12" md="6">
+            <VSelect
+              v-model="formData.filter_id"
+              :items="filters"
+              item-title="name"
+              item-value="id"
+              label="الفلتر / التصنيف الفرعي"
+              placeholder="اختر الفلتر"
+              variant="outlined"
+              color="info"
+              clearable
+              :disabled="!formData.category_id || filtersLoading"
+              :loading="filtersLoading"
+              :hint="!formData.category_id ? 'اختر التصنيف أولاً' : (filters.length === 0 ? 'لا توجد فلاتر لهذا التصنيف' : '')"
+              persistent-hint
             />
           </VCol>
 

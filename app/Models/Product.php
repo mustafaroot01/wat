@@ -8,6 +8,7 @@ class Product extends Model
 {
     protected $fillable = [
         'category_id',
+        'filter_id',
         'brand_id',
         'name',
         'description',
@@ -42,5 +43,10 @@ class Product extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function filter()
+    {
+        return $this->belongsTo(CategoryFilter::class, 'filter_id');
     }
 }

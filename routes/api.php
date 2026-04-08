@@ -39,6 +39,13 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('brands', \App\Http\Controllers\BrandController::class);
         Route::patch('brands/{brand}/toggle', [\App\Http\Controllers\BrandController::class, 'toggleActive']);
 
+        // Category Filters
+        Route::get('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'index']);
+        Route::post('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'store']);
+        Route::put('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'update']);
+        Route::delete('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'destroy']);
+        Route::patch('category-filters/{categoryFilter}/toggle', [\App\Http\Controllers\CategoryFilterController::class, 'toggleActive']);
+
         // Products
         Route::apiResource('products', \App\Http\Controllers\ProductController::class);
         Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
@@ -67,6 +74,13 @@ Route::prefix('app')->group(function () {
     // Brands Public API
     Route::get('brands', [\App\Http\Controllers\BrandController::class, 'indexPublic']);
     Route::get('brands/{brand}/products', [\App\Http\Controllers\BrandController::class, 'products']);
+
+    // Category Filters Public API
+    Route::get('categories/{category}/filters', function (\App\Models\Category $category) {
+        $filters = \App\Models\CategoryFilter::where('category_id', $category->id)
+            ->active()->ordered()->get();
+        return \App\Http\Resources\CategoryFilterResource::collection($filters);
+    });
 
     // Products Public API
     Route::get('products', [\App\Http\Controllers\ProductController::class, 'indexPublic']);

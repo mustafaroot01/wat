@@ -144,6 +144,80 @@ const toggleActive = async (item: Category) => {
   }
 }
 
+// ─── Filters Management ───────────────────────────────────────────
+interface CategoryFilterItem {
+  id: number | null
+  category_id: number
+  name: string
+  sort_order: number
+  is_active: boolean
+}
+
+const showFiltersDialog   = ref(false)
+const selectedCategory    = ref<Category | null>(null)
+const filters             = ref<CategoryFilterItem[]>([])
+const filtersLoading      = ref(false)
+const showFilterForm      = ref(false)
+const filterDialogMode    = ref<'add' | 'edit'>('add')
+const filterForm          = ref<CategoryFilterItem>({ id: null, category_id: 0, name: '', sort_order: 0, is_active: true })
+
+const openFiltersDialog = async (category: Category) => {
+  selectedCategory.value = category
+  showFiltersDialog.value = true
+  showFilterForm.value = false
+  await loadFilters(category.id!)
+}
+
+const loadFilters = async (categoryId: number) => {
+  filtersLoading.value = true
+  try {
+    const res = await apiFetch(`/api/admin/category-filters?category_id=${categoryId}`)
+    if (res.ok) {
+      const data = await res.json()
+      filters.value = data.data || data
+    }
+  } catch (e) { console.error(e) } finally {
+    filtersLoading.value = false
+  }
+}
+
+const openAddFilter = () => {
+  filterDialogMode.value = 'add'
+  filterForm.value = { id: null, category_id: selectedCategory.value!.id!, name: '', sort_order: 0, is_active: true }
+  showFilterForm.value = true
+}
+
+const openEditFilter = (f: CategoryFilterItem) => {
+  filterDialogMode.value = 'edit'
+  filterForm.value = { ...f }
+  showFilterForm.value = true
+}
+
+const saveFilter = async () => {
+  const url    = filterDialogMode.value === 'add' ? '/api/admin/category-filters' : `/api/admin/category-filters/${filterForm.value.id}`
+  const method = filterDialogMode.value === 'add' ? 'POST' : 'PUT'
+  try {
+    const res = await apiFetch(url, { method, body: JSON.stringify(filterForm.value) })
+    if (res.ok) {
+      showFilterForm.value = false
+      await loadFilters(selectedCategory.value!.id!)
+    }
+  } catch (e) { console.error(e) }
+}
+
+const deleteFilter = async (id: number) => {
+  if (!confirm('هل أنت متأكد من حذف هذا الفلتر؟')) return
+  try {
+    const res = await apiFetch(`/api/admin/category-filters/${id}`, { method: 'DELETE' })
+    if (res.ok) await loadFilters(selectedCategory.value!.id!)
+  } catch (e) { console.error(e) }
+}
+
+const toggleFilterActive = async (f: CategoryFilterItem) => {
+  await apiFetch(`/api/admin/category-filters/${f.id}/toggle`, { method: 'PATCH' })
+  await loadFilters(selectedCategory.value!.id!)
+}
+
 onMounted(() => {
   fetchCategories(1)
 })
@@ -214,6 +288,10 @@ onMounted(() => {
                       <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
                     </template>
                     <VList density="compact" min-width="150" rounded="lg" elevation="3">
+                      <VListItem value="filters" @click="openFiltersDialog(item)">
+                        <template #prepend><VIcon icon="ri-filter-3-line" size="18" class="me-2 text-info" /></template>
+                        <VListItemTitle class="text-info">إدارة الفلاتر</VListItemTitle>
+                      </VListItem>
                       <VListItem value="edit" @click="openEditDialog(item)">
                         <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
                         <VListItemTitle>تعديل</VListItemTitle>
@@ -340,6 +418,122 @@ onMounted(() => {
         <VBtn color="primary" variant="elevated" rounded="lg" class="px-6" @click="saveCategory">
           {{ dialogMode === 'add' ? 'إضافة القسم' : 'حفظ التعديلات' }}
         </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+  <!-- Filters Management Dialog -->
+  <VDialog v-model="showFiltersDialog" max-width="560" persistent>
+    <VCard rounded="lg" elevation="0">
+      <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
+        <div class="d-flex align-center gap-2">
+          <VIcon icon="ri-filter-3-line" color="info" />
+          <span class="font-weight-bold text-h6">فلاتر قسم: {{ selectedCategory?.name }}</span>
+        </div>
+        <VBtn icon="ri-close-line" variant="text" size="small" @click="showFiltersDialog = false; showFilterForm = false" />
+      </VCardTitle>
+
+      <VCardText class="pa-5">
+        <!-- Filter Form -->
+        <VExpandTransition>
+          <div v-if="showFilterForm" class="mb-5">
+            <VCard variant="tonal" color="info" rounded="lg" class="pa-4">
+              <p class="text-body-2 font-weight-bold mb-3">
+                {{ filterDialogMode === 'add' ? 'إضافة فلتر جديد' : 'تعديل الفلتر' }}
+              </p>
+              <VRow dense>
+                <VCol cols="12" md="7">
+                  <VTextField
+                    v-model="filterForm.name"
+                    label="اسم الفلتر"
+                    placeholder="مثال: 180 مل، 500 مل"
+                    variant="outlined"
+                    density="compact"
+                    bg-color="white"
+                    hide-details
+                  />
+                </VCol>
+                <VCol cols="6" md="3">
+                  <VTextField
+                    v-model.number="filterForm.sort_order"
+                    label="الترتيب"
+                    type="number"
+                    variant="outlined"
+                    density="compact"
+                    bg-color="white"
+                    hide-details
+                  />
+                </VCol>
+                <VCol cols="6" md="2" class="d-flex align-center">
+                  <VSwitch
+                    v-model="filterForm.is_active"
+                    label="نشط"
+                    color="success"
+                    density="compact"
+                    hide-details
+                  />
+                </VCol>
+              </VRow>
+              <div class="d-flex gap-2 mt-3">
+                <VBtn color="info" size="small" rounded="lg" @click="saveFilter">
+                  {{ filterDialogMode === 'add' ? 'إضافة' : 'حفظ' }}
+                </VBtn>
+                <VBtn variant="text" size="small" rounded="lg" @click="showFilterForm = false">إلغاء</VBtn>
+              </div>
+            </VCard>
+          </div>
+        </VExpandTransition>
+
+        <!-- Filters List -->
+        <div v-if="filtersLoading" class="text-center py-6">
+          <VProgressCircular indeterminate color="info" size="24" />
+        </div>
+        <div v-else-if="filters.length === 0" class="text-center py-6 text-medium-emphasis">
+          <VIcon icon="ri-filter-off-line" size="40" class="mb-2 d-block" />
+          لا توجد فلاتر لهذا القسم بعد
+        </div>
+        <VList v-else density="compact" rounded="lg" border>
+          <VListItem
+            v-for="(f, i) in filters"
+            :key="f.id"
+            :class="{'border-t': i > 0}"
+          >
+            <template #prepend>
+              <VIcon icon="ri-filter-line" size="16" class="me-2 text-medium-emphasis" />
+            </template>
+            <VListItemTitle class="font-weight-medium">{{ f.name }}</VListItemTitle>
+            <VListItemSubtitle>ترتيب: {{ f.sort_order }}</VListItemSubtitle>
+            <template #append>
+              <div class="d-flex align-center gap-1">
+                <VSwitch
+                  :model-value="f.is_active"
+                  color="success"
+                  density="compact"
+                  hide-details
+                  class="me-1"
+                  @change="toggleFilterActive(f)"
+                />
+                <VBtn icon="ri-pencil-line" variant="text" size="x-small" color="primary" @click="openEditFilter(f)" />
+                <VBtn icon="ri-delete-bin-line" variant="text" size="x-small" color="error" @click="deleteFilter(f.id!)" />
+              </div>
+            </template>
+          </VListItem>
+        </VList>
+      </VCardText>
+
+      <VCardActions class="pa-5 border-t">
+        <VBtn
+          v-if="!showFilterForm"
+          color="info"
+          variant="tonal"
+          prepend-icon="ri-add-line"
+          rounded="lg"
+          @click="openAddFilter"
+        >
+          إضافة فلتر
+        </VBtn>
+        <VSpacer />
+        <VBtn color="secondary" variant="tonal" rounded="lg" @click="showFiltersDialog = false; showFilterForm = false">إغلاق</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

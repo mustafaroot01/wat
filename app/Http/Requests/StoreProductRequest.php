@@ -15,6 +15,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'category_id' => 'required|exists:categories,id',
+            'filter_id'   => 'nullable|exists:category_filters,id',
             'brand_id' => 'nullable|exists:brands,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
