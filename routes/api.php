@@ -86,6 +86,16 @@ Route::prefix('admin')->group(function () {
         // Store Settings
         Route::get('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'index']);
         Route::post('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'update']);
+
+        // Current admin info + permissions
+        Route::get('me', [\App\Http\Controllers\AdminController::class, 'me']);
+
+        // Admins Management (super admin only — enforced in controller)
+        Route::get('admins', [\App\Http\Controllers\AdminController::class, 'index']);
+        Route::post('admins', [\App\Http\Controllers\AdminController::class, 'store']);
+        Route::put('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'update']);
+        Route::delete('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'destroy']);
+        Route::patch('admins/{admin}/toggle', [\App\Http\Controllers\AdminController::class, 'toggleActive']);
     });
 });
 

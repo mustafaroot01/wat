@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
+import { useAdminPermissions } from '@/composables/useAdminPermissions'
 
 const router = useRouter()
 const route  = useRoute()
+const { fetchPermissions } = useAdminPermissions()
 
 const form = ref({ email: '', password: '' })
 const isPasswordVisible = ref(false)
@@ -33,6 +35,7 @@ const handleLogin = async () => {
     if (response.ok && data.success) {
       localStorage.setItem('accessToken', data.token)
       localStorage.setItem('userData', JSON.stringify(data.admin))
+      await fetchPermissions()
       const redirect = route.query.redirect as string
       router.push(redirect || '/')
     } else {

@@ -26,7 +26,7 @@ class AdminAuthController extends Controller
             return response()->json(['success' => false, 'message' => 'حساب الإدارة هذا معطل.'], 403);
         }
 
-        $admin->tokens()->delete();
+        // لا نحذف التوكنات القديمة حتى يتمكن أكثر من مشرف من الدخول في نفس الوقت
 
         return response()->json([
             'success' => true,

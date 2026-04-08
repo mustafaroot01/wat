@@ -16,6 +16,8 @@ class Admin extends Authenticatable
         'email',
         'password',
         'is_active',
+        'is_super_admin',
+        'permissions',
     ];
 
     protected $hidden = [
@@ -26,8 +28,21 @@ class Admin extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password'  => 'hashed',
-            'is_active' => 'boolean',
+            'password'       => 'hashed',
+            'is_active'      => 'boolean',
+            'is_super_admin' => 'boolean',
+            'permissions'    => 'array',
         ];
     }
+
+    /**
+     * Check if admin has a specific permission.
+     * Super admins always return true.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->is_super_admin) return true;
+        return in_array($permission, $this->permissions ?? []);
+    }
 }
+

@@ -1,6 +1,7 @@
 import type { App } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from './routes'
+import { useAdminPermissions } from '@/composables/useAdminPermissions'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL || '/'),
@@ -8,11 +9,12 @@ const router = createRouter({
 })
 
 // === Navigation Guards (Route Protection) === //
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const isLoggedIn = !!localStorage.getItem('accessToken')
 
   // Public routes that don't require auth
-  const isPublic = to.path === '/login' || to.path === '/register'
+  const isPublic = to.path === '/login' || to.path === '/register' || to.path === '/403'
+    || to.path.startsWith('/invoice')
 
   // If the user is NOT logged in and trying to access a restricted page
   if (!isPublic && !isLoggedIn) {
@@ -22,6 +24,20 @@ router.beforeEach((to, from, next) => {
   // If the user IS logged in and trying to access login/register
   if ((to.path === '/login' || to.path === '/register') && isLoggedIn) {
     return next('/')
+  }
+
+  // Permission check for protected routes
+  if (isLoggedIn && to.meta?.permission) {
+    const { can, permissionsLoaded, fetchPermissions } = useAdminPermissions()
+
+    // Load permissions if not yet loaded
+    if (!permissionsLoaded.value) {
+      await fetchPermissions()
+    }
+
+    if (!can(to.meta.permission as string)) {
+      return next('/403')
+    }
   }
 
   next()
