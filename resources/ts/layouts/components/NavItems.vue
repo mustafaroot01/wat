@@ -102,6 +102,13 @@ import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
   />
   <VerticalNavLink
     :item="{
+      title: 'إعدادات المتجر والفاتورة',
+      icon: 'ri-store-3-line',
+      to: '/store-settings',
+    }"
+  />
+  <VerticalNavLink
+    :item="{
       title: 'الإعدادات العامة',
       icon: 'ri-settings-4-line',
       to: '/settings',

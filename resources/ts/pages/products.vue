@@ -36,6 +36,7 @@ const {
 } = usePagination<Product>('/api/admin/products')
 
 const headers = [
+  { title: '#',                key: 'seq',       align: 'center' as const, sortable: false, width: '56px' },
   { title: 'المنتج',           key: 'name',      align: 'start'  as const, sortable: true  },
   { title: 'رمز المنتج (SKU)', key: 'sku',       align: 'start'  as const, sortable: false },
   { title: 'التصنيف / الشركة', key: 'category',  align: 'start'  as const, sortable: false },
@@ -51,9 +52,12 @@ const categoryFilter = ref<number | null>(null)
 const stockFilter = ref<string | null>(null)
 const statusFilter = ref<string | null>(null)
 
-const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
+const sortState   = ref<{ sort_by?: string; sort_dir?: string }>({})
+const currentPage = ref(1)
+const perPage     = ref(15)
 
 const loadProducts = (page = 1) => {
+  currentPage.value = page
   const params: any = { ...sortState.value }
   if (searchQuery.value) params.search = searchQuery.value
   if (categoryFilter.value) params.category_id = categoryFilter.value
@@ -61,6 +65,8 @@ const loadProducts = (page = 1) => {
   if (statusFilter.value !== null) params.is_active = statusFilter.value
   fetchProducts(page, params)
 }
+
+const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + index + 1
 
 // Watch filters to trigger reload
 watch([searchQuery, categoryFilter, stockFilter, statusFilter], () => {
@@ -70,6 +76,7 @@ watch([searchQuery, categoryFilter, stockFilter, statusFilter], () => {
 const handleProductOptions = (options: any) => {
   const sort = options.sortBy?.[0]
   sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
+  if (options.itemsPerPage) perPage.value = options.itemsPerPage
   loadProducts(options.page)
 }
 
@@ -374,6 +381,10 @@ onMounted(() => {
           class="rounded-0"
           @update:options="handleProductOptions"
         >
+          <template #item.seq="{ index }">
+            <span class="text-medium-emphasis text-body-2">{{ rowSeq(index) }}</span>
+          </template>
+
           <template #item.sku="{ item }">
             <VChip size="small" color="secondary" variant="outlined" class="font-weight-medium font-monospace">
               {{ item.sku }}

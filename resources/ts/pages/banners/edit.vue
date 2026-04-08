@@ -60,20 +60,14 @@ const fetchCategories = async () => {
 }
 
 const fetchProducts = async () => {
-  if (products.value.length > 0) return 
+  if (products.value.length > 0) return
   isLoadingProducts.value = true
   try {
-    // const res = await fetch(`/api/admin/products`)
-    // if(res.ok) products.value = await res.json()
-    setTimeout(() => {
-      products.value = [
-        { id: 101, name: 'كرتونة مياه دجلة 330 مل' },
-        { id: 102, name: 'عبوة الريان 5 لتر' },
-      ]
-      isLoadingProducts.value = false
-    }, 800)
+    const res = await apiFetch('/api/admin/products?per_page=1000&is_active=1')
+    if (res.ok) products.value = (await res.json()).data || []
   } catch (e) {
     console.error(e)
+  } finally {
     isLoadingProducts.value = false
   }
 }

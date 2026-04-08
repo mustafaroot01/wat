@@ -71,8 +71,21 @@ Route::prefix('admin')->group(function () {
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
+
+        // Orders (admin)
+        Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);
+        Route::get('orders/{id}', [\App\Http\Controllers\OrderController::class, 'show']);
+        Route::patch('orders/{id}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus']);
+        Route::patch('invoice/{token}/status', [\App\Http\Controllers\OrderController::class, 'updateStatusByToken']);
+
+        // Store Settings
+        Route::get('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'index']);
+        Route::post('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'update']);
     });
 });
+
+// Public invoice by QR token (no auth required for viewing)
+Route::get('invoice/{token}', [\App\Http\Controllers\OrderController::class, 'invoiceByToken']);
 
 // مسارات واجهات الموبايل (Front API)
 Route::prefix('app')->group(function () {
@@ -121,6 +134,12 @@ Route::prefix('app')->group(function () {
 
         // Coupons (apply after order confirmed)
         Route::post('coupons/apply', [\App\Http\Controllers\CouponController::class, 'apply']);
+
+        // Orders (app)
+        Route::get('orders', [\App\Http\Controllers\OrderController::class, 'myOrders']);
+        Route::get('orders/{id}', [\App\Http\Controllers\OrderController::class, 'myOrderShow']);
+        Route::post('orders', [\App\Http\Controllers\OrderController::class, 'store']);
+        Route::patch('orders/{id}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel']);
 
         // Profile
         Route::get('profile', [\App\Http\Controllers\Api\ProfileController::class, 'show']);

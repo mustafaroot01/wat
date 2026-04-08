@@ -22,19 +22,26 @@ const {
   fetchData: fetchBrands,
 } = usePagination<Brand>('/api/admin/brands')
 
-const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
+const sortState   = ref<{ sort_by?: string; sort_dir?: string }>({})
+const currentPage = ref(1)
+const perPage     = ref(15)
 
 const loadBrands = (page = 1) => {
+  currentPage.value = page
   fetchBrands(page, { ...sortState.value })
 }
 
 const handleBrandsOptions = (options: any) => {
   const sort = options.sortBy?.[0]
   sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
+  if (options.itemsPerPage) perPage.value = options.itemsPerPage
   loadBrands(options.page)
 }
 
+const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + index + 1
+
 const headers = [
+  { title: '#',          key: 'seq',        align: 'center' as const, sortable: false, width: '56px' },
   { title: 'اسم الشركة', key: 'name',       align: 'start'  as const, sortable: true  },
   { title: 'الترتيب',    key: 'sort_order', align: 'center' as const, sortable: true  },
   { title: 'الحالة',     key: 'is_active',  align: 'center' as const, sortable: false },
@@ -203,6 +210,10 @@ onMounted(() => {
           class="rounded-0"
           @update:options="handleBrandsOptions"
         >
+          <template #item.seq="{ index }">
+            <span class="text-medium-emphasis text-body-2">{{ rowSeq(index) }}</span>
+          </template>
+
           <template #item.name="{ item }">
             <div class="d-flex align-center gap-3 py-1">
               <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />

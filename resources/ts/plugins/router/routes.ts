@@ -68,6 +68,14 @@ export const routes = [
         path: 'coupons/:id/usages',
         component: () => import('@/pages/coupon-usages.vue'),
       },
+      {
+        path: 'store-settings',
+        component: () => import('@/pages/store-settings.vue'),
+      },
+      {
+        path: 'customers/:id/orders',
+        component: () => import('@/pages/customers/[id]/orders.vue'),
+      },
     ],
   },
   {
@@ -77,6 +85,10 @@ export const routes = [
       {
         path: 'login',
         component: () => import('@/pages/login.vue'),
+      },
+      {
+        path: 'invoice/:token',
+        component: () => import('@/pages/invoice/[token].vue'),
       },
       {
         path: '/:pathMatch(.*)*',

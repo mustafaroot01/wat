@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
 
 import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
@@ -8,6 +8,7 @@ import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
 
 const router = useRouter()
+const route  = useRoute()
 const vuetifyTheme = useTheme()
 
 const form = ref({
@@ -57,7 +58,8 @@ const handleLogin = async () => {
     if (response.ok && data.success) {
       localStorage.setItem('accessToken', data.token)
       localStorage.setItem('userData', JSON.stringify(data.admin))
-      router.push('/')
+      const redirect = route.query.redirect as string
+      router.push(redirect || '/')
     } else {
       errorMsg.value = data.message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
     }

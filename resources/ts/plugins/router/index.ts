@@ -11,9 +11,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isLoggedIn = !!localStorage.getItem('accessToken')
 
+  // Public routes that don't require auth
+  const isPublic = to.path === '/login' || to.path === '/register'
+
   // If the user is NOT logged in and trying to access a restricted page
-  if (to.path !== '/login' && to.path !== '/register' && !isLoggedIn) {
-    return next('/login')
+  if (!isPublic && !isLoggedIn) {
+    return next({ path: '/login', query: { redirect: to.fullPath } })
   }
 
   // If the user IS logged in and trying to access login/register
