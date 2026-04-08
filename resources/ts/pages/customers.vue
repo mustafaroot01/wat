@@ -17,6 +17,7 @@ interface Customer {
   area?: { id: number; name: string };
   is_active: boolean;
   is_self_deleted: boolean;
+  orders_count: number;
   created_at: string;
 }
 
@@ -34,11 +35,12 @@ const {
 } = usePagination<Customer>('/api/admin/customers')
 
 const headers = [
-  { title: 'اسم العميل',          key: 'full_name', align: 'start' as const, sortable: false },
-  { title: 'رقم الهاتف',         key: 'phone',     align: 'start' as const, sortable: false },
-  { title: 'الموقع (قضاء/منطقة)', key: 'district',  align: 'start' as const, sortable: false },
-  { title: 'الحالة',             key: 'is_active', align: 'center' as const, sortable: false },
-  { title: 'العمليات',            key: 'actions',   align: 'center' as const, sortable: false },
+  { title: 'اسم العميل',          key: 'full_name',    align: 'start' as const, sortable: false },
+  { title: 'رقم الهاتف',         key: 'phone',        align: 'start' as const, sortable: true },
+  { title: 'الموقع (قضاء/منطقة)', key: 'district',     align: 'start' as const, sortable: false },
+  { title: 'عدد الطلبات',       key: 'orders_count', align: 'center' as const, sortable: true },
+  { title: 'الحالة',             key: 'is_active',    align: 'center' as const, sortable: false },
+  { title: 'العمليات',            key: 'actions',      align: 'center' as const, sortable: false },
 ]
 
 const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
@@ -259,6 +261,19 @@ onMounted(() => {
           <template #item.district="{ item }">
             <span v-if="item.district">{{ item.district.name }} / {{ item.area?.name || '---' }}</span>
             <span v-else class="text-medium-emphasis text-caption">غير محدد</span>
+          </template>
+
+          <template #item.orders_count="{ item }">
+            <VBtn
+              variant="tonal"
+              color="primary"
+              size="small"
+              class="font-weight-bold"
+              prepend-icon="ri-shopping-cart-2-line"
+              @click="$router.push(`/customers/${item.id}/orders`)"
+            >
+              {{ item.orders_count }} طلب
+            </VBtn>
           </template>
 
           <template #item.is_active="{ item }">

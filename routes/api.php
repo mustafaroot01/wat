@@ -53,6 +53,7 @@ Route::prefix('admin')->group(function () {
 
         // Customers
         Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);
+        Route::get('customers/{id}/orders', [\App\Http\Controllers\CustomerController::class, 'orders']);
         Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
         Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
         Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);

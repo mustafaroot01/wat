@@ -16,7 +16,7 @@ class CustomerController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::query()->with(['district', 'area']);
+        $query = User::query()->with(['district', 'area'])->withCount('orders');
 
         if ($request->filled('status')) {
             match ($request->status) {
@@ -30,11 +30,35 @@ class CustomerController extends Controller
         $customers = $this->scopeDataTable(
             $query, $request,
             searchableColumns: ['first_name', 'last_name', 'phone'],
-            allowedSortColumns: ['first_name', 'last_name', 'phone', 'created_at']
+            allowedSortColumns: ['first_name', 'last_name', 'phone', 'orders_count', 'created_at']
         );
 
         return CustomerResource::collection($customers)
             ->additional(['has_more' => $customers->hasMorePages()]);
+    }
+
+    public function orders(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $query = $user->orders()->with('items.product');
+
+        $orders = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['status', 'notes'],
+            allowedSortColumns: ['id', 'status', 'total_amount', 'created_at']
+        );
+
+        return response()->json([
+            'customer' => new CustomerResource($user),
+            'data' => $orders->items(),
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page'    => $orders->lastPage(),
+                'per_page'     => $orders->perPage(),
+                'total'        => $orders->total(),
+            ],
+            'has_more' => $orders->hasMorePages(),
+        ]);
     }
 
     /**
