@@ -28,7 +28,8 @@
 6. [المنتجات — Products](#6-المنتجات--products)
 7. [البنرات — Banners](#7-البنرات--banners)
 8. [الإشعارات — Notifications](#8-الإشعارات--notifications)
-9. [أكواد الخطأ](#9-أكواد-الخطأ)
+9. [أكواد الخصم — Coupons](#9-أكواد-الخصم--coupons)
+10. [أكواد الخطأ](#10-أكواد-الخطأ)
 
 ---
 
@@ -804,7 +805,87 @@ GET /api/app/products?category_id=1&brand_id=2&search=كاسة&page=1
 
 ---
 
-## 9. أكواد الخطأ
+## 9. أكواد الخصم — Coupons
+
+### 9.1 التحقق من صحة كود الخصم
+
+**POST** `/api/app/coupons/validate`  
+🔓 **لا يتطلب Token** — يمكن استدعاؤه قبل تسجيل الدخول
+
+**Body:**
+```json
+{
+  "code": "SUMMER20",
+  "order_amount": 50000
+}
+```
+
+**✅ نجاح (200):**
+```json
+{
+  "success": true,
+  "message": "كود الخصم صحيح!",
+  "coupon_id": 1,
+  "type": "percentage",
+  "value": 20,
+  "discount_amount": 10000,
+  "final_amount": 40000
+}
+```
+
+**❌ أخطاء:**
+```json
+{ "success": false, "message": "كود الخصم غير صحيح." }
+{ "success": false, "message": "انتهت صلاحية كود الخصم." }
+{ "success": false, "message": "تم استنفاد عدد مرات استخدام هذا الكود." }
+{ "success": false, "message": "الحد الأدنى للطلب هو 25,000 د.ع." }
+{ "success": false, "message": "لقد استخدمت هذا الكود مسبقاً." }
+```
+
+> **الحالات:**
+> - `type: "percentage"` → الخصم بنسبة مئوية من إجمالي الطلب
+> - `type: "fixed"` → مبلغ ثابت يُخصم من إجمالي الطلب
+
+---
+
+### 9.2 تطبيق كود الخصم (بعد تأكيد الطلب)
+
+**POST** `/api/app/coupons/apply`  
+🔒 **يتطلب Token**
+
+**Body:**
+```json
+{
+  "coupon_id": 1,
+  "discount_amount": 10000
+}
+```
+
+**✅ نجاح (200):**
+```json
+{
+  "success": true,
+  "message": "تم تطبيق كود الخصم بنجاح."
+}
+```
+
+> استدعِ هذا الـ endpoint **بعد** تأكيد الطلب فقط لتسجيل الاستخدام وتحديث العداد.
+
+---
+
+### سير العمل الكامل (Flow)
+
+```
+1. المستخدم يدخل الكود في صفحة الدفع
+2. POST /api/app/coupons/validate  →  يحسب الخصم
+3. يعرض للمستخدم: "خصم 10,000 د.ع — المجموع: 40,000 د.ع"
+4. المستخدم يؤكد الطلب
+5. POST /api/app/coupons/apply  →  يسجّل الاستخدام
+```
+
+---
+
+## 10. أكواد الخطأ
 
 ### HTTP Status Codes
 
