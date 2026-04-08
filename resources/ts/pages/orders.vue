@@ -244,7 +244,7 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
             <template #item.customer="{ item }">
               <div>
                 <div class="font-weight-medium">{{ item.customer_name }}</div>
-                <div class="text-caption text-medium-emphasis">{{ item.customer_phone }}</div>
+                <div class="text-caption text-medium-emphasis" dir="ltr" style="text-align:right;">{{ item.customer_phone }}</div>
               </div>
             </template>
 
@@ -364,7 +364,7 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
             <VCol cols="12" md="6">
               <div class="text-subtitle-2 font-weight-bold mb-2">بيانات الزبون</div>
               <div class="text-body-2"><span class="font-weight-medium">الاسم:</span> {{ invoiceOrder.customer_name }}</div>
-              <div class="text-body-2"><span class="font-weight-medium">الهاتف:</span> {{ invoiceOrder.customer_phone }}</div>
+              <div class="text-body-2"><span class="font-weight-medium">الهاتف:</span> <span dir="ltr" style="unicode-bidi:embed;">{{ invoiceOrder.customer_phone }}</span></div>
               <div class="text-body-2"><span class="font-weight-medium">القضاء:</span> {{ invoiceOrder.province }}</div>
               <div class="text-body-2"><span class="font-weight-medium">المنطقة:</span> {{ invoiceOrder.district }}</div>
               <div class="text-body-2">

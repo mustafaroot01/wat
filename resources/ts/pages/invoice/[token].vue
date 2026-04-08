@@ -328,7 +328,7 @@ const printPage = () => window.print()
   padding: 24px 16px;
 }
 .invoice-wrapper {
-  max-width: 794px; /* A4 width at 96dpi */
+  max-width: 559px; /* A5 width at 96dpi: 148mm */
   margin: 0 auto;
 }
 
@@ -491,16 +491,24 @@ const printPage = () => window.print()
 
 /* ── Print ──────────────────────────────────────── */
 @media print {
-  @page { size: A4; margin: 10mm; }
-  body * { visibility: hidden; }
-  #invoice-print-area, #invoice-print-area * { visibility: visible; }
-  #invoice-print-area {
-    position: fixed; top: 0; left: 0;
-    width: 210mm;
+  @page { size: A5 portrait; margin: 6mm; }
+
+  .invoice-page { background: #fff !important; padding: 0 !important; }
+  .invoice-wrapper { max-width: 100% !important; margin: 0 !important; }
+  .no-print { display: none !important; }
+
+  .inv-card {
     box-shadow: none !important;
     border-radius: 0 !important;
+    font-size: 11px !important;
   }
-  .no-print { display: none !important; }
-  .invoice-page { background: #fff !important; padding: 0 !important; }
+  .inv-header  { padding: 14px 18px 12px !important; }
+  .inv-logo    { width: 40px !important; height: 40px !important; }
+  .inv-brand-name { font-size: 1rem !important; }
+  .inv-info-row   { padding: 12px 18px !important; }
+  .inv-table      { width: calc(100% - 36px) !important; margin: 0 18px !important; }
+  .inv-totals     { padding: 10px 18px 0 !important; }
+  .inv-footer     { padding: 12px 18px !important; }
+  .inv-qr-img     { width: 80px !important; height: 80px !important; }
 }
 </style>
