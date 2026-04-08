@@ -172,7 +172,7 @@ table.items td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
       color:#fff;text-align:center;padding:9px;margin-top:10px;
       border-radius:0 0 8px 8px;font-size:9pt}
 .foot-sub{color:rgba(255,255,255,.6);font-size:7.5pt;margin-top:3px}
-</style></head>
+</` + `style></` + `head>
 <body>
 <div class="hd">
   <div style="display:flex;align-items:center;gap:10px">
@@ -224,7 +224,7 @@ table.items td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
   <div>${s.thank_you_message||'شكراً لثقتكم بمعمل امواج ديالى'}</div>
   <div class="foot-sub">معمل امواج ديالى — ديالى، العراق</div>
 </div>
-</body></html>`
+</` + `body></` + `html>`
 
   const iframe = document.createElement('iframe')
   iframe.style.position = 'absolute'
