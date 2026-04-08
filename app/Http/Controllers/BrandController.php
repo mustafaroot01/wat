@@ -90,7 +90,13 @@ class BrandController extends Controller
     public function products(Request $request, Brand $brand)
     {
         $perPage = min((int) $request->get('per_page', 15), 100);
-        $products = $brand->products()->where('is_active', true)->ordered()->paginate($perPage);
+
+        $products = $brand->products()
+            ->with(['category', 'filter'])
+            ->where('is_active', true)
+            ->ordered()
+            ->paginate($perPage);
+
         return ProductResource::collection($products)
             ->additional(['has_more' => $products->hasMorePages()]);
     }
