@@ -74,6 +74,13 @@ import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
   />
   <VerticalNavLink
     :item="{
+      title: 'خصومات مميزة',
+      icon: 'ri-price-tag-3-line',
+      to: '/discounts',
+    }"
+  />
+  <VerticalNavLink
+    :item="{
       title: 'الأقضية والمناطق',
       icon: 'ri-map-pin-line',
       to: '/districts',

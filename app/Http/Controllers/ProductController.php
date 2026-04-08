@@ -47,6 +47,48 @@ class ProductController extends Controller
             ->additional(['has_more' => $products->hasMorePages()]);
     }
 
+    public function discounted(Request $request)
+    {
+        $query = Product::with(['category', 'brand', 'filter'])
+            ->discounted()
+            ->active();
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('sku', 'like', "%{$term}%");
+            });
+        }
+
+        // Sort by highest discount by default
+        $sortBy  = $request->get('sort_by', 'discount_percentage');
+        $sortDir = $request->get('sort_dir', 'desc');
+        $allowed = ['discount_percentage', 'price', 'name', 'created_at'];
+        if (!in_array($sortBy, $allowed)) $sortBy = 'discount_percentage';
+
+        $products = $query->orderBy($sortBy, $sortDir)
+            ->paginate($request->get('per_page', 15));
+
+        $stats = [
+            'total_discounted' => Product::active()->discounted()->count(),
+            'avg_discount'     => (int) round(Product::active()->discounted()->avg('discount_percentage') ?? 0),
+            'max_discount'     => (int) (Product::active()->discounted()->max('discount_percentage') ?? 0),
+        ];
+
+        return ProductResource::collection($products)
+            ->additional([
+                'has_more' => $products->hasMorePages(),
+                'stats'    => $stats,
+            ]);
+    }
+
     public function indexPublic(Request $request)
     {
         $query = Product::with(['category', 'brand', 'filter'])->active();

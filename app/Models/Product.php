@@ -51,6 +51,11 @@ class Product extends Model
         return $query->orderBy('sort_order', 'asc');
     }
 
+    public function scopeDiscounted($query)
+    {
+        return $query->where('discount_percentage', '>', 0);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

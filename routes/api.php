@@ -47,6 +47,7 @@ Route::prefix('admin')->group(function () {
         Route::patch('category-filters/{categoryFilter}/toggle', [\App\Http\Controllers\CategoryFilterController::class, 'toggleActive']);
 
         // Products
+        Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discounted']);
         Route::apiResource('products', \App\Http\Controllers\ProductController::class);
         Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
         Route::patch('products/{product}/toggle-stock', [\App\Http\Controllers\ProductController::class, 'toggleInStock']);

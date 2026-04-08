@@ -37,6 +37,10 @@ export const routes = [
         component: () => import('@/pages/products.vue'),
       },
       {
+        path: 'discounts',
+        component: () => import('@/pages/discounts.vue'),
+      },
+      {
         path: 'customers',
         component: () => import('@/pages/customers.vue'),
       },
