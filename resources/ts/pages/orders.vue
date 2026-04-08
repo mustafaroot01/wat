@@ -466,7 +466,7 @@ const copyPhone = async (phone: string) => {
 
           <!-- Items Table -->
           <div class="text-subtitle-2 font-weight-bold mb-2">المنتجات</div>
-          <VTable density="compact" class="mb-4">
+          <table class="inv-dlg-table mb-4">
             <thead>
               <tr>
                 <th>#</th>
@@ -481,13 +481,13 @@ const copyPhone = async (phone: string) => {
               <tr v-for="(item, i) in invoiceOrder.items" :key="item.id">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.product_name }}</td>
-                <td class="text-caption text-medium-emphasis">{{ item.sku || '—' }}</td>
+                <td class="text-muted">{{ item.sku || '—' }}</td>
                 <td>{{ formatIQD(item.unit_price) }}</td>
                 <td>{{ item.quantity }}</td>
-                <td class="font-weight-medium">{{ formatIQD(item.total_price) }}</td>
+                <td class="font-weight-bold">{{ formatIQD(item.total_price) }}</td>
               </tr>
             </tbody>
-          </VTable>
+          </table>
 
           <!-- Totals -->
           <div class="d-flex flex-column align-end gap-1 mb-4">
@@ -518,17 +518,49 @@ const copyPhone = async (phone: string) => {
 </template>
 
 <style>
+/* ── Dialog table ────────────────── */
+.inv-dlg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.inv-dlg-table th {
+  background: #f4f6f8;
+  padding: 8px 10px;
+  border-bottom: 2px solid #ddd;
+  text-align: right;
+  font-weight: 600;
+  color: #444;
+}
+.inv-dlg-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: right;
+}
+.inv-dlg-table tbody tr:nth-child(even) { background: #fafafa; }
+.text-muted { color: #999; font-size: 12px; }
+
+/* ── Print ───────────────────────── */
 @media print {
   @page { size: A5 portrait; margin: 6mm; }
 
-  body > *                          { display: none !important; }
-  .v-overlay-container              { display: block !important; }
-  .v-overlay.v-dialog               { display: block !important; }
-  .v-overlay__content               { display: block !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
-  .v-card                           { box-shadow: none !important; }
-  .no-print                         { display: none !important; }
+  body * { visibility: hidden !important; }
 
-  #invoice-print-area               { padding: 0 !important; }
-  #invoice-print-area .v-divider    { margin: 6px 0 !important; }
+  #invoice-print-area,
+  #invoice-print-area * { visibility: visible !important; }
+
+  #invoice-print-area {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+    padding: 8mm !important;
+    box-sizing: border-box !important;
+  }
+
+  .no-print { display: none !important; }
 }
 </style>
