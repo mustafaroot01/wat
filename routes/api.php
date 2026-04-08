@@ -16,6 +16,8 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role'])->group(function () {
         Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
         Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
+        Route::patch('categories/{category}/toggle-featured', [\App\Http\Controllers\CategoryController::class, 'toggleFeatured']);
+        Route::post('categories/{category}/featured-settings', [\App\Http\Controllers\CategoryController::class, 'updateFeaturedSettings']);
         
         // Banners
         Route::apiResource('banners', \App\Http\Controllers\BannerController::class);
@@ -110,6 +112,9 @@ Route::prefix('app')->group(function () {
 
     // Banners Public API
     Route::get('banners', [\App\Http\Controllers\BannerController::class, 'indexPublic']);
+
+    // Featured Category Public API
+    Route::get('categories/featured', [\App\Http\Controllers\CategoryController::class, 'featured']);
 
     // Brands Public API
     Route::get('brands', [\App\Http\Controllers\BrandController::class, 'indexPublic']);

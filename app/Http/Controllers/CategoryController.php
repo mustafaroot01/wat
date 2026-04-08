@@ -148,4 +148,70 @@ class CategoryController extends Controller
         
         return response()->json(['success' => true, 'is_active' => $category->is_active]);
     }
+
+    /**
+     * تعيين قسم كـ مميز (يُلغي التمييز عن القسم السابق تلقائياً)
+     */
+    public function toggleFeatured(Category $category)
+    {
+        if ($category->is_featured) {
+            // إلغاء التمييز إذا كان مميزاً بالفعل
+            $category->update(['is_featured' => false]);
+        } else {
+            // إلغاء التمييز عن القسم القديم ثم تعيين الجديد
+            Category::where('is_featured', true)->update(['is_featured' => false]);
+            $category->update(['is_featured' => true]);
+        }
+
+        return response()->json([
+            'success'     => true,
+            'is_featured' => $category->is_featured,
+            'data'        => new CategoryResource($category),
+        ]);
+    }
+
+    /**
+     * تحديث إعدادات العرض المميز (عنوان، صورة، لون، أسلوب)
+     */
+    public function updateFeaturedSettings(Request $request, Category $category)
+    {
+        $data = $request->validate([
+            'featured_title'         => 'nullable|string|max:100',
+            'featured_subtitle'      => 'nullable|string|max:200',
+            'featured_bg_color'      => 'nullable|string|max:20',
+            'featured_display_style' => 'nullable|in:full_banner,card,circle',
+        ]);
+
+        $oldImage = $category->featured_image;
+
+        if ($request->hasFile('featured_image')) {
+            $path = $request->file('featured_image')->store('categories/featured', 'public');
+            $data['featured_image'] = $path;
+            if ($oldImage) \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
+        }
+
+        $category->update($data);
+
+        return response()->json([
+            'success' => true,
+            'data'    => new CategoryResource($category),
+        ]);
+    }
+
+    /**
+     * API للتطبيق: يرجع القسم المميز فقط
+     */
+    public function featured()
+    {
+        $category = \Illuminate\Support\Facades\Cache::remember('api_featured_category', 3600, function () {
+            return Category::active()->where('is_featured', true)->first();
+        });
+
+        if (!$category) {
+            return response()->json(['data' => null]);
+        }
+
+        return response()->json(['data' => new CategoryResource($category)]);
+    }
 }
+

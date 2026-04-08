@@ -9,6 +9,12 @@ interface Category {
   slug?: string;
   sort_order: number;
   is_active: boolean;
+  is_featured?: boolean;
+  featured_title?: string;
+  featured_subtitle?: string;
+  featured_image_url?: string | null;
+  featured_bg_color?: string;
+  featured_display_style?: string;
   image?: any;
   image_url: string | null;
 }
@@ -23,11 +29,12 @@ const {
 } = usePagination<Category>('/api/admin/categories')
 
 const headers = [
-  { title: 'اسم القسم', key: 'name',       align: 'start'  as const, sortable: true  },
-  { title: 'Slug',       key: 'slug',       align: 'start'  as const, sortable: true  },
-  { title: 'الترتيب',    key: 'sort_order', align: 'center' as const, sortable: true  },
-  { title: 'الحالة',     key: 'is_active',  align: 'center' as const, sortable: false },
-  { title: 'الإجراءات',  key: 'actions',    align: 'center' as const, sortable: false },
+  { title: 'اسم القسم', key: 'name',        align: 'start'  as const, sortable: true  },
+  { title: 'Slug',       key: 'slug',        align: 'start'  as const, sortable: true  },
+  { title: 'مميز',       key: 'is_featured', align: 'center' as const, sortable: false },
+  { title: 'الترتيب',    key: 'sort_order',  align: 'center' as const, sortable: true  },
+  { title: 'الحالة',     key: 'is_active',   align: 'center' as const, sortable: false },
+  { title: 'الإجراءات',  key: 'actions',     align: 'center' as const, sortable: false },
 ]
 
 // Dialog variables
@@ -150,6 +157,78 @@ const toggleActive = async (item: Category) => {
     item.is_active = !item.is_active
   }
 }
+
+// ─── Featured Category ────────────────────────────────────────────
+const showFeaturedDialog   = ref(false)
+const featuredTarget       = ref<Category | null>(null)
+const featuredImagePreview = ref<string | null>(null)
+const featuredFileRef      = ref<HTMLElement | null>(null)
+const featuredSaving       = ref(false)
+
+const featuredForm = ref({
+  featured_title:         '',
+  featured_subtitle:      '',
+  featured_bg_color:      '#1565c0',
+  featured_display_style: 'full_banner',
+  featured_image:         null as File | null,
+})
+
+const openFeaturedDialog = (item: Category) => {
+  featuredTarget.value        = item
+  featuredImagePreview.value  = item.featured_image_url || null
+  featuredForm.value = {
+    featured_title:         item.featured_title || '',
+    featured_subtitle:      item.featured_subtitle || '',
+    featured_bg_color:      item.featured_bg_color || '#1565c0',
+    featured_display_style: item.featured_display_style || 'full_banner',
+    featured_image:         null,
+  }
+  showFeaturedDialog.value = true
+}
+
+const handleFeaturedImageSelect = (e: any) => {
+  const file = e.target.files[0]
+  if (file) {
+    featuredForm.value.featured_image = file
+    featuredImagePreview.value = URL.createObjectURL(file)
+  }
+}
+
+const saveFeaturedSettings = async () => {
+  if (!featuredTarget.value?.id) return
+  featuredSaving.value = true
+  const payload = new FormData()
+  payload.append('featured_title',         featuredForm.value.featured_title)
+  payload.append('featured_subtitle',      featuredForm.value.featured_subtitle)
+  payload.append('featured_bg_color',      featuredForm.value.featured_bg_color)
+  payload.append('featured_display_style', featuredForm.value.featured_display_style)
+  if (featuredForm.value.featured_image instanceof File) {
+    payload.append('featured_image', featuredForm.value.featured_image)
+  }
+  try {
+    const res = await apiFetch(`/api/admin/categories/${featuredTarget.value.id}/featured-settings`, {
+      method: 'POST', body: payload,
+    })
+    if (res.ok) { showFeaturedDialog.value = false; loadCategories(1) }
+  } catch (e) { console.error(e) } finally { featuredSaving.value = false }
+}
+
+const toggleFeatured = async (item: Category) => {
+  try {
+    const res = await apiFetch(`/api/admin/categories/${item.id}/toggle-featured`, { method: 'PATCH' })
+    if (res.ok) {
+      const body = await res.json()
+      const idx = categories.value.findIndex((c: any) => c.id === item.id)
+      if (idx !== -1) (categories.value as any)[idx].is_featured = body.is_featured
+      // Reset other items
+      if (body.is_featured) {
+        categories.value.forEach((c: any) => { if (c.id !== item.id) c.is_featured = false })
+      }
+    }
+  } catch (e) { console.error(e) }
+}
+
+const loadCategories = (page = 1) => fetchCategories(page)
 
 // ─── Filters Management ───────────────────────────────────────────
 interface CategoryFilterItem {
@@ -274,6 +353,17 @@ onMounted(() => {
             </div>
           </template>
 
+          <template #item.is_featured="{ item }">
+            <VBtn
+              :color="item.is_featured ? 'warning' : 'secondary'"
+              :variant="item.is_featured ? 'elevated' : 'tonal'"
+              size="x-small"
+              rounded="lg"
+              :icon="item.is_featured ? 'ri-star-fill' : 'ri-star-line'"
+              @click="toggleFeatured(item)"
+            />
+          </template>
+
           <template #item.slug="{ item }">
             <VChip size="small" variant="tonal" color="secondary" rounded="sm">{{ item.slug }}</VChip>
           </template>
@@ -292,7 +382,11 @@ onMounted(() => {
               <template #activator="{ props }">
                 <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
               </template>
-              <VList density="compact" min-width="150" rounded="lg" elevation="3">
+              <VList density="compact" min-width="170" rounded="lg" elevation="3">
+                <VListItem @click="openFeaturedDialog(item)">
+                  <template #prepend><VIcon icon="ri-star-settings-line" size="18" class="me-2 text-warning" /></template>
+                  <VListItemTitle class="text-warning">إعدادات القسم المميز</VListItemTitle>
+                </VListItem>
                 <VListItem @click="openFiltersDialog(item)">
                   <template #prepend><VIcon icon="ri-filter-3-line" size="18" class="me-2 text-info" /></template>
                   <VListItemTitle class="text-info">إدارة الفلاتر</VListItemTitle>
@@ -542,6 +636,110 @@ onMounted(() => {
       </VCardActions>
     </VCard>
   </VDialog>
+  <!-- Featured Settings Dialog -->
+  <VDialog v-model="showFeaturedDialog" max-width="520" persistent>
+    <VCard rounded="lg" elevation="0">
+      <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
+        <span class="font-weight-bold text-h6 d-flex align-center gap-2">
+          <VIcon icon="ri-star-settings-line" color="warning" />
+          إعدادات القسم المميز: {{ featuredTarget?.name }}
+        </span>
+        <VBtn icon="ri-close-line" variant="text" size="small" @click="showFeaturedDialog = false" />
+      </VCardTitle>
+
+      <VCardText class="pa-6">
+        <VRow>
+          <!-- Featured Image -->
+          <VCol cols="12" class="text-center">
+            <p class="text-body-2 font-weight-semibold mb-2">صورة القسم المميز (مختلفة عن صورة القسم العادية)</p>
+            <input type="file" ref="featuredFileRef" class="d-none" accept="image/*" @change="handleFeaturedImageSelect" />
+            <div
+              class="featured-img-upload mx-auto"
+              @click="(featuredFileRef as any)?.click()"
+            >
+              <VImg v-if="featuredImagePreview" :src="featuredImagePreview" cover height="140" class="rounded-lg" />
+              <div v-else class="d-flex flex-column align-center justify-center h-100 rounded-lg" style="border: 2px dashed rgba(var(--v-theme-warning),0.5); height:140px;">
+                <VIcon icon="ri-image-add-line" size="32" color="warning" class="mb-2" />
+                <span class="text-caption text-medium-emphasis">اضغط لاختيار صورة</span>
+              </div>
+            </div>
+          </VCol>
+
+          <VCol cols="12">
+            <VTextField
+              v-model="featuredForm.featured_title"
+              label="العنوان المميز"
+              placeholder="مثال: عروض حصرية"
+              variant="outlined"
+              color="warning"
+            />
+          </VCol>
+          <VCol cols="12">
+            <VTextField
+              v-model="featuredForm.featured_subtitle"
+              label="النص الثانوي"
+              placeholder="مثال: خصومات تصل لـ 50%"
+              variant="outlined"
+              color="warning"
+            />
+          </VCol>
+
+          <VCol cols="12" md="6">
+            <label class="text-body-2 font-weight-medium d-block mb-2">لون الخلفية</label>
+            <div class="d-flex align-center gap-3">
+              <input type="color" v-model="featuredForm.featured_bg_color" class="color-picker" />
+              <VTextField
+                v-model="featuredForm.featured_bg_color"
+                variant="outlined"
+                density="compact"
+                hide-details
+                dir="ltr"
+                style="max-width:120px;"
+              />
+            </div>
+          </VCol>
+
+          <VCol cols="12" md="6">
+            <VSelect
+              v-model="featuredForm.featured_display_style"
+              :items="[
+                { title: 'بانر كامل (Full Banner)', value: 'full_banner' },
+                { title: 'بطاقة (Card)', value: 'card' },
+                { title: 'دائرة (Circle)', value: 'circle' },
+              ]"
+              label="طريقة العرض"
+              variant="outlined"
+              color="warning"
+              item-title="title"
+              item-value="value"
+            />
+          </VCol>
+
+          <!-- Preview -->
+          <VCol cols="12">
+            <VCard
+              rounded="lg"
+              class="pa-4 text-white"
+              :style="`background: ${featuredForm.featured_bg_color}`"
+            >
+              <div class="text-caption mb-1 opacity-70">معاينة:</div>
+              <div class="font-weight-bold text-body-1">{{ featuredForm.featured_title || 'العنوان هنا' }}</div>
+              <div class="text-caption opacity-80">{{ featuredForm.featured_subtitle || 'النص الثانوي هنا' }}</div>
+            </VCard>
+          </VCol>
+        </VRow>
+      </VCardText>
+
+      <VCardActions class="pa-5 border-t">
+        <VSpacer />
+        <VBtn variant="tonal" color="secondary" rounded="lg" @click="showFeaturedDialog = false">إلغاء</VBtn>
+        <VBtn color="warning" variant="elevated" rounded="lg" class="px-8" :loading="featuredSaving" @click="saveFeaturedSettings">
+          حفظ الإعدادات
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
 </template>
 
 <style scoped>
@@ -584,5 +782,22 @@ onMounted(() => {
 
 .image-upload-wrapper:hover .image-overlay {
   opacity: 1;
+}
+
+.featured-img-upload {
+  width: 100%;
+  max-width: 400px;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.color-picker {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
 }
 </style>

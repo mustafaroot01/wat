@@ -13,11 +13,18 @@ class Category extends Model
         'image',
         'is_active',
         'sort_order',
+        'is_featured',
+        'featured_title',
+        'featured_subtitle',
+        'featured_image',
+        'featured_bg_color',
+        'featured_display_style',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'sort_order' => 'integer',
+        'is_active'   => 'boolean',
+        'is_featured' => 'boolean',
+        'sort_order'  => 'integer',
     ];
 
     public function scopeActive($query)
@@ -32,7 +39,6 @@ class Category extends Model
 
     public function products()
     {
-        // Add Product model reference here
         return $this->hasMany(\App\Models\Product::class);
     }
 
@@ -40,10 +46,13 @@ class Category extends Model
     {
         static::saved(function () {
             Cache::forget('api_active_categories');
+            Cache::forget('api_featured_category');
         });
 
         static::deleting(function ($category) {
             Cache::forget('api_active_categories');
+            Cache::forget('api_featured_category');
         });
     }
 }
+
