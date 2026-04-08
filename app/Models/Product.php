@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
+        'sku',
         'category_id',
         'filter_id',
         'brand_id',
@@ -27,6 +28,17 @@ class Product extends Model
         'discount_percentage'  => 'integer',
         'brand_id'             => 'integer',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($product) {
+            if (empty($product->sku)) {
+                $product->sku = 'PRD-' . strtoupper(\Illuminate\Support\Str::random(6));
+            }
+        });
+    }
 
     // --- Scopes ---
     public function scopeActive($query)

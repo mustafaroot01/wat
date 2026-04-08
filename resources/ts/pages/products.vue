@@ -9,6 +9,7 @@ interface Product {
   category_id: number | null;
   filter_id: number | null;
   brand_id: number | null;
+  sku?: string;
   name: string;
   description: string;
   price: number;
@@ -36,12 +37,41 @@ const {
 
 const headers = [
   { title: 'المنتج',           key: 'name',      align: 'start'  as const, sortable: true  },
+  { title: 'رمز المنتج (SKU)', key: 'sku',       align: 'start'  as const, sortable: false },
   { title: 'التصنيف / الشركة', key: 'category',  align: 'start'  as const, sortable: false },
   { title: 'السعر / الخصم',   key: 'price',     align: 'start'  as const, sortable: true  },
   { title: 'المخزون',          key: 'in_stock',  align: 'center' as const, sortable: false },
   { title: 'الحالة',           key: 'is_active', align: 'center' as const, sortable: false },
   { title: 'الإجراءات',        key: 'actions',   align: 'center' as const, sortable: false },
 ]
+
+// Search and Filters
+const searchQuery = ref('')
+const categoryFilter = ref<number | null>(null)
+const stockFilter = ref<string | null>(null)
+const statusFilter = ref<string | null>(null)
+
+const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
+
+const loadProducts = (page = 1) => {
+  const params: any = { ...sortState.value }
+  if (searchQuery.value) params.search = searchQuery.value
+  if (categoryFilter.value) params.category_id = categoryFilter.value
+  if (stockFilter.value !== null) params.in_stock = stockFilter.value
+  if (statusFilter.value !== null) params.is_active = statusFilter.value
+  fetchProducts(page, params)
+}
+
+// Watch filters to trigger reload
+watch([searchQuery, categoryFilter, stockFilter, statusFilter], () => {
+  loadProducts(1)
+})
+
+const handleProductOptions = (options: any) => {
+  const sort = options.sortBy?.[0]
+  sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
+  loadProducts(options.page)
+}
 
 // Options for selects
 const categories = ref<any[]>([])
@@ -270,6 +300,67 @@ onMounted(() => {
         </VCardItem>
         <VDivider />
 
+        <!-- Filters Section -->
+        <VCardText class="bg-surface-variant bg-opacity-25 py-5 border-b">
+          <VRow>
+            <VCol cols="12" md="3">
+              <VTextField
+                v-model="searchQuery"
+                placeholder="ابحث باسم أو رمز المنتج..."
+                prepend-inner-icon="ri-search-line"
+                variant="solo"
+                bg-color="surface"
+                hide-details
+                density="compact"
+                rounded="lg"
+                clearable
+              />
+            </VCol>
+            <VCol cols="12" md="3">
+              <VSelect
+                v-model="categoryFilter"
+                :items="categories"
+                item-title="name"
+                item-value="id"
+                placeholder="كل الأقسام"
+                prepend-inner-icon="ri-folder-2-line"
+                variant="solo"
+                bg-color="surface"
+                hide-details
+                density="compact"
+                rounded="lg"
+                clearable
+              />
+            </VCol>
+            <VCol cols="12" md="3">
+              <VSelect
+                v-model="stockFilter"
+                :items="[{ title: 'الكل', value: null }, { title: 'متوفر', value: 1 }, { title: 'نافذ', value: 0 }]"
+                placeholder="حالة المخزون"
+                prepend-inner-icon="ri-box-3-line"
+                variant="solo"
+                bg-color="surface"
+                hide-details
+                density="compact"
+                rounded="lg"
+              />
+            </VCol>
+            <VCol cols="12" md="3">
+              <VSelect
+                v-model="statusFilter"
+                :items="[{ title: 'الكل', value: null }, { title: 'متاح للعرض', value: 1 }, { title: 'مخفي', value: 0 }]"
+                placeholder="حالة العرض"
+                prepend-inner-icon="ri-eye-line"
+                variant="solo"
+                bg-color="surface"
+                hide-details
+                density="compact"
+                rounded="lg"
+              />
+            </VCol>
+          </VRow>
+        </VCardText>
+
         <VDataTableServer
           :headers="headers"
           :items="products"
@@ -277,11 +368,17 @@ onMounted(() => {
           :loading="loading"
           :items-per-page="15"
           :items-per-page-options="[15, 25, 50, 100]"
-          no-data-text="لا توجد منتجات مضافة بعد"
+          no-data-text="لا توجد منتجات تطابق البحث"
           loading-text="جاري التحميل..."
           class="rounded-0"
-          @update:options="handleOptionsChange"
+          @update:options="handleProductOptions"
         >
+          <template #item.sku="{ item }">
+            <VChip size="small" color="secondary" variant="outlined" class="font-weight-medium font-monospace">
+              {{ item.sku }}
+            </VChip>
+          </template>
+
           <template #item.name="{ item }">
             <div class="d-flex align-center gap-3 py-2">
               <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />
@@ -426,7 +523,20 @@ onMounted(() => {
             />
           </VCol>
 
-          <VCol cols="12">
+          <VCol cols="12" md="6">
+            <VTextField
+              v-model="formData.sku"
+              label="رمز المنتج (SKU)"
+              placeholder="يُولد تلقائياً إذا تُرك فارغاً"
+              variant="outlined"
+              color="primary"
+              :disabled="dialogMode === 'edit'"
+              hint="يفضل تركه فارغاً ليتم توليده تلقائياً"
+              persistent-hint
+            />
+          </VCol>
+
+          <VCol cols="12" md="6">
             <VTextField v-model="formData.name" label="اسم المنتج" variant="outlined" color="primary" />
           </VCol>
 

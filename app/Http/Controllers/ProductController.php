@@ -27,13 +27,19 @@ class ProductController extends Controller
         if ($request->filled('brand_id')) {
             $query->where('brand_id', $request->brand_id);
         }
+        if ($request->filled('in_stock')) {
+            $query->where('in_stock', filter_var($request->in_stock, FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
+        }
         if ($request->boolean('active_only')) {
             $query->active();
         }
 
         $products = $this->scopeDataTable(
             $query, $request,
-            searchableColumns: ['name', 'description'],
+            searchableColumns: ['sku', 'name', 'description'],
             allowedSortColumns: ['name', 'price', 'sort_order', 'created_at']
         );
 

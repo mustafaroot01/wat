@@ -11,6 +11,7 @@ class ProductResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'sku' => $this->sku,
             'category_id' => (int) $this->category_id,
             'filter_id'   => $this->filter_id ? (int) $this->filter_id : null,
             'brand_id' => $this->brand_id ? (int) $this->brand_id : null,
