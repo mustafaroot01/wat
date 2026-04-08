@@ -23,7 +23,6 @@ return new class extends Migration
             $table->foreignId('district_id')->nullable()->constrained('districts')->nullOnDelete()->after('birth_date');
             $table->foreignId('area_id')->nullable()->constrained('areas')->nullOnDelete()->after('district_id');
             $table->boolean('is_active')->default(true)->after('password');
-            $table->softDeletes();
         });
     }
 
@@ -48,7 +47,6 @@ return new class extends Migration
                 'district_id',
                 'area_id',
                 'is_active',
-                'deleted_at'
             ]);
         });
     }

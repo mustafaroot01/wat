@@ -30,20 +30,14 @@ class AuthController extends Controller
 
         $phone = OtpService::normalizePhone($request->phone);
         
-        // البحث عن المستخدم (حتى لو كان محذوفاً للتمييز)
-        $user = User::withTrashed()->where('phone', $phone)->first();
+        // البحث عن المستخدم
+        $user = User::where('phone', $phone)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['success' => false, 'message' => 'رقم الهاتف أو كلمة المرور غير صحيحة.'], 401);
         }
 
-        // تمييز الحساب المحذوف (من قبل الزبون)
-        if ($user->trashed()) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'لقد قمت بحذف حسابك مسبقاً. يرجى التواصل مع الإدارة لإعادة تفعيله.'
-            ], 403);
-        }
+
 
         // تمييز الحساب المعطل (إدارياً)
         if (!$user->is_active) {
@@ -173,10 +167,9 @@ class AuthController extends Controller
         $request['phone'] = OtpService::normalizePhone($request->phone ?? '');
         $request->validate(['phone' => 'required']);
 
-        $user = User::withTrashed()->where('phone', $request->phone)->first();
+        $user = User::where('phone', $request->phone)->first();
         
         if (!$user) return response()->json(['success' => false, 'message' => 'هذا الرقم غير مسجل لدينا.'], 404);
-        if ($user->trashed()) return response()->json(['success' => false, 'message' => 'هذا الحساب محذوف مسبقاً.'], 403);
 
         $result = $this->otp->sendOtp($request->phone);
 

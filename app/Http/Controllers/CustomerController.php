@@ -17,7 +17,7 @@ class CustomerController extends Controller
     {
         $perPage = min((int) $request->get('per_page', 15), 100);
 
-        $query = User::withTrashed()
+        $query = User::query()
             ->with(['district', 'area'])
             ->latest('id');
 
@@ -33,11 +33,9 @@ class CustomerController extends Controller
         // فلترة حسب الحالة
         if ($request->filled('status')) {
             if ($request->status === 'active') {
-                $query->whereNull('deleted_at')->where('is_active', true);
+                $query->where('is_active', true);
             } elseif ($request->status === 'inactive') {
-                $query->whereNull('deleted_at')->where('is_active', false);
-            } elseif ($request->status === 'deleted') {
-                $query->onlyTrashed();
+                $query->where('is_active', false);
             }
         }
 
@@ -51,7 +49,7 @@ class CustomerController extends Controller
      */
     public function update(Request $request, int $id)
     {
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::findOrFail($id);
 
         $data = $request->validate([
             'first_name'  => 'sometimes|required|string|max:100',
@@ -74,7 +72,7 @@ class CustomerController extends Controller
      */
     public function updatePassword(Request $request, int $id)
     {
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::findOrFail($id);
 
         $request->validate([
             'password' => ['required', 'confirmed', Password::min(6)],
@@ -92,7 +90,7 @@ class CustomerController extends Controller
      */
     public function toggleActive(int $id)
     {
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::findOrFail($id);
 
         $user->update(['is_active' => !$user->is_active]);
 
@@ -108,13 +106,4 @@ class CustomerController extends Controller
     /**
      * استعادة حساب محذوف (Restore)
      */
-    public function restore(int $id)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-        $user->restore();
-        $user->update(['is_active' => true]);
-        $user->load(['district', 'area']);
-
-        return new CustomerResource($user);
-    }
 }
