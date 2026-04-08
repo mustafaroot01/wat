@@ -1,0 +1,1 @@
+import{s as e}from"./transitions-CAMeDSlP.js";var t=e(`v-spacer`,`div`,`VSpacer`);export{t};

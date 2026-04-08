@@ -256,11 +256,7 @@ const printInvoice = () => {
           ${settings.thank_you_message || 'شكراً لتسوقكم معنا'}
         </div>
       </div>
-      <script>
-        window.onload = function() {
-          window.print();
-        }
-      </script>
+      <script>window.onload=function(){window.print();}<\/script>
     </body>
     </html>
   `;
