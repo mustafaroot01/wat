@@ -109,6 +109,16 @@ class OrderController extends Controller
         return response()->json(['message' => 'تم تحديث حالة الطلب', 'order' => $order]);
     }
 
+    // Admin: delete order
+    public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->items()->delete();
+        $order->delete();
+
+        return response()->json(['message' => 'تم حذف الطلب بنجاح']);
+    }
+
     // App: list own orders
     public function myOrders(Request $request)
     {

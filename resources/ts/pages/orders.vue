@@ -121,6 +121,29 @@ const printInvoice = () => window.print()
 const invoiceUrl = (token: string) =>
   `${window.location.origin}/invoice/${token}`
 
+// ── Delete ─────────────────────────────────────────────────────────
+const deleteDialog    = ref(false)
+const deleteOrderId   = ref<number | null>(null)
+const deleteOrderCode = ref('')
+const deleteLoading   = ref(false)
+
+const openDeleteDialog = (order: Order) => {
+  deleteOrderId.value   = order.id
+  deleteOrderCode.value = order.invoice_code
+  deleteDialog.value    = true
+}
+
+const confirmDelete = async () => {
+  deleteLoading.value = true
+  try {
+    await apiFetch(`/api/admin/orders/${deleteOrderId.value}`, { method: 'DELETE' })
+    deleteDialog.value = false
+    await loadOrders(currentPage.value)
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 // ── Status Dialog ───────────────────────────────────────────────────
 const statusDialog      = ref(false)
 const statusOrderId     = ref<number | null>(null)
@@ -287,12 +310,39 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
                     </VBtn>
                   </template>
                 </VTooltip>
+                <VTooltip text="حذف الطلب">
+                  <template #activator="{ props }">
+                    <VBtn v-bind="props" icon size="small" variant="text" color="error" @click="openDeleteDialog(item)">
+                      <VIcon>ri-delete-bin-line</VIcon>
+                    </VBtn>
+                  </template>
+                </VTooltip>
               </div>
             </template>
           </VDataTableServer>
         </VCard>
       </VCol>
     </VRow>
+
+    <!-- ── Delete Confirm Dialog ────────────── -->
+    <VDialog v-model="deleteDialog" max-width="380">
+      <VCard>
+        <VCardTitle class="pa-4 d-flex align-center gap-2">
+          <VIcon color="error" size="24">ri-error-warning-line</VIcon>
+          تأكيد الحذف
+        </VCardTitle>
+        <VCardText>
+          هل تريد حذف الطلب <strong class="text-error">{{ deleteOrderCode }}</strong> نهائياً؟
+          <br />
+          <span class="text-caption text-medium-emphasis">لا يمكن التراجع عن هذا الإجراء.</span>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="deleteDialog = false">إلغاء</VBtn>
+          <VBtn color="error" :loading="deleteLoading" @click="confirmDelete">حذف</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
 
     <!-- ── Status Dialog ─────────────────────── -->
     <VDialog v-model="statusDialog" max-width="420">
