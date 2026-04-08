@@ -8,10 +8,11 @@ const success  = ref('')
 const errorMsg = ref('')
 
 const form = ref({
-  store_name:        '',
-  store_phone:       '',
-  store_address:     '',
-  thank_you_message: '',
+  store_name:            '',
+  store_phone:           '',
+  store_address:         '',
+  thank_you_message:     '',
+  minimum_order_amount:  0,
 })
 
 const logoFile        = ref<File | null>(null)
@@ -24,11 +25,12 @@ const loadSettings = async () => {
   try {
     const res  = await apiFetch('/api/admin/store-settings')
     const data = await res.json()
-    form.value.store_name        = data.store_name        ?? ''
-    form.value.store_phone       = data.store_phone       ?? ''
-    form.value.store_address     = data.store_address     ?? ''
-    form.value.thank_you_message = data.thank_you_message ?? ''
-    currentLogo.value            = data.logo              ?? null
+    form.value.store_name            = data.store_name            ?? ''
+    form.value.store_phone           = data.store_phone           ?? ''
+    form.value.store_address         = data.store_address         ?? ''
+    form.value.thank_you_message     = data.thank_you_message     ?? ''
+    form.value.minimum_order_amount  = Number(data.minimum_order_amount ?? 0)
+    currentLogo.value                = data.logo                  ?? null
   } finally {
     loading.value = false
   }
@@ -56,10 +58,11 @@ const saveSettings = async () => {
   errorMsg.value = ''
   try {
     const fd = new FormData()
-    fd.append('store_name',        form.value.store_name)
-    fd.append('store_phone',       form.value.store_phone)
-    fd.append('store_address',     form.value.store_address)
-    fd.append('thank_you_message', form.value.thank_you_message)
+    fd.append('store_name',           form.value.store_name)
+    fd.append('store_phone',          form.value.store_phone)
+    fd.append('store_address',        form.value.store_address)
+    fd.append('thank_you_message',    form.value.thank_you_message)
+    fd.append('minimum_order_amount', String(form.value.minimum_order_amount || 0))
     if (logoFile.value) fd.append('logo', logoFile.value)
 
     const res  = await apiFetch('/api/admin/store-settings', { method: 'POST', body: fd })
@@ -155,6 +158,31 @@ const saveSettings = async () => {
             variant="outlined"
             rows="2"
             prepend-inner-icon="ri-chat-heart-line"
+          />
+
+          <VDivider class="my-5" />
+
+          <!-- Minimum Order Amount -->
+          <div class="mb-2">
+            <div class="text-subtitle-2 font-weight-bold mb-1 d-flex align-center gap-2">
+              <VIcon icon="ri-money-dollar-circle-line" color="warning" size="20" />
+              الحد الأدنى لمبلغ الطلب
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              إذا كان المبلغ 0 — لا يوجد حد أدنى (مفعّل دائماً)
+            </div>
+          </div>
+          <VTextField
+            v-model.number="form.minimum_order_amount"
+            label="أقل مبلغ للطلب (بالدينار العراقي)"
+            type="number"
+            min="0"
+            step="500"
+            variant="outlined"
+            color="warning"
+            prepend-inner-icon="ri-shield-check-line"
+            :hint="form.minimum_order_amount > 0 ? `الزبون لازم يطلب بمبلغ لا يقل عن ${form.minimum_order_amount.toLocaleString()} د.ع` : 'لا يوجد حد أدنى حالياً'"
+            persistent-hint
           />
 
           <VAlert v-if="success"  type="success" variant="tonal" class="mt-4" closable @click:close="success=''">{{ success }}</VAlert>

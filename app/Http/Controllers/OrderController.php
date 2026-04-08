@@ -171,6 +171,17 @@ class OrderController extends Controller
             'items.*.total_price' => ['required', 'numeric', 'min:0'],
         ]);
 
+        // ─── فحص أقل مبلغ للطلب ───────────────────────────
+        $minimumOrder = (float) StoreSetting::get('minimum_order_amount', 0);
+        if ($minimumOrder > 0 && $request->final_amount < $minimumOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => "الحد الأدنى للطلب هو " . number_format($minimumOrder, 0) . " د.ع — طلبك الحالي " . number_format($request->final_amount, 0) . " د.ع",
+                'minimum_order_amount' => $minimumOrder,
+            ], 422);
+        }
+        // ────────────────────────────────────────────────────
+
         $order = Order::create([
             'user_id'          => $request->user()->id,
             'customer_name'    => $request->customer_name,
