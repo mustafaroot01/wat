@@ -81,7 +81,10 @@ const loadInvoice = async () => {
   }
 }
 
+const pageUrl = ref('')
+
 onMounted(() => {
+  pageUrl.value = window.location.href.split('?')[0]
   loadInvoice().then(() => {
     if (route.query.print && order.value) {
       setTimeout(() => window.print(), 500)
@@ -235,8 +238,8 @@ const printPage = () => window.print()
             </table>
           </div>
           <div class="inv-qr">
-            <img
-              :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.href)}`"
+            <img v-if="pageUrl"
+              :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(pageUrl)}`"
               width="120" height="120" alt="QR"
               class="inv-qr-img"
             />
