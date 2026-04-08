@@ -15,12 +15,10 @@ class CheckAdminRole
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if (!$user || !$user->is_admin) {
+        if (!($request->user() instanceof Admin)) {
             return response()->json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول. هذا المسار مخصص للإدارة فقط.'
+                'message' => 'ليس لديك صلاحيات الوصول لهذه الصفحة.',
             ], 403);
         }
 

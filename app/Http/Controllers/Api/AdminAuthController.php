@@ -5,39 +5,38 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use App\Models\Admin;
 
 class AdminAuthController extends Controller
 {
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
+            'email'    => 'required|email',
+            'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $admin = Admin::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$admin || !\Hash::check($request->password, $admin->password)) {
             return response()->json(['success' => false, 'message' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'], 401);
         }
 
-        if (!$user->is_active) {
+        if (!$admin->is_active) {
             return response()->json(['success' => false, 'message' => 'حساب الإدارة هذا معطل.'], 403);
         }
 
-        if (!$user->is_admin) {
-            return response()->json(['success' => false, 'message' => 'هذا الحساب لا يملك صلاحيات الإدارة.'], 403);
-        }
-
-        // إغلاق أي جلسات سابقة
-        $user->tokens()->delete();
+        $admin->tokens()->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'تم تسجيل الدخول بنجاح.',
-            'user' => $user,
-            'token' => $user->createToken('admin-dashboard')->plainTextToken
+            'admin'   => [
+                'id'    => $admin->id,
+                'name'  => $admin->name,
+                'email' => $admin->email,
+            ],
+            'token' => $admin->createToken('admin-dashboard')->plainTextToken,
         ]);
     }
 }

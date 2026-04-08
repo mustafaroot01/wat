@@ -18,7 +18,6 @@ class CustomerController extends Controller
         $perPage = min((int) $request->get('per_page', 15), 100);
 
         $query = User::query()
-            ->where('is_admin', false)
             ->with(['district', 'area'])
             ->latest('id');
 

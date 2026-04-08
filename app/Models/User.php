@@ -23,7 +23,6 @@ class User extends Authenticatable
         'district_id',
         'area_id',
         'is_active',
-        'is_admin',
         'is_self_deleted',
     ];
 
@@ -38,9 +37,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'birth_date'        => 'date',
-            'is_active'         => 'boolean',
-            'is_admin'          => 'boolean',
-            'is_self_deleted'   => 'boolean',
+            'is_active'       => 'boolean',
+            'is_self_deleted' => 'boolean',
         ];
     }
 
