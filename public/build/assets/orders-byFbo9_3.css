@@ -1,0 +1,1 @@
+@media print{body *{visibility:hidden}#invoice-print-area,#invoice-print-area *{visibility:visible}#invoice-print-area{width:100%;position:fixed;top:0;left:0}.no-print{display:none!important}}

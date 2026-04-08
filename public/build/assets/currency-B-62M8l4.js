@@ -1,0 +1,1 @@
+var e=e=>{if(e==null||e===``)return`—`;let t=typeof e==`string`?parseFloat(e):e;return isNaN(t)?`—`:t.toLocaleString(`en-US`,{maximumFractionDigits:0})+` د.ع`};export{e as t};

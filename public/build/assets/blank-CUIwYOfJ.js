@@ -1,0 +1,1 @@
+import{F as e,g as t,j as n,p as r}from"./runtime-core.esm-bundler-BLekErz_.js";import{_ as i}from"./main-BrnERxg0.js";var a={},o={class:`layout-wrapper layout-blank`,"data-allow-mismatch":``};function s(i,a){let s=e(`RouterView`);return n(),r(`div`,o,[t(s)])}var c=i(a,[[`render`,s]]);export{c as default};

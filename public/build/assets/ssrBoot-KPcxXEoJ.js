@@ -1,0 +1,1 @@
+import{$ as e,it as t,k as n,nt as r}from"./runtime-core.esm-bundler-BLekErz_.js";function i(){let i=r(!1);return n(()=>{window.requestAnimationFrame(()=>{i.value=!0})}),{ssrBootStyles:t(()=>i.value?void 0:{transition:`none !important`}),isBooted:e(i)}}export{i as t};
