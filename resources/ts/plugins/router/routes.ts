@@ -118,6 +118,10 @@ export const routes = [
         component: () => import('@/pages/403.vue'),
       },
       {
+        path: 'invoice/bulk',
+        component: () => import('@/pages/invoice/bulk.vue'),
+      },
+      {
         path: 'invoice/:token',
         component: () => import('@/pages/invoice/[token].vue'),
       },

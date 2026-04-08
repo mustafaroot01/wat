@@ -44,6 +44,8 @@ const statusFilter = ref<string | null>(null)
 const dateFrom     = ref('')
 const dateTo       = ref('')
 
+const selectedOrders = ref<Order[]>([])
+
 const statusOptions = [
   { title: 'تم الإرسال',                  value: 'sent'                },
   { title: 'تم الاستلام وجاري التجهيز',  value: 'received_preparing'  },
@@ -127,6 +129,12 @@ const printInvoice = () => {
 
 const invoiceUrl = (token: string) =>
   `${window.location.origin}/invoice/${token}`
+
+const bulkPrint = () => {
+  if (selectedOrders.value.length === 0) return
+  const ids = selectedOrders.value.map(o => o.id).join(',')
+  window.open(`${window.location.origin}/invoice/bulk?ids=${ids}&print=1`, '_blank')
+}
 
 // ── Delete ─────────────────────────────────────────────────────────
 const deleteDialog    = ref(false)
@@ -218,8 +226,19 @@ const copyPhone = async (phone: string) => {
       <VCol cols="12">
         <VCard>
           <VCardTitle class="pa-4 d-flex align-center justify-space-between flex-wrap gap-2">
-            <span>إدارة الطلبات</span>
-            <VChip color="primary" variant="tonal">{{ totalItems }} طلب</VChip>
+            <div class="d-flex align-center gap-4">
+              <span>إدارة الطلبات</span>
+              <VChip color="primary" variant="tonal">{{ totalItems }} طلب</VChip>
+            </div>
+            
+            <VBtn
+              v-if="selectedOrders.length > 0"
+              color="primary"
+              prepend-icon="ri-printer-line"
+              @click="bulkPrint"
+            >
+              طباعة الفواتير المحددة ({{ selectedOrders.length }})
+            </VBtn>
           </VCardTitle>
 
           <!-- Filters -->
@@ -274,6 +293,10 @@ const copyPhone = async (phone: string) => {
 
           <!-- Table -->
           <VDataTableServer
+            v-model="selectedOrders"
+            show-select
+            item-value="id"
+            return-object
             :headers="headers"
             :items="orders"
             :items-length="totalItems"

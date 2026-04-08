@@ -89,6 +89,23 @@ class OrderController extends Controller
         ]);
     }
 
+    // Bulk invoice by IDs (admin only)
+    public function bulkInvoice(Request $request)
+    {
+        $ids = explode(',', $request->query('ids', ''));
+        $orders = Order::with(['items.product', 'coupon'])
+            ->whereIn('id', array_filter($ids))
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $settings = StoreSetting::allAsArray();
+
+        return response()->json([
+            'orders'   => $orders,
+            'settings' => $settings,
+        ]);
+    }
+
     // Status update from QR invoice page — requires admin auth (checked in route)
     public function updateStatusByToken(Request $request, $token)
     {

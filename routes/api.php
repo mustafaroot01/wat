@@ -80,6 +80,7 @@ Route::prefix('admin')->group(function () {
 
         // Orders (admin)
         Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);
+        Route::get('orders/bulk-invoice', [\App\Http\Controllers\OrderController::class, 'bulkInvoice']);
         Route::get('orders/{id}', [\App\Http\Controllers\OrderController::class, 'show']);
         Route::patch('orders/{id}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus']);
         Route::delete('orders/{id}', [\App\Http\Controllers\OrderController::class, 'destroy']);
