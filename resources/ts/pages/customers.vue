@@ -130,7 +130,7 @@ const saveCustomer = async () => {
     
     if (res.ok) {
       isEditModalOpen.value = false
-      loadCustomers(currentPage.value)
+      loadCustomers(1)
     } else {
       const err = await res.json()
       alert('خطأ: ' + JSON.stringify(err.errors))

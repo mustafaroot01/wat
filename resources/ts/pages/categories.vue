@@ -103,7 +103,7 @@ const saveCategory = async () => {
 
     if (res.ok) {
       showDialog.value = false
-      fetchCategories(currentPage.value)
+      loadCategories(1)
     } else {
         const errorData = await res.json()
         alert('خطأ: ' + JSON.stringify(errorData.errors || errorData.message))
@@ -126,7 +126,7 @@ const deleteCategory = async () => {
     
     if (res.ok) {
       confirmDeleteDialog.value = false
-      fetchCategories(currentPage.value)
+      loadCategories(1)
     } else {
         const errorData = await res.json()
         alert('خطأ أثناء الحذف: ' + (errorData.message || ''))

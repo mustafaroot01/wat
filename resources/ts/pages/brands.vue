@@ -20,8 +20,19 @@ const {
   loading,
   totalItems,
   fetchData: fetchBrands,
-  handleOptionsChange,
 } = usePagination<Brand>('/api/admin/brands')
+
+const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
+
+const loadBrands = (page = 1) => {
+  fetchBrands(page, { ...sortState.value })
+}
+
+const handleBrandsOptions = (options: any) => {
+  const sort = options.sortBy?.[0]
+  sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
+  loadBrands(options.page)
+}
 
 const headers = [
   { title: 'اسم الشركة', key: 'name',       align: 'start'  as const, sortable: true  },
@@ -105,7 +116,7 @@ const saveBrand = async () => {
 
     if (res.ok) {
       showDialog.value = false
-      fetchBrands(currentPage.value)
+      loadBrands(1)
     } else {
         const errorData = await res.json()
         alert('حدث خطأ: ' + JSON.stringify(errorData.errors || errorData.message))
@@ -128,7 +139,7 @@ const deleteBrand = async () => {
     
     if (res.ok) {
       confirmDeleteDialog.value = false
-      fetchBrands(currentPage.value)
+      loadBrands(1)
     } else {
         const errorData = await res.json()
         alert('خطأ: ' + (errorData.message || 'لا يمكن الحذف لارتباطه بمنتجات'))
@@ -154,7 +165,7 @@ const toggleActive = async (item: Brand) => {
 }
 
 onMounted(() => {
-  fetchBrands(1)
+  loadBrands(1)
 })
 </script>
 
@@ -186,11 +197,11 @@ onMounted(() => {
           :items-length="totalItems"
           :loading="loading"
           :items-per-page="15"
-          :items-per-page-options="[15, 25, 50]"
+          :items-per-page-options="[15, 25, 50, 100]"
           no-data-text="لا توجد شركات مضافة بعد"
           loading-text="جاري التحميل..."
           class="rounded-0"
-          @update:options="handleOptionsChange"
+          @update:options="handleBrandsOptions"
         >
           <template #item.name="{ item }">
             <div class="d-flex align-center gap-3 py-1">
