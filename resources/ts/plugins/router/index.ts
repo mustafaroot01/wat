@@ -19,7 +19,6 @@ router.beforeEach(async (to, from, next) => {
 
   // Public routes that don't require auth
   const isPublic = to.path === '/login' || to.path === '/register' || to.path === '/403'
-    || to.path.startsWith('/invoice')
 
   // If the user is NOT logged in and trying to access a restricted page
   if (!isPublic && !isLoggedIn) {
