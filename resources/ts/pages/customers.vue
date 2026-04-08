@@ -255,7 +255,9 @@ onMounted(() => {
           </template>
 
           <template #item.phone="{ item }">
-            <VChip size="x-small" color="secondary" variant="tonal" prepend-icon="ri-phone-line">{{ item.phone }}</VChip>
+            <VChip size="x-small" color="secondary" variant="tonal" prepend-icon="ri-phone-line">
+              <span dir="ltr">{{ item.phone }}</span>
+            </VChip>
           </template>
 
           <template #item.district="{ item }">

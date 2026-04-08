@@ -143,127 +143,149 @@ const printPage = () => window.print()
     </div>
 
     <!-- Invoice -->
-    <div v-else-if="order" style="max-width:760px;margin:0 auto;">
+    <div v-else-if="order" class="invoice-wrapper">
 
       <!-- Actions bar (no-print) -->
       <div class="d-flex align-center justify-space-between mb-4 no-print">
-        <VChip :color="statusColor(order.status)" variant="tonal">{{ statusLabel(order.status) }}</VChip>
+        <VChip :color="statusColor(order.status)" variant="tonal" size="large">
+          {{ statusLabel(order.status) }}
+        </VChip>
         <div class="d-flex gap-2">
           <VBtn v-if="isAdmin" color="warning" variant="tonal" prepend-icon="ri-refresh-line" @click="openStatusDialog">
             تغيير الحالة
           </VBtn>
-          <VBtn color="primary" variant="tonal" prepend-icon="ri-printer-line" @click="printPage">
-            طباعة PDF
+          <VBtn color="primary" prepend-icon="ri-printer-line" @click="printPage">
+            طباعة / PDF
           </VBtn>
         </div>
       </div>
 
-      <!-- Invoice Card -->
-      <VCard id="invoice-print-area" class="pa-6">
+      <!-- ═══ Invoice Card (A4) ═══ -->
+      <div id="invoice-print-area" class="inv-card">
 
         <!-- Header -->
-        <div class="d-flex align-center justify-space-between mb-4">
-          <div>
-            <img
-              v-if="settings.logo"
-              :src="`/storage/${settings.logo}`"
-              style="max-height:70px;max-width:160px;"
-            />
-            <div v-else class="text-h5 font-weight-bold">{{ settings.store_name || 'المتجر' }}</div>
-            <div v-if="settings.store_phone" class="text-body-2 text-medium-emphasis mt-1">
-              هاتف: {{ settings.store_phone }}
-            </div>
-            <div v-if="settings.store_address" class="text-body-2 text-medium-emphasis">
-              {{ settings.store_address }}
+        <div class="inv-header">
+          <div class="inv-brand">
+            <img src="/logo.png" alt="امواج ديالى" class="inv-logo" />
+            <div>
+              <div class="inv-brand-name">معمل امواج ديالى</div>
+              <div class="inv-brand-sub">لإنتاج وتعبئة المياه</div>
+              <div v-if="settings.store_phone" class="inv-brand-sub" dir="ltr">{{ settings.store_phone }}</div>
             </div>
           </div>
-          <div class="text-end">
-            <div class="text-h6 font-weight-bold text-primary">{{ order.invoice_code }}</div>
-            <div class="text-body-2 text-medium-emphasis mt-1">{{ formatDate(order.created_at) }}</div>
-            <VChip :color="statusColor(order.status)" size="small" variant="tonal" class="mt-1">
+          <div class="inv-meta">
+            <div class="inv-code">{{ order.invoice_code }}</div>
+            <div class="inv-date">{{ formatDate(order.created_at) }}</div>
+            <div class="inv-status-badge" :class="`status-${order.status}`">
               {{ statusLabel(order.status) }}
-            </VChip>
-            <div v-if="order.rejection_reason" class="text-caption text-error mt-1">
-              السبب: {{ order.rejection_reason }}
+            </div>
+            <div v-if="order.rejection_reason" class="inv-rejection">
+              سبب الرفض: {{ order.rejection_reason }}
             </div>
           </div>
         </div>
 
-        <VDivider class="mb-4" />
+        <!-- Divider -->
+        <div class="inv-divider" />
 
-        <!-- Customer + QR -->
-        <VRow class="mb-4">
-          <VCol cols="12" sm="7">
-            <div class="text-subtitle-2 font-weight-bold mb-2">بيانات الزبون</div>
-            <div class="text-body-2"><span class="font-weight-medium">الاسم:</span> {{ order.customer_name }}</div>
-            <div class="text-body-2"><span class="font-weight-medium">الهاتف:</span> {{ order.customer_phone }}</div>
-            <div class="text-body-2"><span class="font-weight-medium">القضاء:</span> {{ order.province }}</div>
-            <div class="text-body-2"><span class="font-weight-medium">المنطقة:</span> {{ order.district }}</div>
-            <div v-if="order.nearest_landmark" class="text-body-2">
-              <span class="font-weight-medium">أقرب نقطة دالة:</span> {{ order.nearest_landmark }}
-            </div>
-            <div v-if="order.notes" class="text-body-2 mt-1">
-              <span class="font-weight-medium">ملاحظات:</span> {{ order.notes }}
-            </div>
-          </VCol>
-          <VCol cols="12" sm="5" class="d-flex justify-end align-start">
-            <div class="text-center">
-              <img
-                :src="`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(window.location.href)}`"
-                width="110" height="110" alt="QR"
-                style="border:1px solid #eee;border-radius:8px;"
-              />
-              <div class="text-caption text-medium-emphasis mt-1">مسح للفاتورة</div>
-            </div>
-          </VCol>
-        </VRow>
+        <!-- Customer + QR row -->
+        <div class="inv-info-row">
+          <div class="inv-customer">
+            <div class="inv-section-title">بيانات الزبون والتوصيل</div>
+            <table class="inv-info-table">
+              <tr>
+                <td class="inv-lbl">الاسم</td>
+                <td class="inv-val">{{ order.customer_name }}</td>
+              </tr>
+              <tr>
+                <td class="inv-lbl">الهاتف</td>
+                <td class="inv-val" dir="ltr">{{ order.customer_phone }}</td>
+              </tr>
+              <tr>
+                <td class="inv-lbl">المحافظة</td>
+                <td class="inv-val">{{ order.province }}</td>
+              </tr>
+              <tr>
+                <td class="inv-lbl">القضاء / المنطقة</td>
+                <td class="inv-val">{{ order.district }}</td>
+              </tr>
+              <tr>
+                <td class="inv-lbl">أقرب نقطة دالة</td>
+                <td class="inv-val">{{ order.nearest_landmark || '—' }}</td>
+              </tr>
+              <tr v-if="order.notes">
+                <td class="inv-lbl">ملاحظات</td>
+                <td class="inv-val">{{ order.notes }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="inv-qr">
+            <img
+              :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.href)}`"
+              width="120" height="120" alt="QR"
+              class="inv-qr-img"
+            />
+            <div class="inv-qr-lbl">مسح للفاتورة</div>
+          </div>
+        </div>
 
-        <!-- Items -->
-        <div class="text-subtitle-2 font-weight-bold mb-2">تفاصيل الطلب</div>
-        <VTable density="compact" class="mb-4" style="border:1px solid rgba(0,0,0,.12);border-radius:8px;">
+        <!-- Items table -->
+        <div class="inv-section-title mt-4 mb-2">تفاصيل الطلب</div>
+        <table class="inv-table">
           <thead>
-            <tr style="background:rgba(0,0,0,.03);">
-              <th class="text-center" style="width:44px;">#</th>
-              <th>المنتج</th>
-              <th>SKU</th>
-              <th class="text-end">السعر</th>
-              <th class="text-center">الكمية</th>
-              <th class="text-end">المجموع</th>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th class="text-start">المنتج</th>
+              <th style="width:90px;">SKU</th>
+              <th style="width:110px;" class="text-end">سعر الوحدة</th>
+              <th style="width:60px;" class="text-center">الكمية</th>
+              <th style="width:120px;" class="text-end">المجموع</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(item, i) in order.items" :key="item.id">
-              <td class="text-center text-medium-emphasis">{{ i + 1 }}</td>
-              <td class="font-weight-medium">{{ item.product_name }}</td>
-              <td class="text-caption text-medium-emphasis">{{ item.sku ?? '—' }}</td>
+              <td class="text-center text-muted">{{ i + 1 }}</td>
+              <td class="inv-product-name">{{ item.product_name }}</td>
+              <td class="text-muted inv-sku">{{ item.sku ?? '—' }}</td>
               <td class="text-end">{{ formatIQD(item.unit_price) }}</td>
-              <td class="text-center">{{ item.quantity }}</td>
-              <td class="text-end font-weight-bold">{{ formatIQD(item.total_price) }}</td>
+              <td class="text-center inv-qty">× {{ item.quantity }}</td>
+              <td class="text-end inv-total-cell">{{ formatIQD(item.total_price) }}</td>
             </tr>
           </tbody>
-        </VTable>
+        </table>
 
         <!-- Totals -->
-        <div class="d-flex flex-column align-end gap-1 mb-6">
-          <div class="text-body-2">
-            المجموع الكلي: <strong>{{ formatIQD(order.total_amount) }}</strong>
-          </div>
-          <div v-if="parseFloat(order.discount_amount) > 0" class="text-body-2 text-success">
-            الخصم: <strong>-{{ formatIQD(order.discount_amount) }}</strong>
-            <span v-if="order.coupon" class="text-caption"> (كوبون: {{ order.coupon.code }})</span>
-          </div>
-          <div class="text-h6 font-weight-bold text-primary mt-1">
-            الإجمالي النهائي: {{ formatIQD(order.final_amount) }}
+        <div class="inv-totals">
+          <div class="inv-totals-inner">
+            <div class="inv-total-row">
+              <span class="inv-total-lbl">المجموع</span>
+              <span class="inv-total-val">{{ formatIQD(order.total_amount) }}</span>
+            </div>
+            <div class="inv-total-row" :class="parseFloat(order.discount_amount) > 0 ? 'inv-discount' : 'inv-no-discount'">
+              <span class="inv-total-lbl">
+                الخصم
+                <span v-if="order.coupon" class="inv-coupon-badge">{{ order.coupon.code }}</span>
+              </span>
+              <span class="inv-total-val">
+                {{ parseFloat(order.discount_amount) > 0 ? '- ' + formatIQD(order.discount_amount) : 'لا يوجد خصم' }}
+              </span>
+            </div>
+            <div class="inv-divider my-2" />
+            <div class="inv-total-row inv-final">
+              <span class="inv-total-lbl">الإجمالي النهائي</span>
+              <span class="inv-total-val">{{ formatIQD(order.final_amount) }}</span>
+            </div>
           </div>
         </div>
 
-        <VDivider class="mb-4" />
-
-        <!-- Thank you -->
-        <div class="text-center text-body-1 font-italic text-medium-emphasis py-2">
-          {{ settings.thank_you_message || 'شكراً لثقتكم بنا' }}
+        <!-- Footer -->
+        <div class="inv-footer">
+          <div class="inv-footer-wave" />
+          <div class="inv-footer-text">{{ settings.thank_you_message || 'شكراً لثقتكم بمعمل امواج ديالى' }}</div>
+          <div class="inv-footer-copy">معمل امواج ديالى — ديالى، العراق</div>
         </div>
-      </VCard>
+
+      </div>
     </div>
 
     <!-- Status Dialog (admin only) -->
@@ -299,14 +321,186 @@ const printPage = () => window.print()
 </template>
 
 <style>
-@media print {
-  body * { visibility: hidden; }
-  #invoice-print-area, #invoice-print-area * { visibility: visible; }
-  #invoice-print-area { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; }
-  .no-print { display: none !important; }
-}
+/* ── Page shell ─────────────────────────────────── */
 .invoice-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #eceff1;
+  padding: 24px 16px;
+}
+.invoice-wrapper {
+  max-width: 794px; /* A4 width at 96dpi */
+  margin: 0 auto;
+}
+
+/* ── Card ───────────────────────────────────────── */
+.inv-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.10);
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  direction: rtl;
+  font-size: 13px;
+  color: #263238;
+}
+
+/* ── Header ─────────────────────────────────────── */
+.inv-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 28px 32px 20px;
+  background: linear-gradient(130deg, #0d47a1 0%, #1565c0 60%, #1b7a3e 100%);
+}
+.inv-brand { display: flex; align-items: center; gap: 14px; }
+.inv-logo  { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; background: rgba(255,255,255,.15); padding: 4px; }
+.inv-brand-name { color: #fff; font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+.inv-brand-sub  { color: rgba(255,255,255,.7); font-size: .78rem; margin-top: 2px; }
+
+.inv-meta       { text-align: start; }
+.inv-code       { color: #fff; font-size: 1.1rem; font-weight: 700; font-family: monospace; }
+.inv-date       { color: rgba(255,255,255,.75); font-size: .8rem; margin-top: 4px; }
+.inv-rejection  { color: #ffcdd2; font-size: .75rem; margin-top: 4px; }
+
+.inv-status-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
+.status-sent               { background: rgba(255,255,255,.25); }
+.status-received_preparing { background: rgba(245,124,0,.6); }
+.status-out_for_delivery   { background: rgba(2,136,209,.6); }
+.status-delivered          { background: rgba(46,125,50,.7); }
+.status-rejected           { background: rgba(198,40,40,.6); }
+.status-cancelled          { background: rgba(84,110,122,.5); }
+
+/* ── Divider ─────────────────────────────────────── */
+.inv-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 0 32px;
+}
+
+/* ── Info row ─────────────────────────────────────── */
+.inv-info-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 32px;
+  gap: 20px;
+}
+.inv-customer { flex: 1; }
+.inv-section-title {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #1565c0;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #e3f0ff;
+  padding-bottom: 4px;
+}
+.inv-info-table { width: 100%; border-collapse: collapse; }
+.inv-info-table tr td { padding: 4px 6px; font-size: .83rem; vertical-align: top; }
+.inv-lbl { color: #78909c; width: 130px; white-space: nowrap; font-weight: 500; }
+.inv-val { color: #263238; font-weight: 600; }
+
+.inv-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.inv-qr-img { border: 2px solid #e0e0e0; border-radius: 8px; }
+.inv-qr-lbl { font-size: .72rem; color: #90a4ae; }
+
+/* ── Items table ─────────────────────────────────── */
+.inv-table {
+  width: calc(100% - 64px);
+  margin: 0 32px 0;
+  border-collapse: collapse;
+  font-size: .83rem;
+}
+.inv-table thead tr {
+  background: #1565c0;
+  color: #fff;
+}
+.inv-table thead th {
+  padding: 9px 10px;
+  font-weight: 600;
+  font-size: .78rem;
+}
+.inv-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+.inv-table tbody tr:last-child { border-bottom: none; }
+.inv-table tbody tr:nth-child(even) { background: #f8faff; }
+.inv-table tbody td { padding: 8px 10px; }
+.inv-product-name { font-weight: 600; color: #1a237e; }
+.inv-sku          { font-size: .75rem; color: #90a4ae; font-family: monospace; }
+.inv-qty          { font-weight: 700; color: #546e7a; }
+.inv-total-cell   { font-weight: 700; color: #2e7d32; }
+.text-muted       { color: #90a4ae; }
+
+/* ── Totals ─────────────────────────────────────── */
+.inv-totals { display: flex; justify-content: flex-start; padding: 16px 32px 0; }
+.inv-totals-inner {
+  min-width: 260px;
+  background: #f8faff;
+  border: 1px solid #e3f0ff;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.inv-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: .85rem;
+}
+.inv-total-lbl { color: #546e7a; font-weight: 500; }
+.inv-total-val { font-weight: 600; color: #263238; }
+.inv-discount .inv-total-val { color: #2e7d32; }
+.inv-no-discount .inv-total-val { color: #90a4ae; font-style: italic; font-size: .78rem; }
+.inv-coupon-badge {
+  display: inline-block;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-right: 6px;
+  font-family: monospace;
+}
+.inv-final .inv-total-lbl { font-weight: 700; color: #1a237e; font-size: .95rem; }
+.inv-final .inv-total-val { font-size: 1.1rem; font-weight: 800; color: #1565c0; }
+
+/* ── Footer ─────────────────────────────────────── */
+.inv-footer {
+  margin-top: 24px;
+  background: linear-gradient(130deg, #0d47a1 0%, #1565c0 60%, #1b7a3e 100%);
+  padding: 18px 32px 16px;
+  text-align: center;
+}
+.inv-footer-text { color: #fff; font-size: .9rem; font-weight: 600; }
+.inv-footer-copy { color: rgba(255,255,255,.6); font-size: .75rem; margin-top: 4px; }
+
+/* ── mt/mb helpers ──────────────────────────────── */
+.mt-4 { margin-top: 16px !important; }
+.mb-2 { margin-bottom: 8px !important; }
+.my-2 { margin-top: 8px !important; margin-bottom: 8px !important; }
+
+/* ── Print ──────────────────────────────────────── */
+@media print {
+  @page { size: A4; margin: 10mm; }
+  body * { visibility: hidden; }
+  #invoice-print-area, #invoice-print-area * { visibility: visible; }
+  #invoice-print-area {
+    position: fixed; top: 0; left: 0;
+    width: 210mm;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .no-print { display: none !important; }
+  .invoice-page { background: #fff !important; padding: 0 !important; }
 }
 </style>
