@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 const settings = ref({
   whatsapp_api_key: ''
@@ -12,7 +13,7 @@ const successMessage = ref('')
 const fetchSettings = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/admin/settings')
+    const res = await apiFetch('/api/admin/settings')
     if (res.ok) {
       const data = await res.json()
       settings.value = data.settings
@@ -28,9 +29,8 @@ const saveSettings = async () => {
   saving.value = true
   successMessage.value = ''
   try {
-    const res = await fetch('/api/admin/settings', {
+    const res = await apiFetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings.value)
     })
     

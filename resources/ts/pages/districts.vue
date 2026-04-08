@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 // States
 const activeTab = ref('districts')
@@ -49,9 +50,8 @@ const saveDistrict = async () => {
   const url = editingDistrict.value ? `/api/admin/districts/${editingDistrict.value.id}` : '/api/admin/districts'
   
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(districtForm.value)
     })
     if (res.ok) {
@@ -63,7 +63,7 @@ const saveDistrict = async () => {
 
 const deleteDistrict = async (id: number) => {
   if (!confirm('هل أنت متأكد من حذف القضاء؟ سيتم حذف جميع المناطق التابعة له!')) return
-  await fetch(`/api/admin/districts/${id}`, { method: 'DELETE' })
+  await apiFetch(`/api/admin/districts/${id}`, { method: 'DELETE' })
   fetchDistricts(distPage.value)
   fetchAreas(areaPage.value)
 }
@@ -80,9 +80,8 @@ const saveArea = async () => {
   const url = editingArea.value ? `/api/admin/areas/${editingArea.value.id}` : '/api/admin/areas'
   
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(areaForm.value)
     })
     if (res.ok) {
@@ -94,12 +93,12 @@ const saveArea = async () => {
 
 const deleteArea = async (id: number) => {
   if (!confirm('هل أنت متأكد من حذف المنطقة؟')) return
-  await fetch(`/api/admin/areas/${id}`, { method: 'DELETE' })
+  await apiFetch(`/api/admin/areas/${id}`, { method: 'DELETE' })
   fetchAreas(areaPage.value)
 }
 
 const toggleStatus = async (type: string, id: number) => {
-  await fetch(`/api/admin/${type}/${id}/toggle`, { method: 'PATCH' })
+  await apiFetch(`/api/admin/${type}/${id}/toggle`, { method: 'PATCH' })
   type === 'districts' ? fetchDistricts(distPage.value) : fetchAreas(areaPage.value)
 }
 

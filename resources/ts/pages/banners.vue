@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 const {
   items: banners,
@@ -21,7 +22,7 @@ const confirmDelete = (id: number | null) => {
 
 const deleteBanner = async () => {
   try {
-    const res = await fetch(`/api/admin/banners/${currBannerId.value}`, {
+    const res = await apiFetch(`/api/admin/banners/${currBannerId.value}`, {
       method: 'DELETE',
     })
     
@@ -38,7 +39,7 @@ const deleteBanner = async () => {
 
 const toggleActive = async (item: any) => {
   try {
-    const res = await fetch(`/api/admin/banners/${item.id}/toggle`, {
+    const res = await apiFetch(`/api/admin/banners/${item.id}/toggle`, {
       method: 'PATCH',
     })
     

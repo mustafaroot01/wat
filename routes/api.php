@@ -48,6 +48,7 @@ Route::prefix('admin')->group(function () {
         Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
         Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
         Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
+        Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);

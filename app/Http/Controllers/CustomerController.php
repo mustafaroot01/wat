@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Http\Resources\CustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class CustomerController extends Controller
@@ -32,11 +33,12 @@ class CustomerController extends Controller
 
         // فلترة حسب الحالة
         if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
+            match ($request->status) {
+                'active'   => $query->where('is_active', true)->where('is_self_deleted', false),
+                'inactive' => $query->where('is_active', false)->where('is_self_deleted', false),
+                'deleted'  => $query->where('is_self_deleted', true),
+                default    => null,
+            };
         }
 
         $customers = $query->paginate($perPage);
@@ -52,13 +54,15 @@ class CustomerController extends Controller
     {
         $user = User::findOrFail($id);
 
+        $districtId = $request->district_id ?? $user->district_id;
+
         $data = $request->validate([
             'first_name'  => 'sometimes|required|string|max:100',
             'last_name'   => 'sometimes|required|string|max:100',
             'gender'      => 'sometimes|required|in:male,female',
             'birth_date'  => 'sometimes|required|date',
             'district_id' => 'sometimes|nullable|exists:districts,id',
-            'area_id'     => 'sometimes|nullable|exists:areas,id',
+            'area_id'     => ['sometimes', 'nullable', Rule::exists('areas', 'id')->where('district_id', $districtId)],
             'phone'       => "sometimes|required|string|unique:users,phone,{$id}",
         ]);
 
@@ -101,6 +105,23 @@ class CustomerController extends Controller
         }
 
         $user->load(['district', 'area']);
+        return new CustomerResource($user);
+    }
+
+    /**
+     * استعادة حساب self-deleted من قبل الإدارة
+     */
+    public function restore(int $id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'is_self_deleted' => false,
+            'is_active'       => true,
+        ]);
+
+        $user->load(['district', 'area']);
+
         return new CustomerResource($user);
     }
 

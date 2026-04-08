@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface Brand {
   id: number | null;
@@ -91,7 +92,7 @@ const saveBrand = async () => {
         payload.append('_method', 'PUT')
     }
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'POST',
       body: payload,
     })
@@ -115,7 +116,7 @@ const confirmDelete = (id: number | null) => {
 
 const deleteBrand = async () => {
   try {
-    const res = await fetch(`/api/admin/brands/${currBrandId.value}`, {
+    const res = await apiFetch(`/api/admin/brands/${currBrandId.value}`, {
       method: 'DELETE',
     })
     
@@ -133,7 +134,7 @@ const deleteBrand = async () => {
 
 const toggleActive = async (item: Brand) => {
   try {
-    const res = await fetch(`/api/admin/brands/${item.id}/toggle`, {
+    const res = await apiFetch(`/api/admin/brands/${item.id}/toggle`, {
       method: 'PATCH',
     })
     

@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/apiFetch'
 import { ref } from 'vue'
 
 export function usePagination<T>(endpoint: string) {
@@ -6,19 +7,23 @@ export function usePagination<T>(endpoint: string) {
   const currentPage = ref(1)
   const totalPages = ref(1)
 
-  const fetchData = async (page = 1) => {
+  const fetchData = async (page = 1, extraParams: Record<string, any> = {}) => {
     loading.value = true
     currentPage.value = page
+
+    const params = new URLSearchParams({ page: String(page) })
+    Object.entries(extraParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') params.set(k, String(v))
+    })
+
     try {
-      const res = await fetch(`${endpoint}?page=${page}`)
+      const res = await apiFetch(`${endpoint}?${params.toString()}`)
       if (res.ok) {
         const body = await res.json()
-        // Support both API Resource structure (body.data) and straight paginated results
         items.value = body.data || body.results || []
-        // Support body.meta.last_page (Resources) or body.last_page (standard paginate)
         totalPages.value = body.meta?.last_page || body.last_page || 1
       } else {
-        throw new Error('Failed to fetch data')
+        items.value = []
       }
     } catch (error) {
       console.error(`Error fetching from ${endpoint}:`, error)

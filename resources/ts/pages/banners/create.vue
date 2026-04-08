@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '@/utils/apiFetch'
 
 const router = useRouter()
 
@@ -46,8 +47,8 @@ const fetchCategories = async () => {
   if (categories.value.length > 0) return 
   isLoadingCategories.value = true
   try {
-    const res = await fetch('/api/admin/categories')
-    if (res.ok) categories.value = await res.json()
+    const res = await apiFetch('/api/admin/categories')
+    if (res.ok) categories.value = (await res.json()).data || []
   } catch (e) {
     console.error(e)
     categories.value = [{ id: 1, name: 'كاسات' }, { id: 2, name: 'عبوات' }]
@@ -150,7 +151,7 @@ const submitForm = async () => {
       formData.append('sort_order', String(sortOrder.value))
     }
 
-    const res = await fetch('/api/admin/banners', { method: 'POST', body: formData })
+    const res = await apiFetch('/api/admin/banners', { method: 'POST', body: formData })
     
     if(!res.ok) throw new Error('Submission Failed')
 

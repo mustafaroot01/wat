@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 const activeTab = ref('connection')
 const loading = ref(true)
@@ -24,7 +25,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const fetchSettings = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/admin/firebase-settings')
+    const res = await apiFetch('/api/admin/firebase-settings')
     const data = await res.json()
     if (data.settings) {
       settings.value = { ...settings.value, ...data.settings }
@@ -41,9 +42,8 @@ const fetchSettings = async () => {
 const saveGeneralSettings = async () => {
   isSaving.value = true
   try {
-    const res = await fetch('/api/admin/firebase-settings/save', {
+    const res = await apiFetch('/api/admin/firebase-settings/save', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings.value),
     })
     const data = await res.json()
@@ -69,7 +69,7 @@ const handleJsonUpload = async (event: Event) => {
 
   isSaving.value = true
   try {
-    const res = await fetch('/api/admin/firebase-settings/upload', {
+    const res = await apiFetch('/api/admin/firebase-settings/upload', {
       method: 'POST',
       body: formData,
     })
@@ -91,7 +91,7 @@ const handleJsonUpload = async (event: Event) => {
 const sendTestNotification = async () => {
   isTesting.value = true
   try {
-    const res = await fetch('/api/admin/firebase-settings/test', { method: 'POST' })
+    const res = await apiFetch('/api/admin/firebase-settings/test', { method: 'POST' })
     const data = await res.json()
     if (data.success) {
       alert('تم إرسال الإشعار التجريبي بنجاح! تحقق من جهازك.')

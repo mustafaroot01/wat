@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface AppNotification {
   id: number | null
@@ -80,7 +81,7 @@ const sendNotification = async () => {
   }
 
   try {
-    const res = await fetch('/api/admin/notifications', {
+    const res = await apiFetch('/api/admin/notifications', {
       method: 'POST',
       body: payload,
     })
@@ -106,7 +107,7 @@ const confirmDelete = (id: number | null) => {
 
 const deleteNotification = async () => {
   try {
-    const res = await fetch(`/api/admin/notifications/${currNotificationId.value}`, {
+    const res = await apiFetch(`/api/admin/notifications/${currNotificationId.value}`, {
       method: 'DELETE',
     })
 

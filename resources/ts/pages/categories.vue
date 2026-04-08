@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface Category {
   id: number | null;
@@ -88,7 +89,7 @@ const saveCategory = async () => {
         payload.append('_method', 'PUT')
     }
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'POST',
       body: payload,
     })
@@ -112,7 +113,7 @@ const confirmDelete = (id: number | null) => {
 
 const deleteCategory = async () => {
   try {
-    const res = await fetch(`/api/admin/categories/${currCategoryId.value}`, {
+    const res = await apiFetch(`/api/admin/categories/${currCategoryId.value}`, {
       method: 'DELETE',
     })
     
@@ -130,7 +131,7 @@ const deleteCategory = async () => {
 
 const toggleActive = async (item: Category) => {
   try {
-    const res = await fetch(`/api/admin/categories/${item.id}/toggle`, {
+    const res = await apiFetch(`/api/admin/categories/${item.id}/toggle`, {
       method: 'PATCH',
     })
     

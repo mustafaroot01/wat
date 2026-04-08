@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { apiFetch } from '@/utils/apiFetch'
 
 const router = useRouter()
 const route = useRoute()
@@ -48,8 +49,8 @@ const fetchCategories = async () => {
   if (categories.value.length > 0) return 
   isLoadingCategories.value = true
   try {
-    const res = await fetch('/api/admin/categories')
-    if (res.ok) categories.value = await res.json()
+    const res = await apiFetch('/api/admin/categories')
+    if (res.ok) categories.value = (await res.json()).data || []
   } catch (e) {
     console.error(e)
     categories.value = [{ id: 1, name: 'كاسات' }, { id: 2, name: 'عبوات' }]
@@ -79,7 +80,7 @@ const fetchProducts = async () => {
 
 const fetchBannerDetails = async () => {
   try {
-    const res = await fetch(`/api/admin/banners/${bannerId}`)
+    const res = await apiFetch(`/api/admin/banners/${bannerId}`)
     if (res.ok) {
       const responseBody = await res.json()
       const data = responseBody.data || responseBody
@@ -184,7 +185,7 @@ const submitForm = async () => {
     // Add method spoofing for PUT since FormData with PUT can be tricky in PHP
     formData.append('_method', 'PUT')
 
-    const res = await fetch(`/api/admin/banners/${bannerId}`, { method: 'POST', body: formData })
+    const res = await apiFetch(`/api/admin/banners/${bannerId}`, { method: 'POST', body: formData })
     
     if(!res.ok) throw new Error('Submission Failed')
 

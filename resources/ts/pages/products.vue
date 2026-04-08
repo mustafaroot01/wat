@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface Product {
   id: number | null;
@@ -57,8 +58,8 @@ const formData = ref<Product>({
 const fetchOptions = async () => {
   try {
     const [catRes, brandRes] = await Promise.all([
-      fetch('/api/admin/categories?per_page=100'),
-      fetch('/api/admin/brands?per_page=100')
+      apiFetch('/api/admin/categories?per_page=100'),
+      apiFetch('/api/admin/brands?per_page=100')
     ])
     if (catRes.ok) categories.value = (await catRes.json()).data || []
     if (brandRes.ok) brands.value = (await brandRes.json()).data || []
@@ -122,7 +123,7 @@ const saveProduct = async () => {
         payload.append('_method', 'PUT')
     }
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'POST',
       body: payload,
     })
@@ -146,7 +147,7 @@ const confirmDelete = (id: number | null) => {
 
 const deleteProduct = async () => {
   try {
-    const res = await fetch(`/api/admin/products/${currProductId.value}`, {
+    const res = await apiFetch(`/api/admin/products/${currProductId.value}`, {
       method: 'DELETE',
     })
     
@@ -161,7 +162,7 @@ const deleteProduct = async () => {
 
 const toggleActive = async (item: Product) => {
   try {
-    const res = await fetch(`/api/admin/products/${item.id}/toggle`, {
+    const res = await apiFetch(`/api/admin/products/${item.id}/toggle`, {
       method: 'PATCH',
     })
     if (!res.ok) item.is_active = !item.is_active

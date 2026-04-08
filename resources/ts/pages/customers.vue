@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { usePagination } from '@/composables/usePagination'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface Customer {
   id: number;
@@ -15,8 +16,7 @@ interface Customer {
   district?: { id: number; name: string };
   area?: { id: number; name: string };
   is_active: boolean;
-  is_deleted: boolean;
-  deleted_at: string | null;
+  is_self_deleted: boolean;
   created_at: string;
 }
 
@@ -76,8 +76,8 @@ const areas = ref<any[]>([])
 const fetchStaticData = async () => {
   try {
     const [dRes, aRes] = await Promise.all([
-      fetch('/api/admin/districts?per_page=100').then(r => r.json()),
-      fetch('/api/admin/areas?per_page=100').then(r => r.json())
+      apiFetch('/api/admin/districts?per_page=100').then(r => r.json()),
+      apiFetch('/api/admin/areas?per_page=100').then(r => r.json())
     ])
     districts.value = dRes.data || []
     areas.value = aRes.data || []
@@ -110,9 +110,8 @@ const saveCustomer = async () => {
   if (!editingCustomer.value) return
   
   try {
-    const res = await fetch(`/api/admin/customers/${editingCustomer.value.id}`, {
+    const res = await apiFetch(`/api/admin/customers/${editingCustomer.value.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editForm.value)
     })
     
@@ -130,9 +129,8 @@ const savePassword = async () => {
   if (!editingCustomer.value) return
   
   try {
-    const res = await fetch(`/api/admin/customers/${editingCustomer.value.id}/password`, {
+    const res = await apiFetch(`/api/admin/customers/${editingCustomer.value.id}/password`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(passwordForm.value)
     })
     
@@ -148,7 +146,7 @@ const savePassword = async () => {
 
 const toggleActive = async (item: Customer) => {
   try {
-    const res = await fetch(`/api/admin/customers/${item.id}/toggle`, {
+    const res = await apiFetch(`/api/admin/customers/${item.id}/toggle`, {
       method: 'PATCH'
     })
     if (res.ok) {
@@ -162,7 +160,7 @@ const restoreAccount = async (item: Customer) => {
   if (!confirm('هل تريد استعادة هذا الحساب المحذوف؟')) return
   
   try {
-    const res = await fetch(`/api/admin/customers/${item.id}/restore`, {
+    const res = await apiFetch(`/api/admin/customers/${item.id}/restore`, {
       method: 'POST'
     })
     if (res.ok) {
@@ -239,7 +237,7 @@ onMounted(() => {
               <tr v-else-if="customers.length === 0">
                 <td colspan="6" class="text-center py-8 text-medium-emphasis">لا يوجد عملاء مطابقين للبحث</td>
               </tr>
-              <tr v-for="(item, index) in customers" :key="item.id" :class="{'bg-red-lighten-5': item.is_deleted}">
+              <tr v-for="(item, index) in customers" :key="item.id" :class="{'bg-red-lighten-5': item.is_self_deleted}">
                 <td class="text-center text-medium-emphasis">{{ index + 1 + (currentPage - 1) * 15 }}</td>
                 <td>
                   <div class="d-flex align-center gap-3">
@@ -260,7 +258,7 @@ onMounted(() => {
                   <span v-else class="text-medium-emphasis text-caption">غير محدد</span>
                 </td>
                 <td class="text-center">
-                  <VChip v-if="item.is_deleted" color="error" size="small" variant="flat">محذوف</VChip>
+                  <VChip v-if="item.is_self_deleted" color="error" size="small" variant="flat">محذوف</VChip>
                   <VSwitch
                     v-else
                     :model-value="item.is_active"
@@ -277,7 +275,7 @@ onMounted(() => {
                       <VBtn icon="ri-more-2-fill" variant="text" size="small" v-bind="props" />
                     </template>
                     <VList density="compact">
-                      <VListItem v-if="item.is_deleted" @click="restoreAccount(item)">
+                      <VListItem v-if="item.is_self_deleted" @click="restoreAccount(item)">
                         <template #prepend><VIcon icon="ri-restart-line" color="success" class="me-2"/></template>
                         <VListItemTitle>استعادة الحساب</VListItemTitle>
                       </VListItem>
