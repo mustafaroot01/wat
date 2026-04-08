@@ -75,6 +75,23 @@ const filteredUsages = computed(() => {
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
+const exporting = ref(false)
+const exportExcel = async () => {
+  exporting.value = true
+  try {
+    const res = await apiFetch(`/api/admin/coupons/${couponId.value}/export`)
+    if (res.ok) {
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `coupon-${coupon.value?.code ?? couponId.value}-usages.xls`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  } catch (e) { console.error(e) } finally { exporting.value = false }
+}
+
 onMounted(() => fetchUsages(1))
 </script>
 
@@ -151,6 +168,17 @@ onMounted(() => fetchUsages(1))
             إجمالي السجلات:
             <strong class="text-primary">{{ totalCount.toLocaleString() }}</strong>
           </div>
+          <VBtn
+            color="success"
+            variant="elevated"
+            rounded="lg"
+            prepend-icon="ri-file-excel-2-line"
+            :loading="exporting"
+            :disabled="totalCount === 0"
+            @click="exportExcel"
+          >
+            تحميل Excel
+          </VBtn>
           <VSelect
             v-model="perPage"
             :items="[25, 50, 100, 200]"

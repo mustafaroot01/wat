@@ -85,6 +85,149 @@ class CouponController extends Controller
         ]);
     }
 
+    // ─── Admin: Export Coupon Usages to Excel ─────────────────────
+    public function exportExcel(Coupon $coupon)
+    {
+        $usages = CouponUsage::where('coupon_id', $coupon->id)
+            ->with('user:id,name,phone')
+            ->latest()
+            ->get();
+
+        $discountLabel = $coupon->type === 'percentage'
+            ? $coupon->value . '%'
+            : number_format($coupon->value, 0) . ' د.ع';
+
+        $exportedAt = now()->format('Y-m-d H:i');
+        $fileName   = 'coupon-' . $coupon->code . '-usages.xls';
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+            xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
+
+        // ── Styles ───────────────────────────────────────────────
+        $xml .= '<Styles>
+            <Style ss:ID="title">
+                <Font ss:Bold="1" ss:Size="14" ss:Color="#1565C0"/>
+                <Alignment ss:Horizontal="Center"/>
+                <Interior ss:Color="#E3F2FD" ss:Pattern="Solid"/>
+            </Style>
+            <Style ss:ID="meta">
+                <Font ss:Bold="1" ss:Size="11" ss:Color="#424242"/>
+                <Interior ss:Color="#F5F5F5" ss:Pattern="Solid"/>
+            </Style>
+            <Style ss:ID="header">
+                <Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="11"/>
+                <Interior ss:Color="#1976D2" ss:Pattern="Solid"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                <Borders>
+                    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#0D47A1"/>
+                </Borders>
+            </Style>
+            <Style ss:ID="rowEven">
+                <Interior ss:Color="#FAFAFA" ss:Pattern="Solid"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                <Borders>
+                    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E0E0E0"/>
+                </Borders>
+            </Style>
+            <Style ss:ID="rowOdd">
+                <Interior ss:Color="#E8F4FD" ss:Pattern="Solid"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                <Borders>
+                    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BBDEFB"/>
+                </Borders>
+            </Style>
+            <Style ss:ID="amountCell">
+                <Font ss:Bold="1" ss:Color="#2E7D32"/>
+                <Alignment ss:Horizontal="Center"/>
+            </Style>
+            <Style ss:ID="footer">
+                <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+                <Interior ss:Color="#0D47A1" ss:Pattern="Solid"/>
+                <Alignment ss:Horizontal="Center"/>
+            </Style>
+        </Styles>' . "\n";
+
+        // ── Worksheet ────────────────────────────────────────────
+        $xml .= '<Worksheet ss:Name="سجل الاستخدام">' . "\n";
+        $xml .= '<Table ss:DefaultColumnWidth="120">' . "\n";
+
+        // Column widths
+        $xml .= '<Column ss:Width="50"/>';   // #
+        $xml .= '<Column ss:Width="150"/>';  // Name
+        $xml .= '<Column ss:Width="130"/>';  // Phone
+        $xml .= '<Column ss:Width="130"/>';  // Discount
+        $xml .= '<Column ss:Width="160"/>';  // Date
+
+        // Title row
+        $xml .= '<Row ss:Height="30"><Cell ss:MergeAcross="4" ss:StyleID="title">
+            <Data ss:Type="String">سجل استخدام كود الخصم — ' . htmlspecialchars($coupon->code) . '</Data>
+        </Cell></Row>' . "\n";
+
+        // Meta rows
+        $xml .= '<Row ss:Height="22"><Cell ss:StyleID="meta"><Data ss:Type="String">نوع الخصم</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String">' . ($coupon->type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت') . '</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String">قيمة الخصم</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String">' . htmlspecialchars($discountLabel) . '</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String"></Data></Cell>
+        </Row>' . "\n";
+
+        $xml .= '<Row ss:Height="22"><Cell ss:StyleID="meta"><Data ss:Type="String">إجمالي الاستخدامات</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="Number">' . $usages->count() . '</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String">تاريخ التصدير</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String">' . $exportedAt . '</Data></Cell>
+            <Cell ss:StyleID="meta"><Data ss:Type="String"></Data></Cell>
+        </Row>' . "\n";
+
+        // Empty spacer row
+        $xml .= '<Row ss:Height="8"><Cell><Data ss:Type="String"></Data></Cell></Row>' . "\n";
+
+        // Header row
+        $xml .= '<Row ss:Height="26">
+            <Cell ss:StyleID="header"><Data ss:Type="String">#</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">اسم المستخدم</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">رقم الهاتف</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">مقدار الخصم</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">تاريخ الاستخدام</Data></Cell>
+        </Row>' . "\n";
+
+        // Data rows
+        foreach ($usages as $i => $u) {
+            $style  = $i % 2 === 0 ? 'rowEven' : 'rowOdd';
+            $name   = htmlspecialchars($u->user->name  ?? 'غير معروف');
+            $phone  = htmlspecialchars($u->user->phone ?? '-');
+            $amount = number_format((float) $u->discount_amount, 0) . ' د.ع';
+            $date   = $u->created_at?->format('Y-m-d H:i') ?? '-';
+
+            $xml .= "<Row ss:Height=\"22\">
+                <Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"Number\">" . ($i + 1) . "</Data></Cell>
+                <Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\">{$name}</Data></Cell>
+                <Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\">{$phone}</Data></Cell>
+                <Cell ss:StyleID=\"amountCell\"><Data ss:Type=\"String\">{$amount}</Data></Cell>
+                <Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\">{$date}</Data></Cell>
+            </Row>\n";
+        }
+
+        // Total footer
+        $totalDiscount = $usages->sum('discount_amount');
+        $xml .= '<Row ss:Height="24">
+            <Cell ss:MergeAcross="2" ss:StyleID="footer"><Data ss:Type="String">إجمالي الخصومات الممنوحة</Data></Cell>
+            <Cell ss:StyleID="footer"><Data ss:Type="String">' . number_format($totalDiscount, 0) . ' د.ع</Data></Cell>
+            <Cell ss:StyleID="footer"><Data ss:Type="String"></Data></Cell>
+        </Row>' . "\n";
+
+        $xml .= '</Table></Worksheet></Workbook>';
+
+        return response($xml, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Cache-Control'       => 'no-cache, no-store',
+        ]);
+    }
+
     // ─── Admin: Update Coupon ─────────────────────────────────────
     public function update(Request $request, Coupon $coupon)
     {

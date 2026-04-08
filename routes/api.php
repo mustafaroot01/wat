@@ -61,6 +61,7 @@ Route::prefix('admin')->group(function () {
         Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
         Route::get('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'show']);
         Route::get('coupons/{coupon}/usages', [\App\Http\Controllers\CouponController::class, 'usages']);
+        Route::get('coupons/{coupon}/export', [\App\Http\Controllers\CouponController::class, 'exportExcel']);
         Route::put('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'update']);
         Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
         Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);
