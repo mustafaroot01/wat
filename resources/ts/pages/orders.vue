@@ -367,8 +367,8 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
               <div class="text-body-2"><span class="font-weight-medium">الهاتف:</span> {{ invoiceOrder.customer_phone }}</div>
               <div class="text-body-2"><span class="font-weight-medium">القضاء:</span> {{ invoiceOrder.province }}</div>
               <div class="text-body-2"><span class="font-weight-medium">المنطقة:</span> {{ invoiceOrder.district }}</div>
-              <div v-if="invoiceOrder.nearest_landmark" class="text-body-2">
-                <span class="font-weight-medium">أقرب نقطة دالة:</span> {{ invoiceOrder.nearest_landmark }}
+              <div class="text-body-2">
+                <span class="font-weight-medium">أقرب نقطة دالة:</span> {{ invoiceOrder.nearest_landmark || '—' }}
               </div>
             </VCol>
             <VCol cols="12" md="6" class="d-flex justify-end align-start">
