@@ -116,8 +116,164 @@ const openInvoice = async (order: Order) => {
   }
 }
 
-const printInvoice = () => window.print()
+const printInvoice = () => {
+  if (!invoiceOrder.value || !invoiceSettings.value) return;
 
+  const order = invoiceOrder.value;
+  const settings = invoiceSettings.value;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) return;
+
+  const logoHtml = settings.logo 
+    ? `<img src="${window.location.origin}/storage/${settings.logo}" class="logo" />` 
+    : `<h2 class="store-name">${settings.store_name || 'المتجر'}</h2>`;
+
+  const itemsHtml = order.items.map((item, i) => `
+    <tr>
+      <td class="text-center">${i + 1}</td>
+      <td>${item.product_name} <br> <span class="sku">${item.sku || ''}</span></td>
+      <td class="text-center">${formatIQD(item.unit_price)}</td>
+      <td class="text-center">${item.quantity}</td>
+      <td class="text-center font-bold">${formatIQD(item.total_price)}</td>
+    </tr>
+  `).join('');
+
+  const barcodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(invoiceUrl(order.invoice_token))}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>فاتورة ${order.invoice_code}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        @page { size: A5 portrait; margin: 10mm; }
+        body { 
+          font-family: 'Cairo', sans-serif; 
+          margin: 0; 
+          padding: 0; 
+          color: #000;
+          font-size: 11pt;
+        }
+        .invoice-box {
+          max-width: 100%;
+          margin: auto;
+          box-sizing: border-box;
+        }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .logo { max-height: 60px; max-width: 150px; }
+        .store-name { margin: 0; font-size: 16pt; color: #333; }
+        .store-info { margin-top: 5px; font-size: 10pt; color: #555; }
+        .invoice-details { text-align: left; }
+        .invoice-details h2 { margin: 0 0 5px 0; color: #1565c0; font-size: 14pt;}
+        .customer-area { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; border-radius: 8px; background: #fafafa; padding: 10px;}
+        .customer-info p { margin: 3px 0; font-size: 10pt; }
+        .qr-code { border: 1px solid #ddd; border-radius: 8px; padding: 4px; text-align: center; background: #fff;}
+        .qr-code img { width: 70px; height: 70px; }
+        .qr-code p { margin: 0; font-size: 7pt; color: #777; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10pt; }
+        th { background: #f4f6f8; padding: 8px; border-bottom: 2px solid #ddd; text-align: right; color: #333;}
+        td { padding: 8px; border-bottom: 1px solid #eee; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .font-bold { font-weight: bold; }
+        .sku { font-size: 8pt; color: #777; }
+        .totals-area { width: 45%; margin-left: 0; margin-right: auto; background: #fafafa; padding: 10px; border-radius: 8px;}
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 10pt;}
+        .total-row.final { font-weight: bold; font-size: 12pt; color: #1565c0; border-top: 2px solid #eee; padding-top: 6px; }
+        .discount-row { color: #2e7d32; }
+        .footer { text-align: center; margin-top: 25px; font-size: 10pt; color: #777; font-style: italic; }
+      </style>
+    </head>
+    <body>
+      <div class="invoice-box">
+        <div class="header">
+          <div>
+            ${logoHtml}
+            <div class="store-info">
+              ${settings.store_phone ? '<div dir="ltr" style="text-align: right;">' + settings.store_phone + '</div>' : ''}
+              ${settings.store_address ? '<div>' + settings.store_address + '</div>' : ''}
+            </div>
+          </div>
+          <div class="invoice-details">
+            <h2>${order.invoice_code}</h2>
+            <div>${formatDate(order.created_at)}</div>
+          </div>
+        </div>
+
+        <div class="customer-area">
+          <div class="customer-info">
+            <p><strong>الزبون:</strong> ${order.customer_name}</p>
+            <p><strong>الهاتف:</strong> <span dir="ltr">${order.customer_phone}</span></p>
+            <p><strong>العنوان:</strong> ${order.province} - ${order.district}</p>
+            ${order.nearest_landmark ? `<p><strong>أقرب نقطة دالة:</strong> ${order.nearest_landmark}</p>` : ''}
+          </div>
+          <div class="qr-code">
+            <img src="${barcodeUrl}" />
+            <p>مسح الفاتورة</p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center" width="5%">#</th>
+              <th width="40%">المنتج</th>
+              <th class="text-center" width="20%">السعر</th>
+              <th class="text-center" width="10%">الكمية</th>
+              <th class="text-center" width="25%">المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="totals-area">
+          <div class="total-row">
+            <span>المجموع:</span>
+            <span>${formatIQD(order.total_amount)}</span>
+          </div>
+          ${parseFloat(order.discount_amount) > 0 ? `
+            <div class="total-row discount-row">
+              <span>الخصم ${order.coupon ? '('+order.coupon.code+')' : ''}:</span>
+              <span>- ${formatIQD(order.discount_amount)}</span>
+            </div>
+          ` : ''}
+          <div class="total-row final">
+             <span>الإجمالي:</span>
+            <span>${formatIQD(order.final_amount)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          ${settings.thank_you_message || 'شكراً لتسوقكم معنا'}
+        </div>
+      </div>
+      <script>
+        window.onload = function() {
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+  `;
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  // Clean up
+  setTimeout(() => {
+    if(document.body.contains(iframe)) document.body.removeChild(iframe);
+  }, 5000);
+}
 const invoiceUrl = (token: string) =>
   `${window.location.origin}/invoice/${token}`
 
@@ -406,9 +562,18 @@ const copyPhone = async (phone: string) => {
     <VDialog v-model="invoiceDialog" max-width="780" scrollable>
       <VCard>
         <VCardTitle class="pa-4 d-flex align-center justify-space-between no-print">
-          <span>الفاتورة</span>
+          <span class="d-flex align-center gap-2">
+            <VIcon icon="ri-file-text-line" color="primary" />
+            {{ invoiceOrder?.invoice_code || 'الفاتورة' }}
+          </span>
           <div class="d-flex gap-2">
-            <VBtn color="primary" variant="tonal" prepend-icon="ri-printer-line" @click="printInvoice">طباعة PDF</VBtn>
+            <VBtn
+              color="primary" variant="elevated" rounded="lg"
+              prepend-icon="ri-printer-line"
+              @click="printInvoice"
+            >
+              طباعة / PDF
+            </VBtn>
             <VBtn icon variant="text" @click="invoiceDialog = false"><VIcon>ri-close-line</VIcon></VBtn>
           </div>
         </VCardTitle>
@@ -513,47 +678,8 @@ const copyPhone = async (phone: string) => {
 </template>
 
 <style>
-/* ═══ Print: طباعة الفاتورة فقط ═══ */
-@media print {
-  @page { size: A4 portrait; margin: 10mm; }
-
-  /* إخفاء كل شي عدا منطقة الفاتورة */
-  body > * { display: none !important; }
-
-  /* إظهار الـ Dialog container */
-  .v-overlay-container { display: block !important; }
-  .v-overlay-container > * { display: block !important; }
-
-  /* إخفاء عناصر الـ Dialog ما عدا المحتوى */
-  .v-dialog { box-shadow: none !important; position: static !important; }
-  .v-overlay__scrim { display: none !important; }
-  .no-print { display: none !important; }
-
-  /* منطقة الفاتورة */
-  #invoice-print-area {
-    display: block !important;
-    visibility: visible !important;
-    position: static !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 11pt !important;
-  }
-  #invoice-print-area * { visibility: visible !important; }
-
-  /* جدول المنتجات */
-  #invoice-print-area table {
-    width: 100% !important;
-    page-break-inside: auto;
-    border-collapse: collapse;
-  }
-  #invoice-print-area tr  { page-break-inside: avoid; }
-  #invoice-print-area th,
-  #invoice-print-area td  { padding: 5px 8px !important; font-size: 10pt !important; }
-
-  /* إخفاء أدوات الطباعة */
-  .v-card-title.no-print,
-  .v-card__title.no-print { display: none !important; }
-}
+/* 
+  قمنا بنقل وظيفة الطباعة لتستخدم iframe مخفي،
+  لذا لا حاجة لميديا كويري الطباعة المعقدة هنا.
+*/
 </style>
