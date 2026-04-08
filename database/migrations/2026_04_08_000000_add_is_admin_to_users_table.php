@@ -20,7 +20,7 @@ return new class extends Migration
 
         // جعل أي مستخدم يمتلك إيميل كمدير افتراضي (لأن مستخدمي الموبايل لا يملكون إيميل).
         // هذا الإجراء يضمن ألا يفقد صاحب الموقع حساب الدخول الخاص به
-        DB::table('users')->whereNotNull('email')->update(['is_admin' => true]);
+        DB::table('users')->whereNull('phone')->update(['is_admin' => true]);
     }
 
     /**
