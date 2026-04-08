@@ -60,6 +60,7 @@ Route::prefix('admin')->group(function () {
         Route::get('coupons', [\App\Http\Controllers\CouponController::class, 'index']);
         Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
         Route::get('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'show']);
+        Route::get('coupons/{coupon}/usages', [\App\Http\Controllers\CouponController::class, 'usages']);
         Route::put('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'update']);
         Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
         Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);

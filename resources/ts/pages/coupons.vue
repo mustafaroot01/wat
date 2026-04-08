@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePagination } from '@/composables/usePagination'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
+
+const router = useRouter()
 
 interface Coupon {
   id: number | null
@@ -24,11 +27,8 @@ const { items: coupons, loading, currentPage, totalPages, fetchData: fetchCoupon
 
 const showDialog      = ref(false)
 const dialogMode      = ref<'add' | 'edit'>('add')
-const confirmDelete   = ref(false)
-const currId          = ref<number | null>(null)
-const showUsageDialog = ref(false)
-const usageData       = ref<{ coupon: Coupon | null; usages: any[] }>({ coupon: null, usages: [] })
-const usageLoading    = ref(false)
+const confirmDelete = ref(false)
+const currId        = ref<number | null>(null)
 
 const formData = ref<Coupon>({
   id: null, code: '', type: 'percentage', type_label: '', value: 0,
@@ -92,17 +92,8 @@ const toggleActive = async (item: Coupon) => {
   } catch (e) { item.is_active = !item.is_active }
 }
 
-const openUsage = async (item: Coupon) => {
-  showUsageDialog.value = true
-  usageLoading.value = true
-  usageData.value = { coupon: item, usages: [] }
-  try {
-    const res = await apiFetch(`/api/admin/coupons/${item.id}`)
-    if (res.ok) {
-      const data = await res.json()
-      usageData.value = { coupon: data.coupon, usages: data.usages }
-    }
-  } catch (e) { console.error(e) } finally { usageLoading.value = false }
+const openUsage = (item: Coupon) => {
+  router.push(`/coupons/${item.id}/usages`)
 }
 
 onMounted(() => fetchCoupons(1))
@@ -261,8 +252,7 @@ onMounted(() => fetchCoupons(1))
         <!-- Code Field -->
         <VTextField
           v-model="formData.code"
-          label="كود الخصم"
-          placeholder="مثال: SUMMER20 أو خصم_صيف"
+          label="كود الخصم (مثال: SUMMER20 أو خصم_صيف)"
           hint="عربي أو إنجليزي — بلا مسافات"
           persistent-hint
           variant="outlined"
@@ -315,9 +305,9 @@ onMounted(() => fetchCoupons(1))
               variant="outlined"
               color="secondary"
               prepend-inner-icon="ri-group-line"
-              placeholder="∞ غير محدود"
+              hint="فارغ = غير محدود"
+              persistent-hint
               clearable
-              hide-details
             />
           </VCol>
           <VCol cols="12" sm="6">
@@ -329,9 +319,9 @@ onMounted(() => fetchCoupons(1))
               variant="outlined"
               color="secondary"
               prepend-inner-icon="ri-shopping-bag-line"
-              placeholder="بلا حد أدنى"
+              hint="فارغ = بلا حد أدنى"
+              persistent-hint
               clearable
-              hide-details
             />
           </VCol>
         </VRow>
@@ -372,80 +362,6 @@ onMounted(() => fetchCoupons(1))
           <VIcon icon="ri-save-line" start size="18" />
           {{ dialogMode === 'add' ? 'إضافة الكود' : 'حفظ التعديلات' }}
         </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
-
-  <!-- Usage Dialog -->
-  <VDialog v-model="showUsageDialog" max-width="600">
-    <VCard rounded="lg" elevation="0">
-      <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
-        <div class="d-flex align-center gap-2">
-          <VIcon icon="ri-bar-chart-line" color="info" />
-          <span class="font-weight-bold">سجل استخدام: {{ usageData.coupon?.code }}</span>
-        </div>
-        <VBtn icon="ri-close-line" variant="text" size="small" @click="showUsageDialog = false" />
-      </VCardTitle>
-
-      <VCardText class="pa-5">
-        <!-- Stats -->
-        <VRow v-if="usageData.coupon" class="mb-4" dense>
-          <VCol cols="4">
-            <VCard variant="tonal" color="primary" rounded="lg" class="pa-3 text-center">
-              <p class="text-h5 font-weight-bold">{{ usageData.coupon.used_count }}</p>
-              <p class="text-caption">عدد الاستخدامات</p>
-            </VCard>
-          </VCol>
-          <VCol cols="4">
-            <VCard variant="tonal" color="info" rounded="lg" class="pa-3 text-center">
-              <p class="text-h5 font-weight-bold">
-                {{ usageData.coupon.max_uses ?? '∞' }}
-              </p>
-              <p class="text-caption">الحد الأقصى</p>
-            </VCard>
-          </VCol>
-          <VCol cols="4">
-            <VCard variant="tonal" :color="usageData.coupon.is_valid ? 'success' : 'error'" rounded="lg" class="pa-3 text-center">
-              <p class="text-h5 font-weight-bold">
-                {{ usageData.coupon.remaining_uses ?? '∞' }}
-              </p>
-              <p class="text-caption">المتبقي</p>
-            </VCard>
-          </VCol>
-        </VRow>
-
-        <div v-if="usageLoading" class="text-center py-6">
-          <VProgressCircular indeterminate color="info" size="24" />
-        </div>
-        <div v-else-if="usageData.usages.length === 0" class="text-center py-6 text-medium-emphasis">
-          <VIcon icon="ri-user-unfollow-line" size="40" class="mb-2 d-block" />
-          لم يستخدم أحد هذا الكود بعد
-        </div>
-        <VTable v-else density="compact">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>المستخدم</th>
-              <th>رقم الهاتف</th>
-              <th>مقدار الخصم</th>
-              <th>التاريخ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(u, i) in usageData.usages" :key="i">
-              <td class="text-medium-emphasis">{{ i + 1 }}</td>
-              <td class="font-weight-medium">{{ u.user_name }}</td>
-              <td>{{ u.user_phone }}</td>
-              <td class="text-success font-weight-bold">{{ formatIQD(u.discount_amount) }}</td>
-              <td class="text-caption text-medium-emphasis">{{ new Date(u.used_at).toLocaleDateString('ar-IQ') }}</td>
-            </tr>
-          </tbody>
-        </VTable>
-      </VCardText>
-
-      <VCardActions class="pa-5 border-t">
-        <VSpacer />
-        <VBtn color="secondary" variant="tonal" rounded="lg" @click="showUsageDialog = false">إغلاق</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

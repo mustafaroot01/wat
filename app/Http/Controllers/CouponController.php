@@ -47,23 +47,38 @@ class CouponController extends Controller
         return new CouponResource($coupon);
     }
 
-    // ─── Admin: Show Coupon + Usage List ─────────────────────────
+    // ─── Admin: Show Coupon ───────────────────────────────────────
     public function show(Coupon $coupon)
     {
+        return new CouponResource($coupon->loadCount('usages'));
+    }
+
+    // ─── Admin: Paginated Usage List for a Coupon ─────────────────
+    public function usages(Request $request, Coupon $coupon)
+    {
+        $perPage = min((int) $request->get('per_page', 50), 200);
+
         $usages = CouponUsage::where('coupon_id', $coupon->id)
             ->with('user:id,name,phone')
             ->latest()
-            ->get()
-            ->map(fn($u) => [
-                'user_name'       => $u->user->name ?? 'غير معروف',
+            ->paginate($perPage);
+
+        return response()->json([
+            'coupon'   => new CouponResource($coupon),
+            'data'     => $usages->map(fn($u) => [
+                'id'              => $u->id,
+                'user_name'       => $u->user->name  ?? 'غير معروف',
                 'user_phone'      => $u->user->phone ?? '-',
                 'discount_amount' => (float) $u->discount_amount,
                 'used_at'         => $u->created_at?->toDateTimeString(),
-            ]);
-
-        return response()->json([
-            'coupon' => new CouponResource($coupon),
-            'usages' => $usages,
+            ]),
+            'meta' => [
+                'current_page' => $usages->currentPage(),
+                'last_page'    => $usages->lastPage(),
+                'per_page'     => $usages->perPage(),
+                'total'        => $usages->total(),
+            ],
+            'has_more' => $usages->hasMorePages(),
         ]);
     }
 

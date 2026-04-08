@@ -64,6 +64,10 @@ export const routes = [
         path: 'coupons',
         component: () => import('@/pages/coupons.vue'),
       },
+      {
+        path: 'coupons/:id/usages',
+        component: () => import('@/pages/coupon-usages.vue'),
+      },
     ],
   },
   {
