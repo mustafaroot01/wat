@@ -221,7 +221,7 @@ const printPage = () => window.print()
               </tr>
               <tr>
                 <td class="inv-lbl">الهاتف</td>
-                <td class="inv-val" dir="ltr">{{ order.customer_phone }}</td>
+                <td class="inv-val"><span dir="ltr" style="display: inline-block;">{{ order.customer_phone }}</span></td>
               </tr>
               <tr>
                 <td class="inv-lbl">المحافظة</td>
@@ -243,8 +243,8 @@ const printPage = () => window.print()
           </div>
           <div class="inv-qr">
             <img v-if="pageUrl"
-              :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(pageUrl)}`"
-              width="120" height="120" alt="QR"
+              :src="`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(pageUrl)}`"
+              width="90" height="90" alt="QR"
               class="inv-qr-img"
             />
             <div class="inv-qr-lbl">مسح للفاتورة</div>
@@ -258,7 +258,7 @@ const printPage = () => window.print()
             <tr>
               <th style="width:36px;">#</th>
               <th class="text-start">المنتج</th>
-              <th style="width:90px;">SKU</th>
+              <th style="width:110px;">SKU</th>
               <th style="width:110px;" class="text-end">سعر الوحدة</th>
               <th style="width:60px;" class="text-center">الكمية</th>
               <th style="width:120px;" class="text-end">المجموع</th>
@@ -429,8 +429,8 @@ const printPage = () => window.print()
 }
 .inv-info-table { width: 100%; border-collapse: collapse; }
 .inv-info-table tr td { padding: 4px 6px; font-size: .83rem; vertical-align: top; }
-.inv-lbl { color: #78909c; width: 130px; white-space: nowrap; font-weight: 500; }
-.inv-val { color: #263238; font-weight: 600; }
+.inv-lbl { color: #78909c; width: 130px; white-space: nowrap; font-weight: 500; text-align: start; }
+.inv-val { color: #263238; font-weight: 700; text-align: start; }
 
 .inv-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
 .inv-qr-img { border: 2px solid #e0e0e0; border-radius: 8px; }
@@ -456,7 +456,7 @@ const printPage = () => window.print()
 .inv-table tbody tr:last-child { border-bottom: none; }
 .inv-table tbody tr:nth-child(even) { background: #f8faff; }
 .inv-table tbody td { padding: 8px 10px; }
-.inv-product-name { font-weight: 600; color: #1a237e; }
+.inv-product-name { font-weight: 700; color: #263238; }
 .inv-sku          { font-size: .75rem; color: #90a4ae; font-family: monospace; }
 .inv-qty          { font-weight: 700; color: #546e7a; }
 .inv-total-cell   { font-weight: 700; color: #2e7d32; }
