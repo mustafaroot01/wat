@@ -224,13 +224,31 @@ table.items td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
   <div>${s.thank_you_message||'شكراً لثقتكم بمعمل امواج ديالى'}</div>
   <div class="foot-sub">معمل امواج ديالى — ديالى، العراق</div>
 </div>
-<` + `script>window.onload=function(){window.print()}<` + `/script>
 </body></html>`
 
-  const w = window.open('', '_blank')
-  if (!w) return
-  w.document.write(html)
-  w.document.close()
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'absolute'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = 'none'
+  document.body.appendChild(iframe)
+
+  const frameDoc = iframe.contentWindow?.document
+  if (!frameDoc) return
+
+  frameDoc.open()
+  frameDoc.write(html)
+  frameDoc.close()
+
+  setTimeout(() => {
+    iframe.contentWindow?.focus()
+    iframe.contentWindow?.print()
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe)
+      }
+    }, 5000)
+  }, 500)
 }
 
 const invoiceUrl = (token: string) =>
@@ -656,26 +674,4 @@ const copyPhone = async (phone: string) => {
 .inv-dlg-table tbody tr:nth-child(even) { background: #fafafa; }
 .text-muted { color: #999; font-size: 12px; }
 
-/* ── Print ───────────────────────── */
-@media print {
-  @page { size: A5 portrait; margin: 6mm; }
-
-  body * { visibility: hidden !important; }
-
-  #invoice-print-area,
-  #invoice-print-area * { visibility: visible !important; }
-
-  #invoice-print-area {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    background: #fff !important;
-    padding: 8mm !important;
-    box-sizing: border-box !important;
-  }
-
-  .no-print { display: none !important; }
-}
 </style>
