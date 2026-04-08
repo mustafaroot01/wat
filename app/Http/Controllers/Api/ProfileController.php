@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
@@ -28,13 +29,15 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        $districtId = $request->district_id ?? $user->district_id;
+
         $data = $request->validate([
             'first_name'  => 'sometimes|required|string|max:100',
             'last_name'   => 'sometimes|required|string|max:100',
             'gender'      => 'sometimes|required|in:male,female',
             'birth_date'  => 'sometimes|required|date|before:today',
             'district_id' => 'sometimes|required|exists:districts,id',
-            'area_id'     => 'sometimes|required|exists:areas,id',
+            'area_id'     => ['sometimes', 'required', Rule::exists('areas', 'id')->where('district_id', $districtId)],
         ]);
 
         $user->update($data);
@@ -67,21 +70,24 @@ class ProfileController extends Controller
     }
 
     /**
-     * حذف الحساب (Soft Delete)
+     * طلب حذف الحساب — يُعطَّل الحساب ويُسجَّل الطلب للإدارة
      */
     public function deleteAccount(Request $request)
     {
         $user = $request->user();
 
-        // سحب الجلسة الحالية
+        // تعطيل الحساب وتسجيل طلب الحذف
+        $user->update([
+            'is_active'       => false,
+            'is_self_deleted' => true,
+        ]);
+
+        // إلغاء جميع الجلسات على كل الأجهزة
         $user->tokens()->delete();
-        
-        // تطبيق الحذف الوهمي (Soft Delete)
-        $user->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'تم حذف حسابك بنجاح. سنفتقدك!',
+            'message' => 'تم إيقاف حسابك بنجاح. يمكنك التواصل مع الإدارة لاستعادته.',
         ]);
     }
 }

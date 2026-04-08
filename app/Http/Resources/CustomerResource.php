@@ -26,10 +26,9 @@ class CustomerResource extends JsonResource
                 'id'   => $this->area->id,
                 'name' => $this->area->name,
             ]),
-            'is_active'    => $this->is_active,
-            'is_deleted'   => !is_null($this->deleted_at),
-            'deleted_at'   => $this->deleted_at?->format('Y-m-d H:i'),
-            'created_at'   => $this->created_at?->format('Y-m-d'),
+            'is_active'       => $this->is_active,
+            'is_self_deleted' => $this->is_self_deleted,
+            'created_at'      => $this->created_at?->format('Y-m-d'),
         ];
     }
 }

@@ -13,13 +13,23 @@ class CheckAccountActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && !$request->user()->is_active) {
-            // Delete current token to force logout
-            $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
 
+        if ($user && $user->is_self_deleted) {
+            $user->currentAccessToken()?->delete();
             return response()->json([
                 'success' => false,
-                'message' => 'حسابك معطل حالياً، يرجى التواصل مع الإدارة.'
+                'message' => 'تم حذف هذا الحساب بناءً على طلبك. تواصل مع الإدارة لاستعادته.',
+                'code'    => 'account_deleted',
+            ], 403);
+        }
+
+        if ($user && !$user->is_active) {
+            $user->currentAccessToken()?->delete();
+            return response()->json([
+                'success' => false,
+                'message' => 'حسابك معطل حالياً، يرجى التواصل مع الإدارة.',
+                'code'    => 'account_disabled',
             ], 403);
         }
 

@@ -48,8 +48,6 @@ Route::prefix('admin')->group(function () {
         Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
         Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
         Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
-        Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
-
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
@@ -59,17 +57,18 @@ Route::prefix('admin')->group(function () {
 // مسارات واجهات الموبايل (Front API)
 Route::prefix('app')->group(function () {
     Route::get('categories', [App\Http\Controllers\Api\CategoryController::class, 'index']);
-    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index']);
-    Route::get('notifications/{notification}', function(\App\Models\AppNotification $notification) {
-        return new \App\Http\Resources\NotificationResource($notification);
-    });
+    Route::get('notifications', [App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::get('notifications/{notification}', [App\Http\Controllers\Api\NotificationController::class, 'show']);
+
+    // Banners Public API
+    Route::get('banners', [\App\Http\Controllers\BannerController::class, 'indexPublic']);
 
     // Brands Public API
-    Route::get('brands', [\App\Http\Controllers\BrandController::class, 'index']);
+    Route::get('brands', [\App\Http\Controllers\BrandController::class, 'indexPublic']);
     Route::get('brands/{brand}/products', [\App\Http\Controllers\BrandController::class, 'products']);
 
     // Products Public API
-    Route::get('products', [\App\Http\Controllers\ProductController::class, 'index']);
+    Route::get('products', [\App\Http\Controllers\ProductController::class, 'indexPublic']);
 
     // --- Authentication ---
     Route::prefix('auth')->group(function () {

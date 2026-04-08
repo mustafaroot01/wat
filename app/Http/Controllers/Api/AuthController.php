@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\OtpService;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\CustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 use Illuminate\Database\QueryException;
 
 class AuthController extends Controller
@@ -37,12 +37,15 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'رقم الهاتف أو كلمة المرور غير صحيحة.'], 401);
         }
 
+        // حساب طلب المستخدم حذفه بنفسه
+        if ($user->is_self_deleted) {
+            return response()->json(['success' => false, 'message' => 'تم حذف هذا الحساب بناءً على طلبك. تواصل مع الإدارة لاستعادته.', 'code' => 'account_deleted'], 403);
+        }
 
-
-        // تمييز الحساب المعطل (إدارياً)
+        // حساب معطل إدارياً
         if (!$user->is_active) {
             $user->tokens()->delete();
-            return response()->json(['success' => false, 'message' => 'حسابك معطل حالياً من قبل الإدارة.'], 403);
+            return response()->json(['success' => false, 'message' => 'حسابك معطل حالياً من قبل الإدارة.', 'code' => 'account_disabled'], 403);
         }
 
         // طرد من جميع الأجهزة الأخرى (Single device policy)
@@ -72,13 +75,23 @@ class AuthController extends Controller
     {
         $request['phone'] = OtpService::normalizePhone($request->phone ?? '');
 
+        // رقم هاتف يخص حساباً طلب حذفه — أبلغه بدلاً من رسالة "مستخدم مسبقاً" الغامضة
+        $existingDeleted = User::where('phone', $request->phone)->where('is_self_deleted', true)->exists();
+        if ($existingDeleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'هذا الرقم مرتبط بحساب تم حذفه سابقاً. تواصل مع الإدارة لاستعادته.',
+                'code'    => 'account_deleted',
+            ], 422);
+        }
+
         $data = $request->validate([
             'first_name'  => 'required|string|max:100',
             'last_name'   => 'required|string|max:100',
             'gender'      => 'required|in:male,female',
             'birth_date'  => 'required|date|before:today',
             'district_id' => 'required|exists:districts,id',
-            'area_id'     => 'required|exists:areas,id',
+            'area_id'     => ['required', Rule::exists('areas', 'id')->where('district_id', $request->district_id)],
             'phone'       => 'required|string|unique:users,phone',
             'password'    => ['required', 'confirmed', Password::min(6)],
         ]);
@@ -210,8 +223,12 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'رقم الهاتف هذا غير مسجل لدينا.'], 404);
         }
 
+        if ($user->is_self_deleted) {
+            return response()->json(['success' => false, 'message' => 'تم حذف هذا الحساب بناءً على طلبك. تواصل مع الإدارة لاستعادته.', 'code' => 'account_deleted'], 403);
+        }
+
         if (!$user->is_active) {
-            return response()->json(['success' => false, 'message' => 'لا يمكن تغيير الباسورد، حسابك معطل حالياً.'], 403);
+            return response()->json(['success' => false, 'message' => 'لا يمكن تغيير الباسورد، حسابك معطل من قبل الإدارة.', 'code' => 'account_disabled'], 403);
         }
 
         $user->update(['password' => Hash::make($request->password)]);

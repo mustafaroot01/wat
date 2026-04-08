@@ -23,7 +23,8 @@ class NotificationController extends Controller
     public function index()
     {
         $notifications = AppNotification::orderBy('created_at', 'desc')->paginate(15);
-        return NotificationResource::collection($notifications);
+        return NotificationResource::collection($notifications)
+            ->additional(['has_more' => $notifications->hasMorePages()]);
     }
 
     public function store(StoreNotificationRequest $request)

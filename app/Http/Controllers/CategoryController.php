@@ -16,7 +16,8 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::ordered()->paginate(15);
-        return CategoryResource::collection($categories);
+        return CategoryResource::collection($categories)
+            ->additional(['has_more' => $categories->hasMorePages()]);
     }
 
     public function store(StoreCategoryRequest $request)

@@ -24,6 +24,7 @@ class User extends Authenticatable
         'area_id',
         'is_active',
         'is_admin',
+        'is_self_deleted',
     ];
 
     protected $hidden = [
@@ -38,6 +39,8 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'birth_date'        => 'date',
             'is_active'         => 'boolean',
+            'is_admin'          => 'boolean',
+            'is_self_deleted'   => 'boolean',
         ];
     }
 

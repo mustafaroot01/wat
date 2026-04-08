@@ -15,12 +15,20 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'brand']);
 
-        if ($request->has('category_id')) {
+        if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        if ($request->has('brand_id')) {
+        if ($request->filled('brand_id')) {
             $query->where('brand_id', $request->brand_id);
+        }
+
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%");
+            });
         }
 
         if ($request->boolean('active_only')) {
@@ -29,7 +37,34 @@ class ProductController extends Controller
 
         $products = $query->ordered()->latest()->paginate($request->get('per_page', 15));
 
-        return ProductResource::collection($products);
+        return ProductResource::collection($products)
+            ->additional(['has_more' => $products->hasMorePages()]);
+    }
+
+    public function indexPublic(Request $request)
+    {
+        $query = Product::with(['category', 'brand'])->active();
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%");
+            });
+        }
+
+        $products = $query->ordered()->latest()->paginate($request->get('per_page', 15));
+
+        return ProductResource::collection($products)
+            ->additional(['has_more' => $products->hasMorePages()]);
     }
 
     public function store(StoreProductRequest $request)

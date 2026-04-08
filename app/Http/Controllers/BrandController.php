@@ -29,13 +29,34 @@ class BrandController extends Controller
             ->ordered()
             ->paginate($perPage);
 
-        return BrandResource::collection($brands);
+        return BrandResource::collection($brands)
+            ->additional(['has_more' => $brands->hasMorePages()]);
+    }
+
+    public function indexPublic(Request $request)
+    {
+        $perPage = min((int) $request->get('per_page', 15), 100);
+
+        $brands = Brand::active()
+            ->withCount('products')
+            ->ordered()
+            ->paginate($perPage);
+
+        return BrandResource::collection($brands)
+            ->additional(['has_more' => $brands->hasMorePages()]);
     }
 
     public function store(StoreBrandRequest $request)
     {
         $data = $request->validated();
-        $data['slug'] = Str::slug($data['name']);
+
+        $baseSlug = Str::slug($data['name']);
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Brand::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter++;
+        }
+        $data['slug'] = $slug;
 
         $path = null;
 
@@ -70,7 +91,8 @@ class BrandController extends Controller
     {
         $perPage = min((int) $request->get('per_page', 15), 100);
         $products = $brand->products()->where('is_active', true)->ordered()->paginate($perPage);
-        return ProductResource::collection($products);
+        return ProductResource::collection($products)
+            ->additional(['has_more' => $products->hasMorePages()]);
     }
 
     public function update(UpdateBrandRequest $request, Brand $brand)
@@ -78,7 +100,13 @@ class BrandController extends Controller
         $data = $request->validated();
         
         if (isset($data['name'])) {
-            $data['slug'] = Str::slug($data['name']);
+            $baseSlug = Str::slug($data['name']);
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Brand::where('slug', $slug)->where('id', '!=', $brand->id)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+            $data['slug'] = $slug;
         }
 
         if ($request->hasFile('image')) {

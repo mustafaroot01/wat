@@ -18,6 +18,7 @@ class CustomerController extends Controller
         $perPage = min((int) $request->get('per_page', 15), 100);
 
         $query = User::query()
+            ->where('is_admin', false)
             ->with(['district', 'area'])
             ->latest('id');
 
@@ -41,7 +42,8 @@ class CustomerController extends Controller
 
         $customers = $query->paginate($perPage);
 
-        return CustomerResource::collection($customers);
+        return CustomerResource::collection($customers)
+            ->additional(['has_more' => $customers->hasMorePages()]);
     }
 
     /**
@@ -103,7 +105,4 @@ class CustomerController extends Controller
         return new CustomerResource($user);
     }
 
-    /**
-     * استعادة حساب محذوف (Restore)
-     */
 }

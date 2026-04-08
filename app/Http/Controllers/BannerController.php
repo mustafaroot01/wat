@@ -15,6 +15,16 @@ class BannerController extends Controller
     public function index()
     {
         $banners = Banner::orderBy('sort_order', 'asc')->paginate(15);
+        return BannerResource::collection($banners)
+            ->additional(['has_more' => $banners->hasMorePages()]);
+    }
+
+    public function indexPublic()
+    {
+        $banners = Banner::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
         return BannerResource::collection($banners);
     }
 
