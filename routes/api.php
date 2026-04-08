@@ -127,6 +127,17 @@ Route::prefix('app')->group(function () {
         Route::middleware('throttle:otp-verify')->post('forgot-password/verify', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordVerifyAndReset']);
     });
 
+    // Districts & Areas Public API (for registration form)
+    Route::get('districts', function () {
+        $districts = \App\Models\District::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        return response()->json($districts);
+    });
+    Route::get('districts/{district}/areas', function (\App\Models\District $district) {
+        $areas = \App\Models\Area::where('district_id', $district->id)
+            ->where('is_active', true)->orderBy('name')->get(['id', 'name', 'district_id']);
+        return response()->json($areas);
+    });
+
     // Coupons Public API
     Route::post('coupons/validate', [\App\Http\Controllers\CouponController::class, 'validate']);
 
