@@ -206,7 +206,7 @@ const saveProduct = async () => {
 
     if (res.ok) {
       showDialog.value = false
-      fetchProducts(currentPage.value)
+      loadProducts(1) // Reload table data using the custom load function
     } else {
         const errorData = await res.json()
         alert('حدث خطأ: ' + JSON.stringify(errorData.errors || errorData.message))
@@ -229,7 +229,7 @@ const deleteProduct = async () => {
     
     if (res.ok) {
       confirmDeleteDialog.value = false
-      fetchProducts(currentPage.value)
+      loadProducts(1) // Reload table data using the custom load function
     }
   } catch (error) {
     console.error('Error deleting product:', error)
@@ -274,7 +274,7 @@ const toggleInStock = async (item: Product) => {
 }
 
 onMounted(() => {
-  fetchProducts(1)
+  loadProducts(1)
   fetchOptions()
 })
 </script>
