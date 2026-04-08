@@ -184,6 +184,25 @@ const formatDate = (d: string) =>
   new Date(d).toLocaleString('ar-IQ', { dateStyle: 'short', timeStyle: 'short' })
 
 const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + index + 1
+
+// ── Copy phone ─────────────────────────────────────────────────
+const copySnack = ref(false)
+
+const copyPhone = async (phone: string) => {
+  try {
+    await navigator.clipboard.writeText(phone)
+    copySnack.value = true
+  } catch {
+    // Fallback
+    const el = document.createElement('textarea')
+    el.value = phone
+    document.body.appendChild(el)
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+    copySnack.value = true
+  }
+}
 </script>
 
 <template>
@@ -267,7 +286,16 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
             <template #item.customer="{ item }">
               <div>
                 <div class="font-weight-medium">{{ item.customer_name }}</div>
-                <div class="text-caption text-medium-emphasis" dir="ltr" style="text-align:right;">{{ item.customer_phone }}</div>
+                <div
+                  class="text-caption text-primary d-flex align-center gap-1 cursor-pointer"
+                  dir="ltr"
+                  style="text-align:right; width:fit-content;"
+                  title="اضغط لنسخ رقم الهاتف"
+                  @click="copyPhone(item.customer_phone)"
+                >
+                  <VIcon size="12" icon="ri-file-copy-line" />
+                  {{ item.customer_phone }}
+                </div>
               </div>
             </template>
 
@@ -475,14 +503,57 @@ const rowSeq = (index: number) => (currentPage.value - 1) * perPage.value + inde
         </VCardText>
       </VCard>
     </VDialog>
+    <!-- Copy Snackbar -->
+    <VSnackbar v-model="copySnack" :timeout="2000" color="success" location="bottom center" rounded="lg">
+      <VIcon icon="ri-check-line" class="me-2" />
+      تم نسخ رقم الهاتف ✓
+    </VSnackbar>
+
   </div>
 </template>
 
 <style>
+/* ═══ Print: طباعة الفاتورة فقط ═══ */
 @media print {
-  body * { visibility: hidden; }
-  #invoice-print-area, #invoice-print-area * { visibility: visible; }
-  #invoice-print-area { position: fixed; top: 0; left: 0; width: 100%; }
+  @page { size: A4 portrait; margin: 10mm; }
+
+  /* إخفاء كل شي عدا منطقة الفاتورة */
+  body > * { display: none !important; }
+
+  /* إظهار الـ Dialog container */
+  .v-overlay-container { display: block !important; }
+  .v-overlay-container > * { display: block !important; }
+
+  /* إخفاء عناصر الـ Dialog ما عدا المحتوى */
+  .v-dialog { box-shadow: none !important; position: static !important; }
+  .v-overlay__scrim { display: none !important; }
   .no-print { display: none !important; }
+
+  /* منطقة الفاتورة */
+  #invoice-print-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 11pt !important;
+  }
+  #invoice-print-area * { visibility: visible !important; }
+
+  /* جدول المنتجات */
+  #invoice-print-area table {
+    width: 100% !important;
+    page-break-inside: auto;
+    border-collapse: collapse;
+  }
+  #invoice-print-area tr  { page-break-inside: avoid; }
+  #invoice-print-area th,
+  #invoice-print-area td  { padding: 5px 8px !important; font-size: 10pt !important; }
+
+  /* إخفاء أدوات الطباعة */
+  .v-card-title.no-print,
+  .v-card__title.no-print { display: none !important; }
 }
 </style>
