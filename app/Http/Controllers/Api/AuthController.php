@@ -212,6 +212,11 @@ class AuthController extends Controller
         }
 
         $user = User::where('phone', $request->phone)->first();
+        
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'رقم الهاتف هذا غير مسجل لدينا.'], 404);
+        }
+
         if (!$user->is_active) {
             return response()->json(['success' => false, 'message' => 'لا يمكن تغيير الباسورد، حسابك معطل حالياً.'], 403);
         }

@@ -23,11 +23,11 @@ class ProductController extends Controller
             $query->where('brand_id', $request->brand_id);
         }
 
-        if ($request->has('active_only')) {
-            $query->where('is_active', true);
+        if ($request->boolean('active_only')) {
+            $query->active();
         }
 
-        $products = $query->orderBy('sort_order', 'asc')->latest()->paginate($request->get('per_page', 15));
+        $products = $query->ordered()->latest()->paginate($request->get('per_page', 15));
 
         return ProductResource::collection($products);
     }

@@ -57,7 +57,7 @@ class NotificationController extends Controller
 
         // Get topic from settings
         $settings = \App\Models\FirebaseSetting::first();
-        $topic = $settings->default_topic ?? 'all_users';
+        $topic = optional($settings)->default_topic ?? 'all_users';
 
         // Send to Firebase
         $response = $this->firebaseService->sendToTopic(

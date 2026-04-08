@@ -13,7 +13,7 @@ Route::prefix('admin')->group(function () {
     Route::post('login', [\App\Http\Controllers\Api\AdminAuthController::class, 'login']);
 
     // محمية بصلاحيات الدخول
-    Route::middleware(['auth:sanctum'])->group(function () {
+    Route::middleware(['auth:sanctum', 'admin.role'])->group(function () {
         Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
         Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
         

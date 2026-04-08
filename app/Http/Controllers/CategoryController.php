@@ -118,10 +118,9 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        // TODO: Add check here to prevent deletion if there are products linked
-        // if ($category->products()->count() > 0) {
-        //     return response()->json(['message' => 'لا يمكن حذف القسم لأنه مرتبط بمنتجات'], 403);
-        // }
+        if ($category->products()->count() > 0) {
+            return response()->json(['message' => 'لا يمكن حذف القسم لأنه مرتبط بمنتجات'], 403);
+        }
 
         if ($category->image) {
             Storage::disk('public')->delete($category->image);

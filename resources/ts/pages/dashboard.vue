@@ -21,6 +21,12 @@ const statusLabel: Record<string, string> = {
   completed: 'مكتمل',
   cancelled: 'ملغي',
 }
+
+const storeStatus = [
+  { label: 'حالة الربط مع Firebase', status: 'نشط', icon: 'ri-signal-tower-line', color: 'success' },
+  { label: 'خدمة الرسال OTP', status: 'نشط', icon: 'ri-whatsapp-line', color: 'primary' },
+  { label: 'تزامن البيانات المحلي', status: 'نشط', icon: 'ri-refresh-line', color: 'info' },
+]
 </script>
 
 <template>

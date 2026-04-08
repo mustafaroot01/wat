@@ -10,6 +10,7 @@ use App\Http\Resources\ProductResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class BrandController extends Controller
 {
@@ -36,13 +37,28 @@ class BrandController extends Controller
         $data = $request->validated();
         $data['slug'] = Str::slug($data['name']);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('brands', 'public');
+        $path = null;
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('brands', 'public');
+                $data['image'] = $path;
+            }
+
+            $brand = Brand::create($data);
+
+            DB::commit();
+
+            return new BrandResource($brand);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+            return response()->json(['message' => 'فشل إضافة العلامة التجارية.'], 500);
         }
-
-        $brand = Brand::create($data);
-
-        return new BrandResource($brand);
     }
 
     public function show(Brand $brand)

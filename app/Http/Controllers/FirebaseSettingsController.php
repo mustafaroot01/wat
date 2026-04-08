@@ -46,7 +46,7 @@ class FirebaseSettingsController extends Controller
     public function uploadJson(Request $request)
     {
         $request->validate([
-            'firebase_json' => 'required|file|mimes:json',
+            'firebase_json' => 'required|file|mimes:json|max:2048',
         ]);
 
         try {

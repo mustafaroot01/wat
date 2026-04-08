@@ -26,6 +26,10 @@ class AdminAuthController extends Controller
             return response()->json(['success' => false, 'message' => 'حساب الإدارة هذا معطل.'], 403);
         }
 
+        if (!$user->is_admin) {
+            return response()->json(['success' => false, 'message' => 'هذا الحساب لا يملك صلاحيات الإدارة.'], 403);
+        }
+
         // إغلاق أي جلسات سابقة
         $user->tokens()->delete();
 
