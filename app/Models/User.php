@@ -12,8 +12,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasApiTokens;
 
     protected $fillable = [
-        'name',
-        'email',
         'password',
         'first_name',
         'last_name',
@@ -28,14 +26,12 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'password'        => 'hashed',
             'birth_date'        => 'date',
             'is_active'       => 'boolean',
             'is_self_deleted' => 'boolean',
