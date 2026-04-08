@@ -22,8 +22,18 @@ interface Coupon {
   is_valid: boolean
 }
 
-const { items: coupons, loading, currentPage, totalPages, fetchData: fetchCoupons, handlePageChange } =
+const { items: coupons, loading, totalItems, fetchData: fetchCoupons, handleOptionsChange } =
   usePagination<Coupon>('/api/admin/coupons')
+
+const headers = [
+  { title: 'الكود',        key: 'code',       align: 'start'  as const, sortable: true  },
+  { title: 'نوع الخصم',   key: 'type',       align: 'start'  as const, sortable: false },
+  { title: 'قيمة الخصم',  key: 'value',      align: 'start'  as const, sortable: true  },
+  { title: 'الاستخدامات', key: 'usages',     align: 'center' as const, sortable: false },
+  { title: 'الانتهاء',    key: 'expires_at', align: 'start'  as const, sortable: true  },
+  { title: 'الحالة',      key: 'is_active',  align: 'center' as const, sortable: false },
+  { title: 'الإجراءات',   key: 'actions',    align: 'center' as const, sortable: false },
+]
 
 const showDialog      = ref(false)
 const dialogMode      = ref<'add' | 'edit'>('add')
@@ -116,100 +126,78 @@ onMounted(() => fetchCoupons(1))
         </VCardItem>
         <VDivider />
 
-        <VCardText class="pa-0">
-          <VTable class="text-no-wrap">
-            <thead>
-              <tr class="bg-light">
-                <th class="text-center">#</th>
-                <th>الكود</th>
-                <th>نوع الخصم</th>
-                <th>قيمة الخصم</th>
-                <th class="text-center">الاستخدامات</th>
-                <th>الانتهاء</th>
-                <th class="text-center">الحالة</th>
-                <th class="text-center">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td colspan="8" class="text-center py-8">
-                  <VProgressCircular indeterminate color="primary" size="24" class="me-2" />
-                  جاري التحميل...
-                </td>
-              </tr>
-              <tr v-else-if="coupons.length === 0">
-                <td colspan="8" class="text-center py-8 text-medium-emphasis">لا توجد أكواد خصم</td>
-              </tr>
-              <tr v-for="(item, index) in coupons" :key="item.id ?? index">
-                <td class="text-center text-medium-emphasis">{{ index + 1 + (currentPage - 1) * 15 }}</td>
-                <td>
-                  <VChip color="primary" variant="tonal" size="small" class="font-weight-bold" style="font-family: monospace; letter-spacing: 1px;">
-                    {{ item.code }}
-                  </VChip>
-                </td>
-                <td>
-                  <VChip :color="item.type === 'percentage' ? 'info' : 'warning'" variant="tonal" size="small">
-                    {{ item.type_label }}
-                  </VChip>
-                </td>
-                <td class="font-weight-bold">
-                  {{ item.type === 'percentage' ? item.value + '%' : formatIQD(item.value) }}
-                </td>
-                <td class="text-center">
-                  <VBtn variant="text" size="small" color="secondary" @click="openUsage(item)">
-                    <VIcon icon="ri-user-line" size="14" class="me-1" />
-                    {{ item.used_count }}
-                    <span v-if="item.max_uses" class="text-medium-emphasis"> / {{ item.max_uses }}</span>
-                  </VBtn>
-                </td>
-                <td>
-                  <span v-if="!item.expires_at" class="text-medium-emphasis text-caption">بلا انتهاء</span>
-                  <VChip v-else :color="item.is_valid ? 'success' : 'error'" variant="tonal" size="x-small">
-                    {{ new Date(item.expires_at).toLocaleDateString('ar-IQ') }}
-                  </VChip>
-                </td>
-                <td class="text-center">
-                  <VSwitch
-                    v-model="item.is_active"
-                    color="success"
-                    density="compact"
-                    hide-details
-                    class="d-inline-flex"
-                    @change="toggleActive(item)"
-                  />
-                </td>
-                <td class="text-center">
-                  <VMenu location="bottom end">
-                    <template #activator="{ props }">
-                      <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
-                    </template>
-                    <VList density="compact" min-width="150" rounded="lg" elevation="3">
-                      <VListItem @click="openUsage(item)">
-                        <template #prepend><VIcon icon="ri-bar-chart-line" size="18" class="me-2 text-info" /></template>
-                        <VListItemTitle class="text-info">سجل الاستخدام</VListItemTitle>
-                      </VListItem>
-                      <VListItem @click="openEdit(item)">
-                        <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
-                        <VListItemTitle>تعديل</VListItemTitle>
-                      </VListItem>
-                      <VListItem @click="currId = item.id; confirmDelete = true">
-                        <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
-                        <VListItemTitle class="text-error">حذف</VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </td>
-              </tr>
-            </tbody>
-          </VTable>
+        <VDataTableServer
+          :headers="headers"
+          :items="coupons"
+          :items-length="totalItems"
+          :loading="loading"
+          :items-per-page="15"
+          :items-per-page-options="[15, 25, 50, 100]"
+          no-data-text="لا توجد أكواد خصم"
+          loading-text="جاري التحميل..."
+          class="rounded-0"
+          @update:options="handleOptionsChange"
+        >
+          <template #item.code="{ item }">
+            <VChip color="primary" variant="tonal" size="small" class="font-weight-bold">
+              {{ item.code }}
+            </VChip>
+          </template>
 
-          <VDivider v-if="totalPages > 1" />
-          <div v-if="totalPages > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-            <span class="text-caption text-medium-emphasis">عرض الصفحة {{ currentPage }} من {{ totalPages }}</span>
-            <VPagination v-model="currentPage" :length="totalPages" :total-visible="5" density="comfortable"
-              variant="tonal" active-color="primary" @update:model-value="handlePageChange" />
-          </div>
-        </VCardText>
+          <template #item.type="{ item }">
+            <VChip :color="item.type === 'percentage' ? 'info' : 'warning'" variant="tonal" size="small">
+              {{ item.type_label }}
+            </VChip>
+          </template>
+
+          <template #item.value="{ item }">
+            <span class="font-weight-bold">
+              {{ item.type === 'percentage' ? item.value + '%' : formatIQD(item.value) }}
+            </span>
+          </template>
+
+          <template #item.usages="{ item }">
+            <VBtn variant="text" size="small" color="secondary" @click="openUsage(item)">
+              <VIcon icon="ri-user-line" size="14" class="me-1" />
+              {{ item.used_count }}
+              <span v-if="item.max_uses" class="text-medium-emphasis"> / {{ item.max_uses }}</span>
+            </VBtn>
+          </template>
+
+          <template #item.expires_at="{ item }">
+            <span v-if="!item.expires_at" class="text-medium-emphasis text-caption">بلا انتهاء</span>
+            <VChip v-else :color="item.is_valid ? 'success' : 'error'" variant="tonal" size="x-small">
+              {{ new Date(item.expires_at).toLocaleDateString('ar-IQ') }}
+            </VChip>
+          </template>
+
+          <template #item.is_active="{ item }">
+            <VSwitch v-model="item.is_active" color="success" density="compact" hide-details
+              class="d-inline-flex" @change="toggleActive(item)" />
+          </template>
+
+          <template #item.actions="{ item }">
+            <VMenu location="bottom end">
+              <template #activator="{ props }">
+                <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
+              </template>
+              <VList density="compact" min-width="150" rounded="lg" elevation="3">
+                <VListItem @click="openUsage(item)">
+                  <template #prepend><VIcon icon="ri-bar-chart-line" size="18" class="me-2 text-info" /></template>
+                  <VListItemTitle class="text-info">سجل الاستخدام</VListItemTitle>
+                </VListItem>
+                <VListItem @click="openEdit(item)">
+                  <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
+                  <VListItemTitle>تعديل</VListItemTitle>
+                </VListItem>
+                <VListItem @click="currId = item.id; confirmDelete = true">
+                  <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
+                  <VListItemTitle class="text-error">حذف</VListItemTitle>
+                </VListItem>
+              </VList>
+            </VMenu>
+          </template>
+        </VDataTableServer>
       </VCard>
     </VCol>
   </VRow>

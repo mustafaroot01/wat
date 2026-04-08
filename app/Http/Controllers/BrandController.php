@@ -7,6 +7,7 @@ use App\Http\Requests\StoreBrandRequest;
 use App\Http\Requests\UpdateBrandRequest;
 use App\Http\Resources\BrandResource;
 use App\Http\Resources\ProductResource;
+use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,20 +15,21 @@ use Illuminate\Support\Facades\DB;
 
 class BrandController extends Controller
 {
+    use VuetifyTrait;
+
     public function index(Request $request)
     {
-        $query = Brand::query();
+        $query = Brand::withCount('products');
 
         if ($request->boolean('active_only')) {
             $query->active();
         }
 
-        $perPage = min((int) $request->get('per_page', 15), 100);
-
-        $brands = $query
-            ->withCount('products')
-            ->ordered()
-            ->paginate($perPage);
+        $brands = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['name', 'slug'],
+            allowedSortColumns: ['name', 'sort_order', 'created_at']
+        );
 
         return BrandResource::collection($brands)
             ->additional(['has_more' => $brands->hasMorePages()]);

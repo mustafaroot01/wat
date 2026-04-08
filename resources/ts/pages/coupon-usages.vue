@@ -33,30 +33,36 @@ const couponId   = computed(() => route.params.id as string)
 const coupon     = ref<Coupon | null>(null)
 const usages     = ref<UsageRow[]>([])
 const loading    = ref(false)
-const currentPage = ref(1)
-const totalPages  = ref(1)
-const totalCount  = ref(0)
-const perPage     = ref(50)
-const search      = ref('')
+const totalCount = ref(0)
+const search     = ref('')
+const perPage    = ref(50)
 
-const fetchUsages = async (page = 1) => {
+const headers = [
+  { title: 'المستخدم',        key: 'user_name',        align: 'start'  as const, sortable: false },
+  { title: 'رقم الهاتف',     key: 'user_phone',       align: 'start'  as const, sortable: false },
+  { title: 'مقدار الخصم',    key: 'discount_amount',  align: 'center' as const, sortable: false },
+  { title: 'تاريخ الاستخدام', key: 'used_at',          align: 'start'  as const, sortable: false },
+]
+
+const fetchUsages = async (page = 1, itemsPerPage = perPage.value) => {
   loading.value = true
   try {
     const res = await apiFetch(
-      `/api/admin/coupons/${couponId.value}/usages?page=${page}&per_page=${perPage.value}`
+      `/api/admin/coupons/${couponId.value}/usages?page=${page}&per_page=${itemsPerPage}`
     )
     if (res.ok) {
       const data = await res.json()
-      coupon.value      = data.coupon
-      usages.value      = data.data
-      currentPage.value = data.meta.current_page
-      totalPages.value  = data.meta.last_page
-      totalCount.value  = data.meta.total
+      coupon.value     = data.coupon
+      usages.value     = data.data
+      totalCount.value = data.meta.total
+      perPage.value    = data.meta.per_page
     }
   } catch (e) { console.error(e) } finally { loading.value = false }
 }
 
-const handlePageChange = (page: number) => fetchUsages(page)
+const handleOptionsChange = (options: { page: number; itemsPerPage: number }) => {
+  fetchUsages(options.page, options.itemsPerPage)
+}
 
 const filteredUsages = computed(() => {
   if (!search.value.trim()) return usages.value
@@ -158,77 +164,43 @@ onMounted(() => fetchUsages(1))
         </div>
 
         <!-- Table -->
-        <VTable>
-          <thead>
-            <tr class="bg-light">
-              <th class="text-center" style="width:60px">#</th>
-              <th>المستخدم</th>
-              <th>رقم الهاتف</th>
-              <th class="text-center">مقدار الخصم</th>
-              <th>تاريخ الاستخدام</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="5" class="text-center py-10">
-                <VProgressCircular indeterminate color="primary" size="28" class="me-2" />
-                جاري تحميل السجلات...
-              </td>
-            </tr>
-            <tr v-else-if="filteredUsages.length === 0">
-              <td colspan="5" class="text-center py-10 text-medium-emphasis">
-                <VIcon icon="ri-user-unfollow-line" size="40" class="d-block mx-auto mb-2" />
-                لم يستخدم أحد هذا الكود بعد
-              </td>
-            </tr>
-            <tr
-              v-for="(u, i) in filteredUsages"
-              :key="u.id"
-              :class="i % 2 === 0 ? '' : 'bg-surface'"
-            >
-              <td class="text-center text-medium-emphasis text-caption">
-                {{ (currentPage - 1) * perPage + i + 1 }}
-              </td>
-              <td>
-                <div class="d-flex align-center gap-2">
-                  <VAvatar color="primary" variant="tonal" size="32" rounded="lg">
-                    <span class="text-caption font-weight-bold">{{ u.user_name.charAt(0) }}</span>
-                  </VAvatar>
-                  <span class="font-weight-medium">{{ u.user_name }}</span>
-                </div>
-              </td>
-              <td>
-                <VChip size="x-small" color="secondary" variant="tonal" prepend-icon="ri-phone-line">
-                  {{ u.user_phone }}
-                </VChip>
-              </td>
-              <td class="text-center">
-                <VChip color="success" variant="tonal" size="small" prepend-icon="ri-price-tag-3-line" class="font-weight-bold">
-                  {{ formatIQD(u.discount_amount) }}
-                </VChip>
-              </td>
-              <td class="text-caption text-medium-emphasis">{{ formatDate(u.used_at) }}</td>
-            </tr>
-          </tbody>
-        </VTable>
+        <VDataTableServer
+          :headers="headers"
+          :items="filteredUsages"
+          :items-length="totalCount"
+          :loading="loading"
+          :items-per-page="perPage"
+          :items-per-page-options="[25, 50, 100, 200]"
+          no-data-text="لم يستخدم أحد هذا الكود بعد"
+          loading-text="جاري تحميل السجلات..."
+          class="rounded-0"
+          @update:options="handleOptionsChange"
+        >
+          <template #item.user_name="{ item }">
+            <div class="d-flex align-center gap-2 py-1">
+              <VAvatar color="primary" variant="tonal" size="32" rounded="lg">
+                <span class="text-caption font-weight-bold">{{ item.user_name.charAt(0) }}</span>
+              </VAvatar>
+              <span class="font-weight-medium">{{ item.user_name }}</span>
+            </div>
+          </template>
 
-        <!-- Pagination -->
-        <VDivider v-if="totalPages > 1" />
-        <div v-if="totalPages > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-          <span class="text-caption text-medium-emphasis">
-            الصفحة {{ currentPage }} من {{ totalPages }}
-            ({{ totalCount.toLocaleString() }} سجل)
-          </span>
-          <VPagination
-            v-model="currentPage"
-            :length="totalPages"
-            :total-visible="7"
-            density="comfortable"
-            variant="tonal"
-            active-color="primary"
-            @update:model-value="handlePageChange"
-          />
-        </div>
+          <template #item.user_phone="{ item }">
+            <VChip size="x-small" color="secondary" variant="tonal" prepend-icon="ri-phone-line">
+              {{ item.user_phone }}
+            </VChip>
+          </template>
+
+          <template #item.discount_amount="{ item }">
+            <VChip color="success" variant="tonal" size="small" prepend-icon="ri-price-tag-3-line" class="font-weight-bold">
+              {{ formatIQD(item.discount_amount) }}
+            </VChip>
+          </template>
+
+          <template #item.used_at="{ item }">
+            <span class="text-caption text-medium-emphasis">{{ formatDate(item.used_at) }}</span>
+          </template>
+        </VDataTableServer>
       </VCard>
 
     </VCol>

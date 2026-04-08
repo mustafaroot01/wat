@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Http\Resources\CustomerResource;
+use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,27 +12,12 @@ use Illuminate\Validation\Rules\Password;
 
 class CustomerController extends Controller
 {
-    /**
-     * قائمة العملاء (مع العملاء المحذوفين لعرضهم بشكل مختلف)
-     */
+    use VuetifyTrait;
+
     public function index(Request $request)
     {
-        $perPage = min((int) $request->get('per_page', 15), 100);
+        $query = User::query()->with(['district', 'area']);
 
-        $query = User::query()
-            ->with(['district', 'area'])
-            ->latest('id');
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        // فلترة حسب الحالة
         if ($request->filled('status')) {
             match ($request->status) {
                 'active'   => $query->where('is_active', true)->where('is_self_deleted', false),
@@ -41,7 +27,11 @@ class CustomerController extends Controller
             };
         }
 
-        $customers = $query->paginate($perPage);
+        $customers = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['first_name', 'last_name', 'phone'],
+            allowedSortColumns: ['first_name', 'last_name', 'phone', 'created_at']
+        );
 
         return CustomerResource::collection($customers)
             ->additional(['has_more' => $customers->hasMorePages()]);

@@ -6,11 +6,14 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    use VuetifyTrait;
+
     public function index(Request $request)
     {
         $query = Product::with(['category', 'brand', 'filter']);
@@ -18,28 +21,21 @@ class ProductController extends Controller
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
-
         if ($request->filled('filter_id')) {
             $query->where('filter_id', $request->filter_id);
         }
-
         if ($request->filled('brand_id')) {
             $query->where('brand_id', $request->brand_id);
         }
-
-        if ($request->filled('search')) {
-            $term = $request->search;
-            $query->where(function ($q) use ($term) {
-                $q->where('name', 'like', "%{$term}%")
-                  ->orWhere('description', 'like', "%{$term}%");
-            });
-        }
-
         if ($request->boolean('active_only')) {
             $query->active();
         }
 
-        $products = $query->ordered()->latest()->paginate($request->get('per_page', 15));
+        $products = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['name', 'description'],
+            allowedSortColumns: ['name', 'price', 'sort_order', 'created_at']
+        );
 
         return ProductResource::collection($products)
             ->additional(['has_more' => $products->hasMorePages()]);

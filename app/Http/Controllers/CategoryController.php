@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use App\Traits\VuetifyTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +15,18 @@ use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
-    public function index()
+    use VuetifyTrait;
+
+    public function index(Request $request)
     {
-        $categories = Category::ordered()->paginate(15);
+        $query = Category::query();
+
+        $categories = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['name', 'slug'],
+            allowedSortColumns: ['name', 'slug', 'sort_order']
+        );
+
         return CategoryResource::collection($categories)
             ->additional(['has_more' => $categories->hasMorePages()]);
     }

@@ -27,26 +27,37 @@ const statusFilter = ref('all')
 // Using Composable
 const { 
   items: customers, 
-  loading, 
-  currentPage, 
-  totalPages, 
+  loading,
+  totalItems,
+  itemsPerPage,
   fetchData: fetchCustomers,
-  handlePageChange
 } = usePagination<Customer>('/api/admin/customers')
 
-// Extended fetch with filters
+const headers = [
+  { title: 'اسم العميل',          key: 'full_name', align: 'start' as const, sortable: false },
+  { title: 'رقم الهاتف',         key: 'phone',     align: 'start' as const, sortable: false },
+  { title: 'الموقع (قضاء/منطقة)', key: 'district',  align: 'start' as const, sortable: false },
+  { title: 'الحالة',             key: 'is_active', align: 'center' as const, sortable: false },
+  { title: 'العمليات',            key: 'actions',   align: 'center' as const, sortable: false },
+]
+
+const sortState = ref<{ sort_by?: string; sort_dir?: string }>({})
+
 const loadCustomers = (page = 1) => {
-  const params: any = { page }
+  const params: any = { ...sortState.value }
   if (searchQuery.value) params.search = searchQuery.value
   if (statusFilter.value !== 'all') params.status = statusFilter.value
-  
   fetchCustomers(page, params)
 }
 
-// Watch filters
-watch([searchQuery, statusFilter], () => {
-  loadCustomers(1)
-})
+const handleCustomerOptions = (options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) => {
+  itemsPerPage.value = options.itemsPerPage
+  const sort = options.sortBy?.[0]
+  sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
+  loadCustomers(options.page)
+}
+
+watch([searchQuery, statusFilter], () => { loadCustomers(1) })
 
 // Dialogs
 const isEditModalOpen = ref(false)
@@ -164,7 +175,7 @@ const restoreAccount = async (item: Customer) => {
       method: 'POST'
     })
     if (res.ok) {
-      loadCustomers(currentPage.value)
+      loadCustomers(1)
     }
   } catch (e) { console.error(e) }
 }
@@ -216,102 +227,70 @@ onMounted(() => {
 
         <VDivider />
 
-        <VCardText class="pa-0">
-          <VTable class="text-no-wrap">
-            <thead>
-              <tr>
-                <th style="width: 50px;" class="text-center">#</th>
-                <th>اسم العميل</th>
-                <th>رقم الهاتف</th>
-                <th>الموقع (قضاء/منطقة)</th>
-                <th class="text-center">الحالة</th>
-                <th class="text-center">العمليات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td colspan="6" class="text-center py-8">
-                  <VProgressCircular indeterminate color="primary" />
-                </td>
-              </tr>
-              <tr v-else-if="customers.length === 0">
-                <td colspan="6" class="text-center py-8 text-medium-emphasis">لا يوجد عملاء مطابقين للبحث</td>
-              </tr>
-              <tr v-for="(item, index) in customers" :key="item.id" :class="{'bg-red-lighten-5': item.is_self_deleted}">
-                <td class="text-center text-medium-emphasis">{{ index + 1 + (currentPage - 1) * 15 }}</td>
-                <td>
-                  <div class="d-flex align-center gap-3">
-                    <VAvatar color="primary" variant="tonal" size="36">
-                      {{ item.first_name?.[0] }}{{ item.last_name?.[0] }}
-                    </VAvatar>
-                    <div class="d-flex flex-column">
-                      <span class="font-weight-medium">{{ item.full_name }}</span>
-                      <span class="text-caption text-medium-emphasis">{{ item.gender === 'male' ? 'ذكر' : 'أنثى' }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ item.phone }}</td>
-                <td>
-                  <span v-if="item.district">
-                    {{ item.district.name }} / {{ item.area?.name || '---' }}
-                  </span>
-                  <span v-else class="text-medium-emphasis text-caption">غير محدد</span>
-                </td>
-                <td class="text-center">
-                  <VChip v-if="item.is_self_deleted" color="error" size="small" variant="flat">محذوف</VChip>
-                  <VSwitch
-                    v-else
-                    :model-value="item.is_active"
-                    color="success"
-                    density="compact"
-                    hide-details
-                    class="d-inline-flex"
-                    @change="toggleActive(item)"
-                  />
-                </td>
-                <td class="text-center">
-                  <VMenu location="bottom end">
-                    <template #activator="{ props }">
-                      <VBtn icon="ri-more-2-fill" variant="text" size="small" v-bind="props" />
-                    </template>
-                    <VList density="compact">
-                      <VListItem v-if="item.is_self_deleted" @click="restoreAccount(item)">
-                        <template #prepend><VIcon icon="ri-restart-line" color="success" class="me-2"/></template>
-                        <VListItemTitle>استعادة الحساب</VListItemTitle>
-                      </VListItem>
-                      <template v-else>
-                        <VListItem @click="openEditModal(item)">
-                          <template #prepend><VIcon icon="ri-edit-line" color="primary" class="me-2"/></template>
-                          <VListItemTitle>تعديل البيانات</VListItemTitle>
-                        </VListItem>
-                        <VListItem @click="openPasswordModal(item)">
-                          <template #prepend><VIcon icon="ri-lock-password-line" color="warning" class="me-2"/></template>
-                          <VListItemTitle>تغيير كلمة المرور</VListItemTitle>
-                        </VListItem>
-                      </template>
-                    </VList>
-                  </VMenu>
-                </td>
-              </tr>
-            </tbody>
-          </VTable>
+        <VDataTableServer
+          :headers="headers"
+          :items="customers"
+          :items-length="totalItems"
+          :loading="loading"
+          :items-per-page="15"
+          :items-per-page-options="[15, 25, 50, 100]"
+          no-data-text="لا يوجد عملاء مطابقين للبحث"
+          loading-text="جاري التحميل..."
+          class="rounded-0"
+          @update:options="handleCustomerOptions"
+        >
+          <template #item.full_name="{ item }">
+            <div class="d-flex align-center gap-3 py-1" :class="{'opacity-60': item.is_self_deleted}">
+              <VAvatar color="primary" variant="tonal" size="36" rounded="lg">
+                <span class="text-caption">{{ item.first_name?.[0] }}{{ item.last_name?.[0] }}</span>
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <span class="font-weight-medium">{{ item.full_name }}</span>
+                <span class="text-caption text-medium-emphasis">{{ item.gender === 'male' ? 'ذكر' : 'أنثى' }}</span>
+              </div>
+              <VChip v-if="item.is_self_deleted" color="error" size="x-small" class="ms-1">محذوف</VChip>
+            </div>
+          </template>
 
-          <!-- Pagination -->
-          <VDivider v-if="totalPages > 1" />
-          <div v-if="totalPages > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-            <span class="text-caption text-medium-emphasis">
-              عرض الصفحة {{ currentPage }} من {{ totalPages }}
-            </span>
-            <VPagination
-              v-model="currentPage"
-              :length="totalPages"
-              :total-visible="5"
-              density="comfortable"
-              variant="tonal"
-              @update:model-value="handlePageChange"
-            />
-          </div>
-        </VCardText>
+          <template #item.phone="{ item }">
+            <VChip size="x-small" color="secondary" variant="tonal" prepend-icon="ri-phone-line">{{ item.phone }}</VChip>
+          </template>
+
+          <template #item.district="{ item }">
+            <span v-if="item.district">{{ item.district.name }} / {{ item.area?.name || '---' }}</span>
+            <span v-else class="text-medium-emphasis text-caption">غير محدد</span>
+          </template>
+
+          <template #item.is_active="{ item }">
+            <VChip v-if="item.is_self_deleted" color="error" size="small" variant="flat">محذوف</VChip>
+            <VSwitch v-else :model-value="item.is_active" color="success" density="compact" hide-details
+              class="d-inline-flex" @change="toggleActive(item)" />
+          </template>
+
+          <template #item.actions="{ item }">
+            <VMenu location="bottom end">
+              <template #activator="{ props }">
+                <VBtn icon="ri-more-2-fill" variant="text" size="small" v-bind="props" />
+              </template>
+              <VList density="compact" min-width="160" rounded="lg" elevation="3">
+                <VListItem v-if="item.is_self_deleted" @click="restoreAccount(item)">
+                  <template #prepend><VIcon icon="ri-restart-line" color="success" class="me-2"/></template>
+                  <VListItemTitle>استعادة الحساب</VListItemTitle>
+                </VListItem>
+                <template v-else>
+                  <VListItem @click="openEditModal(item)">
+                    <template #prepend><VIcon icon="ri-edit-line" color="primary" class="me-2"/></template>
+                    <VListItemTitle>تعديل البيانات</VListItemTitle>
+                  </VListItem>
+                  <VListItem @click="openPasswordModal(item)">
+                    <template #prepend><VIcon icon="ri-lock-password-line" color="warning" class="me-2"/></template>
+                    <VListItemTitle>تغيير كلمة المرور</VListItemTitle>
+                  </VListItem>
+                </template>
+              </VList>
+            </VMenu>
+          </template>
+        </VDataTableServer>
       </VCard>
     </VCol>
   </VRow>

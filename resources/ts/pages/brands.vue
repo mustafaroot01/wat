@@ -17,12 +17,18 @@ interface Brand {
 // Using Composable
 const { 
   items: brands, 
-  loading, 
-  currentPage, 
-  totalPages, 
+  loading,
+  totalItems,
   fetchData: fetchBrands,
-  handlePageChange
+  handleOptionsChange,
 } = usePagination<Brand>('/api/admin/brands')
+
+const headers = [
+  { title: 'اسم الشركة', key: 'name',       align: 'start'  as const, sortable: true  },
+  { title: 'الترتيب',    key: 'sort_order', align: 'center' as const, sortable: true  },
+  { title: 'الحالة',     key: 'is_active',  align: 'center' as const, sortable: false },
+  { title: 'الإجراءات',  key: 'actions',    align: 'center' as const, sortable: false },
+]
 
 // Dialog variables
 const showDialog = ref(false)
@@ -174,87 +180,56 @@ onMounted(() => {
         </VCardItem>
         <VDivider />
 
-        <VCardText class="pa-0">
-          <VTable class="text-no-wrap">
-            <thead>
-              <tr class="bg-light">
-                <th style="width: 50px;" class="text-center">#</th>
-                <th>اسم الشركة</th>
-                <th class="text-center">الترتيب</th>
-                <th class="text-center">الحالة</th>
-                <th class="text-center">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td colspan="5" class="text-center py-8 text-medium-emphasis">
-                  <VProgressCircular indeterminate color="primary" size="24" class="me-2" />
-                  جاري التحميل...
-                </td>
-              </tr>
-              <tr v-else-if="brands.length === 0">
-                <td colspan="5" class="text-center py-8 text-medium-emphasis">لا توجد شركات مضافة بعد</td>
-              </tr>
-              <tr v-for="(item, index) in brands" :key="item.id || item.name">
-                <td class="text-center text-medium-emphasis">{{ index + 1 + (currentPage - 1) * 15 }}</td>
-                <td class="font-weight-medium">
-                  <div class="d-flex align-center gap-3">
-                    <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />
-                    <VAvatar v-else color="surface-variant" size="40" rounded="lg">
-                      <VIcon icon="ri-building-line" size="20" />
-                    </VAvatar>
-                    <span>{{ item.name }}</span>
-                  </div>
-                </td>
-                <td class="text-center">{{ item.sort_order }}</td>
-                <td class="text-center">
-                  <VSwitch
-                    v-model="item.is_active"
-                    color="success"
-                    density="compact"
-                    hide-details
-                    class="d-inline-flex justify-center"
-                    @change="toggleActive(item)"
-                  />
-                </td>
-                <td class="text-center">
-                  <VMenu location="bottom end">
-                    <template #activator="{ props }">
-                      <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
-                    </template>
-                    <VList density="compact" min-width="150" rounded="lg" elevation="3">
-                      <VListItem value="edit" @click="openEditDialog(item)">
-                        <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
-                        <VListItemTitle>تعديل</VListItemTitle>
-                      </VListItem>
-                      <VListItem value="delete" @click="confirmDelete(item.id)">
-                        <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
-                        <VListItemTitle class="text-error">حذف</VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </td>
-              </tr>
-            </tbody>
-          </VTable>
+        <VDataTableServer
+          :headers="headers"
+          :items="brands"
+          :items-length="totalItems"
+          :loading="loading"
+          :items-per-page="15"
+          :items-per-page-options="[15, 25, 50]"
+          no-data-text="لا توجد شركات مضافة بعد"
+          loading-text="جاري التحميل..."
+          class="rounded-0"
+          @update:options="handleOptionsChange"
+        >
+          <template #item.name="{ item }">
+            <div class="d-flex align-center gap-3 py-1">
+              <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />
+              <VAvatar v-else color="surface-variant" size="40" rounded="lg">
+                <VIcon icon="ri-building-line" size="20" />
+              </VAvatar>
+              <span class="font-weight-medium">{{ item.name }}</span>
+            </div>
+          </template>
 
-          <!-- Pagination -->
-          <VDivider v-if="totalPages > 1" />
-          <div v-if="totalPages > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-            <span class="text-caption text-medium-emphasis">
-              عرض الصفحة {{ currentPage }} من {{ totalPages }}
-            </span>
-            <VPagination
-              v-model="currentPage"
-              :length="totalPages"
-              :total-visible="5"
-              density="comfortable"
-              variant="tonal"
-              active-color="primary"
-              @update:model-value="handlePageChange"
-            />
-          </div>
-        </VCardText>
+          <template #item.sort_order="{ item }">
+            <span class="text-medium-emphasis">{{ item.sort_order }}</span>
+          </template>
+
+          <template #item.is_active="{ item }">
+            <VSwitch v-model="item.is_active" color="success" density="compact" hide-details
+              class="d-inline-flex justify-center" @change="toggleActive(item)" />
+          </template>
+
+          <template #item.actions="{ item }">
+            <VMenu location="bottom end">
+              <template #activator="{ props }">
+                <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
+              </template>
+              <VList density="compact" min-width="150" rounded="lg" elevation="3">
+                <VListItem @click="openEditDialog(item)">
+                  <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
+                  <VListItemTitle>تعديل</VListItemTitle>
+                </VListItem>
+                <VListItem @click="confirmDelete(item.id)">
+                  <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
+                  <VListItemTitle class="text-error">حذف</VListItemTitle>
+                </VListItem>
+              </VList>
+            </VMenu>
+          </template>
+        </VDataTableServer>
+
       </VCard>
     </VCol>
   </VRow>

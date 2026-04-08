@@ -25,11 +25,18 @@ interface Product {
 const { 
   items: products, 
   loading, 
-  currentPage, 
-  totalPages, 
+  totalItems,
   fetchData: fetchProducts,
-  handlePageChange
+  handleOptionsChange,
 } = usePagination<Product>('/api/admin/products')
+
+const headers = [
+  { title: 'المنتج',           key: 'name',      align: 'start'  as const, sortable: true  },
+  { title: 'التصنيف / الشركة', key: 'category',  align: 'start'  as const, sortable: false },
+  { title: 'السعر',            key: 'price',     align: 'start'  as const, sortable: true  },
+  { title: 'الحالة',           key: 'is_active', align: 'center' as const, sortable: false },
+  { title: 'الإجراءات',        key: 'actions',   align: 'center' as const, sortable: false },
+]
 
 // Options for selects
 const categories = ref<any[]>([])
@@ -229,100 +236,68 @@ onMounted(() => {
         </VCardItem>
         <VDivider />
 
-        <VCardText class="pa-0">
-          <VTable class="text-no-wrap">
-            <thead>
-              <tr class="bg-light">
-                <th style="width: 50px;" class="text-center">#</th>
-                <th>المنتج</th>
-                <th>التصنيف / الشركة</th>
-                <th>السعر</th>
-                <th class="text-center">الحالة</th>
-                <th class="text-center">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td colspan="6" class="text-center py-8 text-medium-emphasis">
-                  <VProgressCircular indeterminate color="primary" size="24" class="me-2" />
-                  جاري التحميل...
-                </td>
-              </tr>
-              <tr v-else-if="products.length === 0">
-                <td colspan="6" class="text-center py-8 text-medium-emphasis">لا توجد منتجات مضافة بعد</td>
-              </tr>
-              <tr v-for="(item, index) in products" :key="item.id || index">
-                <td class="text-center text-medium-emphasis">{{ index + 1 + (currentPage - 1) * 15 }}</td>
-                <td class="font-weight-medium">
-                  <div class="d-flex align-center gap-3">
-                    <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />
-                    <VAvatar v-else color="surface-variant" size="40" rounded="lg">
-                      <VIcon icon="ri-image-line" size="20" />
-                    </VAvatar>
-                    <div class="d-flex flex-column">
-                      <span>{{ item.name }}</span>
-                      <span class="text-caption text-medium-emphasis">{{ item.description?.substring(0, 30) }}...</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="d-flex flex-column gap-1">
-                    <VChip size="x-small" color="primary" variant="tonal" class="w-fit">{{ item.category?.name || 'بدون تصنيف' }}</VChip>
-                    <VChip size="x-small" color="secondary" variant="outlined" class="w-fit" v-if="item.brand?.name">
-                      <VIcon icon="ri-verified-badge-line" start size="12" />
-                      {{ item.brand?.name }}
-                    </VChip>
-                  </div>
-                </td>
-                <td class="font-weight-bold text-primary">{{ formatIQD(item.price) }}</td>
-                <td class="text-center">
-                  <VSwitch
-                    v-model="item.is_active"
-                    color="success"
-                    density="compact"
-                    hide-details
-                    class="d-inline-flex justify-center"
-                    @change="toggleActive(item)"
-                  />
-                </td>
-                <td class="text-center">
-                  <VMenu location="bottom end">
-                    <template #activator="{ props }">
-                      <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
-                    </template>
-                    <VList density="compact" min-width="150" rounded="lg" elevation="3">
-                      <VListItem value="edit" @click="openEditDialog(item)">
-                        <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
-                        <VListItemTitle>تعديل</VListItemTitle>
-                      </VListItem>
-                      <VListItem value="delete" @click="confirmDelete(item.id)">
-                        <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
-                        <VListItemTitle class="text-error">حذف</VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </td>
-              </tr>
-            </tbody>
-          </VTable>
+        <VDataTableServer
+          :headers="headers"
+          :items="products"
+          :items-length="totalItems"
+          :loading="loading"
+          :items-per-page="15"
+          :items-per-page-options="[15, 25, 50, 100]"
+          no-data-text="لا توجد منتجات مضافة بعد"
+          loading-text="جاري التحميل..."
+          class="rounded-0"
+          @update:options="handleOptionsChange"
+        >
+          <template #item.name="{ item }">
+            <div class="d-flex align-center gap-3 py-2">
+              <VAvatar v-if="item.image_url" :image="item.image_url" size="40" rounded="lg" border />
+              <VAvatar v-else color="surface-variant" size="40" rounded="lg">
+                <VIcon icon="ri-image-line" size="20" />
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <span class="font-weight-medium">{{ item.name }}</span>
+                <span class="text-caption text-medium-emphasis">{{ item.description?.substring(0, 35) }}</span>
+              </div>
+            </div>
+          </template>
 
-          <!-- Pagination -->
-          <VDivider v-if="totalPages > 1" />
-          <div v-if="totalPages > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-            <span class="text-caption text-medium-emphasis">
-              عرض الصفحة {{ currentPage }} من {{ totalPages }}
-            </span>
-            <VPagination
-              v-model="currentPage"
-              :length="totalPages"
-              :total-visible="5"
-              density="comfortable"
-              variant="tonal"
-              active-color="primary"
-              @update:model-value="handlePageChange"
-            />
-          </div>
-        </VCardText>
+          <template #item.category="{ item }">
+            <div class="d-flex flex-column gap-1">
+              <VChip size="x-small" color="primary" variant="tonal">{{ item.category?.name || 'بدون تصنيف' }}</VChip>
+              <VChip v-if="item.brand?.name" size="x-small" color="secondary" variant="outlined">
+                <VIcon icon="ri-verified-badge-line" start size="12" />
+                {{ item.brand?.name }}
+              </VChip>
+            </div>
+          </template>
+
+          <template #item.price="{ item }">
+            <span class="font-weight-bold text-primary">{{ formatIQD(item.price) }}</span>
+          </template>
+
+          <template #item.is_active="{ item }">
+            <VSwitch v-model="item.is_active" color="success" density="compact" hide-details
+              class="d-inline-flex justify-center" @change="toggleActive(item)" />
+          </template>
+
+          <template #item.actions="{ item }">
+            <VMenu location="bottom end">
+              <template #activator="{ props }">
+                <VBtn icon="ri-more-2-fill" variant="text" size="small" color="secondary" v-bind="props" />
+              </template>
+              <VList density="compact" min-width="150" rounded="lg" elevation="3">
+                <VListItem @click="openEditDialog(item)">
+                  <template #prepend><VIcon icon="ri-pencil-line" size="18" class="me-2 text-primary" /></template>
+                  <VListItemTitle>تعديل</VListItemTitle>
+                </VListItem>
+                <VListItem @click="confirmDelete(item.id)">
+                  <template #prepend><VIcon icon="ri-delete-bin-line" size="18" class="me-2 text-error" /></template>
+                  <VListItemTitle class="text-error">حذف</VListItemTitle>
+                </VListItem>
+              </VList>
+            </VMenu>
+          </template>
+        </VDataTableServer>
       </VCard>
     </VCol>
   </VRow>

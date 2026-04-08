@@ -5,21 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Http\Resources\CouponResource;
+use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CouponController extends Controller
 {
+    use VuetifyTrait;
+
     // ─── Admin: List Coupons ──────────────────────────────────────
     public function index(Request $request)
     {
         $query = Coupon::withCount('usages');
 
-        if ($request->filled('search')) {
-            $query->where('code', 'like', '%' . $request->search . '%');
-        }
-
-        $coupons = $query->latest()->paginate($request->get('per_page', 15));
+        $coupons = $this->scopeDataTable(
+            $query, $request,
+            searchableColumns: ['code'],
+            allowedSortColumns: ['code', 'value', 'used_count', 'expires_at', 'created_at']
+        );
 
         return CouponResource::collection($coupons)
             ->additional(['has_more' => $coupons->hasMorePages()]);
