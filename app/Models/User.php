@@ -49,6 +49,11 @@ class User extends Authenticatable
         return $this->belongsTo(Area::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     // ---- Accessors ----
     public function getFullNameAttribute(): string
     {
