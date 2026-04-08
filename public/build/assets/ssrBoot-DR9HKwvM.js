@@ -1,0 +1,1 @@
+import{A as e,at as t,et as n,rt as r}from"./runtime-core.esm-bundler-D-CWpDMB.js";function i(){let i=r(!1);return e(()=>{window.requestAnimationFrame(()=>{i.value=!0})}),{ssrBootStyles:t(()=>i.value?void 0:{transition:`none !important`}),isBooted:n(i)}}export{i as t};

@@ -1,58 +1,33 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { useTheme } from 'vuetify'
-
-import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
-import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
-import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
-import authV1Tree from '@images/pages/auth-v1-tree.png'
 
 const router = useRouter()
 const route  = useRoute()
-const vuetifyTheme = useTheme()
 
-const form = ref({
-  email: '',
-  password: '',
-})
-
-const authThemeMask = computed(() => {
-  return vuetifyTheme.global.name.value === 'light'
-    ? authV1MaskLight
-    : authV1MaskDark
-})
-
+const form = ref({ email: '', password: '' })
 const isPasswordVisible = ref(false)
 const isLoading = ref(false)
-const errorMsg = ref('')
+const errorMsg  = ref('')
+const formRef   = ref()
 
 const rules = {
   required: (v: string) => !!v || 'هذا الحقل مطلوب',
-  email: (v: string) => /.+@.+\..+/.test(v) || 'البريد الإلكتروني غير صحيح',
+  email:    (v: string) => /.+@.+\..+/.test(v) || 'البريد الإلكتروني غير صحيح',
 }
-
-const formRef = ref()
 
 const handleLogin = async () => {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
   isLoading.value = true
-  errorMsg.value = ''
+  errorMsg.value  = ''
 
   try {
     const response = await fetch('/api/admin/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        email: form.value.email,
-        password: form.value.password,
-      }),
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ email: form.value.email, password: form.value.password }),
     })
-
     const data = await response.json()
 
     if (response.ok && data.success) {
@@ -72,147 +47,269 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="auth-wrapper d-flex align-center justify-center pa-4">
-    <VCard
-      class="auth-card pa-6 pt-8"
-      max-width="460"
-      rounded="xl"
-      elevation="8"
-    >
-      <!-- Logo + Brand -->
-      <VCardItem class="justify-center pb-2">
-        <RouterLink
-          to="/"
-          class="d-flex flex-column align-center gap-2 text-decoration-none"
-        >
-          <div class="brand-icon-wrapper">
-            <VIcon
-              icon="ri-water-flash-line"
-              size="48"
-              color="primary"
-            />
-          </div>
-          <h2 class="font-weight-bold text-h5 text-primary">
-            امواج ديالى
-          </h2>
-          <span class="text-caption text-medium-emphasis">متجر مياه الشرب</span>
-        </RouterLink>
-      </VCardItem>
+  <div class="login-page">
 
-      <VDivider class="my-4" />
+    <!-- ═══ Branding Panel (left on desktop, top on mobile) ═══ -->
+    <div class="brand-panel d-flex flex-column align-center justify-center">
+      <!-- Decorative circles -->
+      <div class="deco-circle deco-circle-1" />
+      <div class="deco-circle deco-circle-2" />
+      <div class="deco-circle deco-circle-3" />
 
-      <!-- Welcome Text -->
-      <VCardText class="pt-2 pb-4 text-center">
-        <h4 class="text-h6 font-weight-bold mb-1">
-          أهلاً وسهلاً 👋
-        </h4>
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          سجّل دخولك للوصول إلى لوحة التحكم
+      <div class="brand-content text-center">
+        <img src="/logo.png" alt="امواج ديالى" class="brand-logo mb-6" />
+        <h1 class="brand-title">معمل امواج ديالى</h1>
+        <p class="brand-subtitle">لإنتاج وتعبئة المياه</p>
+
+        <div class="brand-divider my-6" />
+
+        <p class="brand-desc">
+          لوحة التحكم الإدارية<br />
+          <span>إدارة المنتجات · الطلبات · الزبائن</span>
         </p>
-      </VCardText>
 
-      <!-- Form -->
-      <VCardText>
+        <!-- Stats row -->
+        <div class="brand-stats d-flex justify-center gap-6 mt-8">
+          <div class="stat-item text-center">
+            <div class="stat-icon"><VIcon icon="ri-shopping-cart-2-line" size="22" /></div>
+            <div class="stat-label">الطلبات</div>
+          </div>
+          <div class="stat-sep" />
+          <div class="stat-item text-center">
+            <div class="stat-icon"><VIcon icon="ri-box-3-line" size="22" /></div>
+            <div class="stat-label">المنتجات</div>
+          </div>
+          <div class="stat-sep" />
+          <div class="stat-item text-center">
+            <div class="stat-icon"><VIcon icon="ri-group-line" size="22" /></div>
+            <div class="stat-label">الزبائن</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Form Panel (right) ═══ -->
+    <div class="form-panel d-flex flex-column align-center justify-center">
+      <div class="form-wrapper">
+
+        <!-- Mobile logo -->
+        <div class="mobile-logo d-flex d-md-none flex-column align-center mb-6">
+          <img src="/logo.png" alt="امواج ديالى" style="width:80px;" />
+          <h2 class="mt-2 font-weight-bold text-primary">معمل امواج ديالى</h2>
+        </div>
+
+        <!-- Heading -->
+        <div class="mb-7">
+          <h2 class="form-heading">تسجيل الدخول</h2>
+          <p class="form-subheading">أدخل بياناتك للوصول إلى لوحة التحكم</p>
+        </div>
+
+        <!-- Error -->
+        <VAlert
+          v-if="errorMsg"
+          type="error"
+          variant="tonal"
+          density="compact"
+          rounded="lg"
+          class="mb-5"
+          closable
+          @click:close="errorMsg = ''"
+        >
+          {{ errorMsg }}
+        </VAlert>
+
+        <!-- Form -->
         <VForm ref="formRef" @submit.prevent="handleLogin">
-          <VRow>
-            <!-- Alert Error -->
-            <VCol v-if="errorMsg" cols="12">
-              <VAlert
-                type="error"
-                variant="tonal"
-                density="compact"
-              >
-                {{ errorMsg }}
-              </VAlert>
-            </VCol>
 
-            <!-- Email -->
-            <VCol cols="12">
-              <VTextField
-                v-model="form.email"
-                label="البريد الإلكتروني"
-                placeholder="admin@amwajdiyala.com"
-                type="email"
-                prepend-inner-icon="ri-mail-line"
-                variant="outlined"
-                density="comfortable"
-                dir="ltr"
-                :rules="[rules.required, rules.email]"
-              />
-            </VCol>
+          <div class="field-label">البريد الإلكتروني</div>
+          <VTextField
+            v-model="form.email"
+            placeholder="admin@amwajdiyala.com"
+            type="email"
+            prepend-inner-icon="ri-mail-line"
+            variant="outlined"
+            density="comfortable"
+            rounded="lg"
+            dir="ltr"
+            class="mb-4"
+            :rules="[rules.required, rules.email]"
+          />
 
-            <!-- Password -->
-            <VCol cols="12">
-              <VTextField
-                v-model="form.password"
-                label="كلمة المرور"
-                placeholder="············"
-                :type="isPasswordVisible ? 'text' : 'password'"
-                autocomplete="current-password"
-                prepend-inner-icon="ri-lock-line"
-                :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
-                variant="outlined"
-                density="comfortable"
-                dir="ltr"
-                :rules="[rules.required]"
-                @click:append-inner="isPasswordVisible = !isPasswordVisible"
-              />
+          <div class="field-label">كلمة المرور</div>
+          <VTextField
+            v-model="form.password"
+            placeholder="············"
+            :type="isPasswordVisible ? 'text' : 'password'"
+            autocomplete="current-password"
+            prepend-inner-icon="ri-lock-line"
+            :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
+            variant="outlined"
+            density="comfortable"
+            rounded="lg"
+            dir="ltr"
+            class="mb-6"
+            :rules="[rules.required]"
+            @click:append-inner="isPasswordVisible = !isPasswordVisible"
+          />
 
-              <!-- Login Button -->
-              <VBtn
-                block
-                type="submit"
-                size="large"
-                class="mt-4"
-                :loading="isLoading"
-                prepend-icon="ri-login-box-line"
-              >
-                تسجيل الدخول
-              </VBtn>
-            </VCol>
-          </VRow>
+          <VBtn
+            block
+            type="submit"
+            size="x-large"
+            rounded="lg"
+            :loading="isLoading"
+            class="login-btn"
+          >
+            <VIcon start icon="ri-login-box-line" />
+            تسجيل الدخول
+          </VBtn>
         </VForm>
-      </VCardText>
 
-      <!-- Footer -->
-      <VCardText class="text-center pt-0">
-        <span class="text-body-2 text-medium-emphasis">© {{ new Date().getFullYear() }} امواج ديالى — جميع الحقوق محفوظة</span>
-      </VCardText>
-    </VCard>
+        <p class="text-center text-caption text-medium-emphasis mt-8">
+          © {{ new Date().getFullYear() }} معمل امواج ديالى — جميع الحقوق محفوظة
+        </p>
+      </div>
+    </div>
 
-    <VImg
-      class="auth-footer-start-tree d-none d-md-block"
-      :src="authV1Tree"
-      :width="250"
-    />
-
-    <VImg
-      :src="authV1Tree2"
-      class="auth-footer-end-tree d-none d-md-block"
-      :width="350"
-    />
-
-    <!-- bg img -->
-    <VImg
-      class="auth-footer-mask d-none d-md-block"
-      :src="authThemeMask"
-    />
   </div>
 </template>
 
-<style lang="scss">
-@use "@core-scss/template/pages/page-auth";
+<style scoped>
+/* ── Layout ────────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+}
 
-.brand-icon-wrapper {
-  background: rgba(var(--v-theme-primary), 0.1);
+/* ── Brand Panel ───────────────────────────────────────── */
+.brand-panel {
+  position: relative;
+  width: 45%;
+  min-height: 100vh;
+  background: linear-gradient(145deg, #0d47a1 0%, #1565c0 40%, #1b7a3e 100%);
+  overflow: hidden;
+  padding: 40px;
+}
+
+.deco-circle {
+  position: absolute;
   border-radius: 50%;
-  padding: 16px;
+  background: rgba(255,255,255,0.06);
+}
+.deco-circle-1 { width: 340px; height: 340px; top: -80px;  right: -80px; }
+.deco-circle-2 { width: 220px; height: 220px; bottom: 60px; left: -60px; }
+.deco-circle-3 { width: 120px; height: 120px; bottom: 180px; right: 40px; background: rgba(255,255,255,0.04); }
+
+.brand-content { position: relative; z-index: 1; }
+
+.brand-logo {
+  width: 130px;
+  height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+}
+
+.brand-title {
+  color: #fff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.brand-subtitle {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.brand-divider {
+  width: 60px;
+  height: 3px;
+  background: rgba(255,255,255,0.35);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+.brand-desc {
+  color: rgba(255,255,255,0.85);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.brand-desc span {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+}
+
+.stat-item .stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
+  margin: 0 auto 6px;
+}
+.stat-label {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.78rem;
+}
+.stat-sep {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+  align-self: center;
 }
 
-.auth-card {
-  backdrop-filter: blur(10px);
+/* ── Form Panel ────────────────────────────────────────── */
+.form-panel {
+  flex: 1;
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 40px 20px;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0d47a1;
+  margin-bottom: 6px;
+}
+
+.form-subheading {
+  color: #78909c;
+  font-size: 0.92rem;
+}
+
+.field-label {
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: #37474f;
+  margin-bottom: 6px;
+}
+
+.login-btn {
+  background: linear-gradient(90deg, #0d47a1, #1b7a3e) !important;
+  color: #fff !important;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 20px rgba(13,71,161,0.35) !important;
+  transition: opacity 0.2s;
+}
+.login-btn:hover { opacity: 0.92; }
+
+/* ── Mobile ────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .login-page   { flex-direction: column; }
+  .brand-panel  { display: none !important; }
+  .form-panel   { min-height: 100vh; background: #fff; }
 }
 </style>
