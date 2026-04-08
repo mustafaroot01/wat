@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { usePagination } from '@/composables/usePagination'
 import { apiFetch } from '@/utils/apiFetch'
+import { formatIQD } from '@/utils/currency'
 
 interface Product {
   id: number | null;
@@ -273,7 +274,7 @@ onMounted(() => {
                     </VChip>
                   </div>
                 </td>
-                <td class="font-weight-bold text-primary">{{ item.price }} د.ع</td>
+                <td class="font-weight-bold text-primary">{{ formatIQD(item.price) }}</td>
                 <td class="text-center">
                   <VSwitch
                     v-model="item.is_active"

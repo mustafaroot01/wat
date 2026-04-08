@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { usePagination } from '@/composables/usePagination'
 import { apiFetch } from '@/utils/apiFetch'
+import { formatIQD } from '@/utils/currency'
 
 interface Coupon {
   id: number | null
@@ -161,7 +162,7 @@ onMounted(() => fetchCoupons(1))
                   </VChip>
                 </td>
                 <td class="font-weight-bold">
-                  {{ item.type === 'percentage' ? item.value + '%' : item.value.toLocaleString() + ' د.ع' }}
+                  {{ item.type === 'percentage' ? item.value + '%' : formatIQD(item.value) }}
                 </td>
                 <td class="text-center">
                   <VBtn variant="text" size="small" color="secondary" @click="openUsage(item)">
@@ -252,7 +253,7 @@ onMounted(() => fetchCoupons(1))
           <div>
             <p class="text-body-2 mb-0 font-weight-medium">معاينة الخصم</p>
             <p class="text-h6 font-weight-bold mb-0">
-              {{ formData.type === 'percentage' ? formData.value + '% خصم' : formData.value.toLocaleString() + ' د.ع خصم ثابت' }}
+              {{ formData.type === 'percentage' ? formData.value + '% خصم' : formatIQD(formData.value) + ' خصم ثابت' }}
             </p>
           </div>
         </VCard>
@@ -435,7 +436,7 @@ onMounted(() => fetchCoupons(1))
               <td class="text-medium-emphasis">{{ i + 1 }}</td>
               <td class="font-weight-medium">{{ u.user_name }}</td>
               <td>{{ u.user_phone }}</td>
-              <td class="text-success font-weight-bold">{{ u.discount_amount.toLocaleString() }} د.ع</td>
+              <td class="text-success font-weight-bold">{{ formatIQD(u.discount_amount) }}</td>
               <td class="text-caption text-medium-emphasis">{{ new Date(u.used_at).toLocaleDateString('ar-IQ') }}</td>
             </tr>
           </tbody>
