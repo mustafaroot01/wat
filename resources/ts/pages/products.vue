@@ -12,6 +12,10 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  discount_percentage: number;
+  discounted_price?: number | null;
+  has_discount?: boolean;
+  in_stock: boolean;
   is_active: boolean;
   sort_order: number;
   image?: any;
@@ -33,7 +37,8 @@ const {
 const headers = [
   { title: 'المنتج',           key: 'name',      align: 'start'  as const, sortable: true  },
   { title: 'التصنيف / الشركة', key: 'category',  align: 'start'  as const, sortable: false },
-  { title: 'السعر',            key: 'price',     align: 'start'  as const, sortable: true  },
+  { title: 'السعر / الخصم',   key: 'price',     align: 'start'  as const, sortable: true  },
+  { title: 'المخزون',          key: 'in_stock',  align: 'center' as const, sortable: false },
   { title: 'الحالة',           key: 'is_active', align: 'center' as const, sortable: false },
   { title: 'الإجراءات',        key: 'actions',   align: 'center' as const, sortable: false },
 ]
@@ -77,6 +82,8 @@ const formData = ref<Product>({
   name: '',
   description: '',
   price: 0,
+  discount_percentage: 0,
+  in_stock: true,
   is_active: true,
   sort_order: 0,
   image: null,
@@ -122,8 +129,8 @@ const openAddDialog = () => {
   dialogMode.value = 'add'
   formData.value = { 
     id: null, category_id: null, filter_id: null, brand_id: null, name: '', 
-    description: '', price: 0, is_active: true, sort_order: 0, 
-    image: null, image_url: null 
+    description: '', price: 0, discount_percentage: 0, in_stock: true,
+    is_active: true, sort_order: 0, image: null, image_url: null 
   }
   filters.value = []
   imagePreviewUrl.value = null
@@ -146,6 +153,8 @@ const saveProduct = async () => {
   payload.append('name', formData.value.name)
   payload.append('description', formData.value.description || '')
   payload.append('price', String(formData.value.price))
+  payload.append('discount_percentage', String(formData.value.discount_percentage ?? 0))
+  payload.append('in_stock', formData.value.in_stock ? '1' : '0')
   payload.append('is_active', formData.value.is_active ? '1' : '0')
   payload.append('sort_order', String(formData.value.sort_order))
   
@@ -272,7 +281,26 @@ onMounted(() => {
           </template>
 
           <template #item.price="{ item }">
-            <span class="font-weight-bold text-primary">{{ formatIQD(item.price) }}</span>
+            <div class="d-flex flex-column gap-1">
+              <div class="d-flex align-center gap-2">
+                <span :class="item.has_discount ? 'text-decoration-line-through text-medium-emphasis text-caption' : 'font-weight-bold text-primary'">
+                  {{ formatIQD(item.price) }}
+                </span>
+                <VChip v-if="item.has_discount" color="error" size="x-small" variant="flat">
+                  وفّر {{ item.discount_percentage }}%
+                </VChip>
+              </div>
+              <span v-if="item.has_discount" class="font-weight-bold text-success">
+                {{ formatIQD(item.discounted_price) }}
+              </span>
+            </div>
+          </template>
+
+          <template #item.in_stock="{ item }">
+            <VChip :color="item.in_stock ? 'success' : 'warning'" size="x-small" variant="tonal">
+              <VIcon :icon="item.in_stock ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'" size="12" start />
+              {{ item.in_stock ? 'متوفر' : 'نافذ' }}
+            </VChip>
           </template>
 
           <template #item.is_active="{ item }">
@@ -382,15 +410,34 @@ onMounted(() => {
           </VCol>
 
           <VCol cols="12" md="6">
-            <VTextField v-model.number="formData.price" label="السعر (د.ع)" type="number" variant="outlined" color="primary" />
+            <VTextField v-model.number="formData.price" label="السعر الأصلي (د.ع)" type="number" variant="outlined" color="primary" />
+          </VCol>
+
+          <VCol cols="12" md="6">
+            <VTextField
+              v-model.number="formData.discount_percentage"
+              label="نسبة الخصم (%)"
+              type="number"
+              variant="outlined"
+              color="error"
+              :hint="formData.discount_percentage > 0 ? 'السعر بعد الخصم: ' + formatIQD(formData.price * (1 - formData.discount_percentage / 100)) : 'أدخل 0 لإلغاء الخصم'"
+              persistent-hint
+              :min="0"
+              :max="99"
+            />
           </VCol>
 
           <VCol cols="12" md="6">
              <VTextField v-model.number="formData.sort_order" label="الترتيب" type="number" variant="outlined" color="primary" />
           </VCol>
 
+          <VCol cols="12" md="6" class="d-flex align-center gap-4">
+            <VSwitch v-model="formData.in_stock" :label="formData.in_stock ? 'متوفر في المخزون' : 'نافذ (غير متوفر)'"
+              color="success" hide-details />
+          </VCol>
+
           <VCol cols="12">
-            <VSwitch v-model="formData.is_active" label="المنتج متاح للبيع" color="success" hide-details />
+            <VSwitch v-model="formData.is_active" label="المنتج متاح للعرض" color="primary" hide-details />
           </VCol>
         </VRow>
       </VCardText>

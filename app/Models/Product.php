@@ -13,15 +13,19 @@ class Product extends Model
         'name',
         'description',
         'price',
+        'discount_percentage',
+        'in_stock',
         'image',
         'is_active',
         'sort_order',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'price' => 'decimal:2',
-        'brand_id' => 'integer',
+        'is_active'            => 'boolean',
+        'in_stock'             => 'boolean',
+        'price'                => 'decimal:2',
+        'discount_percentage'  => 'integer',
+        'brand_id'             => 'integer',
     ];
 
     // --- Scopes ---
