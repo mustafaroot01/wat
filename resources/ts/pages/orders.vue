@@ -116,167 +116,8 @@ const openInvoice = async (order: Order) => {
   }
 }
 
-const printInvoice = () => {
-  if (!invoiceOrder.value) return
+const printInvoice = () => window.print()
 
-  const order    = invoiceOrder.value
-  const settings = invoiceSettings.value
-
-  const origin = window.location.origin
-  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(invoiceUrl(order.invoice_token))}`
-
-  const logoHtml = settings.logo
-    ? `<img src="${origin}/storage/${settings.logo}" style="max-height:55px;max-width:130px;" />`
-    : `<div style="font-size:15pt;font-weight:700;color:#0d47a1;">معمل امواج ديالى</div>`
-
-  const itemsHtml = order.items.map((item, i) => `
-    <tr>
-      <td style="text-align:center;color:#888;">${i + 1}</td>
-      <td style="font-weight:600;">${item.product_name}${item.sku ? `<br><span style="font-size:8pt;color:#aaa;">${item.sku}</span>` : ''}</td>
-      <td style="text-align:center;">${formatIQD(item.unit_price)}</td>
-      <td style="text-align:center;font-weight:700;">× ${item.quantity}</td>
-      <td style="text-align:center;font-weight:700;color:#1b5e20;">${formatIQD(item.total_price)}</td>
-    </tr>`).join('')
-
-  const discountRow = parseFloat(order.discount_amount) > 0
-    ? `<tr style="color:#2e7d32;">
-        <td colspan="3" style="text-align:right;padding:5px 8px;">الخصم${order.coupon ? ` (${order.coupon.code})` : ''}</td>
-        <td colspan="2" style="text-align:center;padding:5px 8px;font-weight:700;">- ${formatIQD(order.discount_amount)}</td>
-       </tr>`
-    : `<tr style="color:#aaa;font-style:italic;">
-        <td colspan="3" style="text-align:right;padding:5px 8px;">الخصم</td>
-        <td colspan="2" style="text-align:center;padding:5px 8px;">لا يوجد خصم</td>
-       </tr>`
-
-  const html = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>فاتورة ${order.invoice_code}</title>
-<style>
-  @page { size: A5 portrait; margin: 8mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Tahoma, Arial, sans-serif; color: #111; font-size: 10.5pt; background:#fff; }
-  .wrap { padding: 2mm; }
-
-  /* Header */
-  .hd { display:flex; justify-content:space-between; align-items:flex-start;
-        background:linear-gradient(135deg,#0d47a1,#1565c0 55%,#1b7a3e);
-        color:#fff; padding:10px 14px; border-radius:8px 8px 0 0; }
-  .hd-brand { display:flex; align-items:center; gap:10px; }
-  .hd-brand-name { font-size:13pt; font-weight:700; }
-  .hd-brand-sub  { font-size:8pt; color:rgba(255,255,255,.75); margin-top:2px; }
-  .hd-meta { text-align:start; }
-  .hd-code { font-size:12pt; font-weight:700; font-family:monospace; }
-  .hd-date { font-size:8pt; color:rgba(255,255,255,.75); margin-top:3px; }
-
-  /* Info row */
-  .info-row { display:flex; gap:10px; padding:10px 14px; border:1px solid #e0e0e0;
-              border-top:none; background:#fafafa; }
-  .info-tbl { flex:1; border-collapse:collapse; font-size:9.5pt; }
-  .info-tbl td { padding:3px 5px; vertical-align:top; }
-  .lbl { color:#888; width:110px; white-space:nowrap; }
-  .val { font-weight:600; }
-
-  /* Items */
-  .sec-title { font-size:9pt; font-weight:700; color:#1565c0;
-               border-bottom:2px solid #e3f0ff; padding:6px 14px 4px;
-               background:#f5f8ff; }
-  .items-tbl { width:100%; border-collapse:collapse; font-size:9.5pt; }
-  .items-tbl thead tr { background:#1565c0; color:#fff; }
-  .items-tbl thead th { padding:7px 8px; font-size:8.5pt; }
-  .items-tbl tbody tr:nth-child(even) { background:#f8faff; }
-  .items-tbl tbody td { padding:6px 8px; border-bottom:1px solid #f0f0f0; }
-
-  /* Totals */
-  .totals-wrap { display:flex; justify-content:flex-start; padding:10px 14px 0; }
-  .totals-tbl { border-collapse:collapse; min-width:240px;
-                border:1px solid #e3f0ff; border-radius:8px; overflow:hidden; font-size:9.5pt; }
-  .totals-tbl td { padding:5px 12px; }
-  .final-row td { font-size:11pt; font-weight:800; color:#1565c0;
-                  border-top:2px solid #e3f0ff; }
-
-  /* Footer */
-  .foot { background:linear-gradient(135deg,#0d47a1,#1565c0 55%,#1b7a3e);
-          color:#fff; text-align:center; padding:9px; margin-top:10px;
-          border-radius:0 0 8px 8px; font-size:9pt; }
-  .foot-sub { color:rgba(255,255,255,.65); font-size:7.5pt; margin-top:3px; }
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <div class="hd">
-    <div class="hd-brand">
-      ${logoHtml}
-      <div>
-        <div class="hd-brand-name">معمل امواج ديالى</div>
-        <div class="hd-brand-sub">لإنتاج وتعبئة المياه</div>
-        ${settings.store_phone ? `<div class="hd-brand-sub" dir="ltr">${settings.store_phone}</div>` : ''}
-      </div>
-    </div>
-    <div class="hd-meta">
-      <div class="hd-code">${order.invoice_code}</div>
-      <div class="hd-date">${formatDate(order.created_at)}</div>
-    </div>
-  </div>
-
-  <div class="info-row">
-    <table class="info-tbl">
-      <tr><td class="lbl">الزبون</td><td class="val">${order.customer_name}</td></tr>
-      <tr><td class="lbl">الهاتف</td><td class="val" dir="ltr">${order.customer_phone}</td></tr>
-      <tr><td class="lbl">المحافظة</td><td class="val">${order.province}</td></tr>
-      <tr><td class="lbl">القضاء / المنطقة</td><td class="val">${order.district}</td></tr>
-      <tr><td class="lbl">أقرب نقطة دالة</td><td class="val">${order.nearest_landmark || '—'}</td></tr>
-      ${order.notes ? `<tr><td class="lbl">ملاحظات</td><td class="val">${order.notes}</td></tr>` : ''}
-    </table>
-    <div style="text-align:center;flex-shrink:0;">
-      <img src="${qrUrl}" width="90" height="90" style="border:2px solid #e0e0e0;border-radius:6px;" />
-      <div style="font-size:7pt;color:#aaa;margin-top:3px;">مسح للفاتورة</div>
-    </div>
-  </div>
-
-  <div class="sec-title">تفاصيل الطلب</div>
-  <table class="items-tbl">
-    <thead>
-      <tr>
-        <th style="width:30px;">#</th>
-        <th style="text-align:right;">المنتج</th>
-        <th style="width:90px;">سعر الوحدة</th>
-        <th style="width:55px;">الكمية</th>
-        <th style="width:100px;">المجموع</th>
-      </tr>
-    </thead>
-    <tbody>${itemsHtml}</tbody>
-  </table>
-
-  <div class="totals-wrap">
-    <table class="totals-tbl">
-      <tr><td>المجموع</td><td style="font-weight:600;text-align:center;">${formatIQD(order.total_amount)}</td></tr>
-      ${discountRow.replace(/<tr[^>]*>|<\/tr>|<td[^>]*>|<\/td>/g, m => {
-        const map: Record<string,string> = {'<tr style="color:#2e7d32;">':'<tr>','<tr style="color:#aaa;font-style:italic;">':'<tr style="color:#aaa;font-style:italic;">'}
-        return map[m] ?? m
-      })}
-      <tr class="final-row"><td>الإجمالي النهائي</td><td style="text-align:center;">${formatIQD(order.final_amount)}</td></tr>
-    </table>
-  </div>
-
-  <div class="foot">
-    <div>${settings.thank_you_message || 'شكراً لثقتكم بمعمل امواج ديالى'}</div>
-    <div class="foot-sub">معمل امواج ديالى — ديالى، العراق</div>
-  </div>
-
-</div>
-</body>
-</html>`
-
-  const win = window.open('', '_blank')
-  if (!win) { alert('يرجى السماح للنوافذ المنبثقة في المتصفح'); return }
-  win.document.write(html)
-  win.document.close()
-  win.focus()
-  win.print()
-}
 const invoiceUrl = (token: string) =>
   `${window.location.origin}/invoice/${token}`
 
@@ -570,15 +411,8 @@ const copyPhone = async (phone: string) => {
             {{ invoiceOrder?.invoice_code || 'الفاتورة' }}
           </span>
           <div class="d-flex gap-2">
-            <VBtn
-              v-if="invoiceOrder"
-              color="primary" variant="elevated" rounded="lg"
-              prepend-icon="ri-printer-line"
-              :href="invoiceUrl(invoiceOrder.invoice_token)"
-              target="_blank"
-              rel="noopener"
-            >
-              فتح وطباعة
+            <VBtn color="primary" variant="elevated" rounded="lg" prepend-icon="ri-printer-line" @click="printInvoice">
+              طباعة PDF
             </VBtn>
             <VBtn icon variant="text" @click="invoiceDialog = false"><VIcon>ri-close-line</VIcon></VBtn>
           </div>
@@ -647,7 +481,7 @@ const copyPhone = async (phone: string) => {
               <tr v-for="(item, i) in invoiceOrder.items" :key="item.id">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.product_name }}</td>
-                <td class="text-caption text-medium-emphasis">{{ item.sku ?? '—' }}</td>
+                <td class="text-caption text-medium-emphasis">{{ item.sku || '—' }}</td>
                 <td>{{ formatIQD(item.unit_price) }}</td>
                 <td>{{ item.quantity }}</td>
                 <td class="font-weight-medium">{{ formatIQD(item.total_price) }}</td>
@@ -684,8 +518,17 @@ const copyPhone = async (phone: string) => {
 </template>
 
 <style>
-/* 
-  قمنا بنقل وظيفة الطباعة لتستخدم iframe مخفي،
-  لذا لا حاجة لميديا كويري الطباعة المعقدة هنا.
-*/
+@media print {
+  @page { size: A5 portrait; margin: 6mm; }
+
+  body > *                          { display: none !important; }
+  .v-overlay-container              { display: block !important; }
+  .v-overlay.v-dialog               { display: block !important; }
+  .v-overlay__content               { display: block !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
+  .v-card                           { box-shadow: none !important; }
+  .no-print                         { display: none !important; }
+
+  #invoice-print-area               { padding: 0 !important; }
+  #invoice-print-area .v-divider    { margin: 6px 0 !important; }
+}
 </style>

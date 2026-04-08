@@ -1,1 +1,0 @@
-import{I as e,M as t,_ as n,p as r}from"./runtime-core.esm-bundler-D-CWpDMB.js";import{u as i}from"./main-BR2WIZmV.js";var a={},o={class:`layout-wrapper layout-blank`,"data-allow-mismatch":``};function s(i,a){let s=e(`RouterView`);return t(),r(`div`,o,[n(s)])}var c=i(a,[[`render`,s]]);export{c as default};
