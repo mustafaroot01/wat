@@ -222,16 +222,21 @@ const toggleActive = async (item: Product) => {
 }
 
 const toggleInStock = async (item: Product) => {
+  // Optimistic update
+  item.in_stock = !item.in_stock
+  
   try {
     const res = await apiFetch(`/api/admin/products/${item.id}/toggle-stock`, { method: 'PATCH' })
-    if (res.ok) {
-      const data = await res.json()
-      const index = products.value.findIndex(p => p.id === item.id)
-      if (index !== -1) products.value[index] = data.data
-    } else {
+    if (!res.ok) {
+      // Revert on error
       item.in_stock = !item.in_stock
+    } else {
+      const data = await res.json()
+      // Make sure we update with the server response if needed
+      item.in_stock = data.data.in_stock
     }
   } catch (e) {
+    // Revert on network error
     item.in_stock = !item.in_stock
     console.error(e)
   }
