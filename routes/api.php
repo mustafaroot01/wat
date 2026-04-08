@@ -56,6 +56,14 @@ Route::prefix('admin')->group(function () {
         Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
         Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
         Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
+        // Coupons
+        Route::get('coupons', [\App\Http\Controllers\CouponController::class, 'index']);
+        Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
+        Route::get('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'show']);
+        Route::put('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'update']);
+        Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
+        Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);
+
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
@@ -99,10 +107,16 @@ Route::prefix('app')->group(function () {
         Route::middleware('throttle:otp-verify')->post('forgot-password/verify', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordVerifyAndReset']);
     });
 
+    // Coupons Public API
+    Route::post('coupons/validate', [\App\Http\Controllers\CouponController::class, 'validate']);
+
     // --- Protected Routes ---
     Route::middleware(['auth:sanctum', 'check.account.active'])->group(function () {
         // Logout
         Route::post('auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+
+        // Coupons (apply after order confirmed)
+        Route::post('coupons/apply', [\App\Http\Controllers\CouponController::class, 'apply']);
 
         // Profile
         Route::get('profile', [\App\Http\Controllers\Api\ProfileController::class, 'show']);

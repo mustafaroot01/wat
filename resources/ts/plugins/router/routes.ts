@@ -60,6 +60,10 @@ export const routes = [
         path: 'settings',
         component: () => import('@/pages/settings.vue'),
       },
+      {
+        path: 'coupons',
+        component: () => import('@/pages/coupons.vue'),
+      },
     ],
   },
   {

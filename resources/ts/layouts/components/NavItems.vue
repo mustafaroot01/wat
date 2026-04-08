@@ -95,6 +95,13 @@ import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
   />
   <VerticalNavLink
     :item="{
+      title: 'أكواد الخصم',
+      icon: 'ri-coupon-3-line',
+      to: '/coupons',
+    }"
+  />
+  <VerticalNavLink
+    :item="{
       title: 'الإعدادات العامة',
       icon: 'ri-settings-4-line',
       to: '/settings',
