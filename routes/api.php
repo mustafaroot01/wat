@@ -49,6 +49,7 @@ Route::prefix('admin')->group(function () {
         // Products
         Route::apiResource('products', \App\Http\Controllers\ProductController::class);
         Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
+        Route::patch('products/{product}/toggle-stock', [\App\Http\Controllers\ProductController::class, 'toggleInStock']);
 
         // Customers
         Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);

@@ -119,4 +119,10 @@ class ProductController extends Controller
         $product->update(['is_active' => !$product->is_active]);
         return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
+
+    public function toggleInStock(Product $product)
+    {
+        $product->update(['in_stock' => !$product->in_stock]);
+        return new ProductResource($product->load(['category', 'brand', 'filter']));
+    }
 }

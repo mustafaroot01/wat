@@ -207,13 +207,33 @@ const deleteProduct = async () => {
 
 const toggleActive = async (item: Product) => {
   try {
-    const res = await apiFetch(`/api/admin/products/${item.id}/toggle`, {
-      method: 'PATCH',
-    })
-    if (!res.ok) item.is_active = !item.is_active
-  } catch (error) {
-    console.error('Error toggling active:', error)
+    const res = await apiFetch(`/api/admin/products/${item.id}/toggle`, { method: 'PATCH' })
+    if (res.ok) {
+      const data = await res.json()
+      const index = products.value.findIndex(p => p.id === item.id)
+      if (index !== -1) products.value[index] = data.data
+    } else {
+      item.is_active = !item.is_active
+    }
+  } catch (e) {
     item.is_active = !item.is_active
+    console.error(e)
+  }
+}
+
+const toggleInStock = async (item: Product) => {
+  try {
+    const res = await apiFetch(`/api/admin/products/${item.id}/toggle-stock`, { method: 'PATCH' })
+    if (res.ok) {
+      const data = await res.json()
+      const index = products.value.findIndex(p => p.id === item.id)
+      if (index !== -1) products.value[index] = data.data
+    } else {
+      item.in_stock = !item.in_stock
+    }
+  } catch (e) {
+    item.in_stock = !item.in_stock
+    console.error(e)
   }
 }
 
@@ -297,7 +317,7 @@ onMounted(() => {
           </template>
 
           <template #item.in_stock="{ item }">
-            <VChip :color="item.in_stock ? 'success' : 'warning'" size="x-small" variant="tonal">
+            <VChip :color="item.in_stock ? 'success' : 'warning'" size="x-small" variant="tonal" class="cursor-pointer" @click="toggleInStock(item)">
               <VIcon :icon="item.in_stock ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'" size="12" start />
               {{ item.in_stock ? 'متوفر' : 'نافذ' }}
             </VChip>
