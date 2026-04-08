@@ -13,6 +13,7 @@ interface OrderItem {
   unit_price: string
   quantity: number
   total_price: string
+  product?: { sku: string | null }
 }
 
 interface Order {
@@ -184,10 +185,13 @@ const printPage = () => window.print()
         <!-- Header -->
         <div class="inv-header">
           <div class="inv-brand">
-            <img src="/logo.png" alt="امواج ديالى" class="inv-logo" />
+            <img v-if="settings.logo" :src="`/storage/${settings.logo}`" :alt="settings.store_name" class="inv-logo" />
+            <div v-else class="inv-logo d-flex align-center justify-center font-weight-bold" style="background:rgba(255,255,255,.15);color:#fff;font-size:24px;">
+              {{ (settings.store_name?.charAt(0) || 'م') }}
+            </div>
             <div>
-              <div class="inv-brand-name">معمل امواج ديالى</div>
-              <div class="inv-brand-sub">لإنتاج وتعبئة المياه</div>
+              <div class="inv-brand-name">{{ settings.store_name || 'فاتورة طلب' }}</div>
+              <div v-if="settings.store_address" class="inv-brand-sub">{{ settings.store_address }}</div>
               <div v-if="settings.store_phone" class="inv-brand-sub" dir="ltr">{{ settings.store_phone }}</div>
             </div>
           </div>
@@ -264,7 +268,7 @@ const printPage = () => window.print()
             <tr v-for="(item, i) in order.items" :key="item.id">
               <td class="text-center text-muted">{{ i + 1 }}</td>
               <td class="inv-product-name">{{ item.product_name }}</td>
-              <td class="text-muted inv-sku">{{ item.sku ?? '—' }}</td>
+              <td class="text-muted inv-sku">{{ item.sku || item.product?.sku || '—' }}</td>
               <td class="text-end">{{ formatIQD(item.unit_price) }}</td>
               <td class="text-center inv-qty">× {{ item.quantity }}</td>
               <td class="text-end inv-total-cell">{{ formatIQD(item.total_price) }}</td>
@@ -299,8 +303,8 @@ const printPage = () => window.print()
         <!-- Footer -->
         <div class="inv-footer">
           <div class="inv-footer-wave" />
-          <div class="inv-footer-text">{{ settings.thank_you_message || 'شكراً لثقتكم بمعمل امواج ديالى' }}</div>
-          <div class="inv-footer-copy">معمل امواج ديالى — ديالى، العراق</div>
+          <div class="inv-footer-text">{{ settings.thank_you_message || 'شكراً لثقتكم بنا' }}</div>
+          <div class="inv-footer-copy">{{ settings.store_name || 'المتجر' }} — {{ settings.store_address || 'العراق' }}</div>
         </div>
 
       </div>
