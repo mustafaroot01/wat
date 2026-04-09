@@ -40,7 +40,7 @@ class CustomerController extends Controller
     public function orders(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $query = $user->orders()->with('items.product');
+        $query = \App\Models\Order::where('user_id', $user->id)->with(['items', 'coupon']);
 
         $orders = $this->scopeDataTable(
             $query, $request,
