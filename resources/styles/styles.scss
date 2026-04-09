@@ -1,1 +1,113 @@
 // Write your overrides
+
+// ─── Brand Colors ───────────────────────────────────────────────────
+$brand-blue:       #4472C4;
+$brand-blue-dark:  #3A5FA0;
+$brand-green:      #2E8B2E;
+$nav-bg:           #162038;   // Dark navy sidebar background
+$nav-text:         #CBD5E8;   // Soft white-blue text
+$nav-text-strong:  #EEF2FA;   // Strong white text (for active / hover)
+
+// ─── Sidebar (Vertical Nav) ──────────────────────────────────────────
+.layout-nav-type-vertical .layout-vertical-nav {
+  background-color: $nav-bg !important;
+  border-inline-end: none !important;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+
+  // Logo title
+  h1, .app-logo h1 {
+    color: $nav-text-strong !important;
+    font-size: 1rem !important;
+  }
+
+  // Section titles (labels like "الإدارة")
+  .nav-section-title .title-text {
+    color: rgba($nav-text, 0.6) !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.08em;
+  }
+
+  // All nav item labels
+  .nav-item-title {
+    color: $nav-text !important;
+    font-size: 0.9rem !important;
+  }
+
+  // Nav item icons
+  .nav-item-icon {
+    color: rgba($nav-text, 0.7) !important;
+  }
+
+  // Hover state
+  .nav-link > a:not(.router-link-active):hover,
+  .nav-group > .nav-group-label:hover {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    border-radius: 8px !important;
+
+    .nav-item-title,
+    .nav-item-icon {
+      color: $nav-text-strong !important;
+    }
+  }
+
+  // Active / current route
+  .nav-link > .router-link-exact-active,
+  .nav-link > .router-link-active {
+    background: linear-gradient(135deg, $brand-blue 0%, $brand-blue-dark 100%) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba($brand-blue, 0.4) !important;
+
+    .nav-item-title {
+      color: #fff !important;
+      font-weight: 600 !important;
+    }
+
+    .nav-item-icon {
+      color: #fff !important;
+    }
+  }
+
+  // Open nav group
+  .nav-group.active > .nav-group-label,
+  .nav-group.open > .nav-group-label {
+    .nav-item-title {
+      color: $brand-blue !important;
+      font-weight: 600 !important;
+    }
+    .nav-item-icon {
+      color: $brand-blue !important;
+    }
+  }
+
+  // Perfect scrollbar thumb
+  .ps__thumb-y {
+    background-color: rgba($brand-blue, 0.5) !important;
+  }
+}
+
+// ─── Navbar (Top bar) ───────────────────────────────────────────────
+.layout-navbar {
+  .v-toolbar {
+    background: linear-gradient(90deg, $brand-blue 0%, darken($brand-blue, 8%) 100%) !important;
+    box-shadow: 0 2px 12px rgba($brand-blue, 0.3) !important;
+
+    // All icons in navbar
+    .v-icon, .v-btn__content {
+      color: #fff !important;
+    }
+    // User name / text
+    .v-btn__content span, p, .v-avatar {
+      color: #fff !important;
+    }
+  }
+}
+
+// ─── Dashboard Cards ────────────────────────────────────────────────
+.v-card {
+  border-radius: 12px !important;
+}
+
+// Stats cards top border accent
+.v-card.border-s-xl {
+  border-inline-start-color: $brand-blue !important;
+}
