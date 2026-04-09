@@ -106,6 +106,11 @@ const showDialog = ref(false)
 const dialogMode = ref('add')
 const confirmDeleteDialog = ref(false)
 const currProductId = ref<number | null>(null)
+const isSaving = ref(false)
+const formErrors = ref<Record<string, string>>({})
+const generalError = ref('')
+
+const fieldError = (key: string) => formErrors.value[key]?.[0] ?? formErrors.value[key] ?? ''
 
 // Image Preview
 const imagePreviewUrl = ref<string | null>(null)
@@ -171,6 +176,8 @@ const openAddDialog = () => {
   }
   filters.value = []
   imagePreviewUrl.value = null
+  formErrors.value = {}
+  generalError.value = ''
   showDialog.value = true
 }
 
@@ -178,11 +185,17 @@ const openEditDialog = (item: Product) => {
   dialogMode.value = 'edit'
   formData.value = { ...item, image: null }
   imagePreviewUrl.value = item.image_url
+  formErrors.value = {}
+  generalError.value = ''
   if (item.category_id) loadFiltersForCategory(item.category_id)
   showDialog.value = true
 }
 
 const saveProduct = async () => {
+  formErrors.value = {}
+  generalError.value = ''
+  isSaving.value = true
+
   const payload = new FormData()
   if (formData.value.sku) payload.append('sku', formData.value.sku)
   payload.append('category_id', String(formData.value.category_id || ''))
@@ -195,31 +208,27 @@ const saveProduct = async () => {
   payload.append('in_stock', formData.value.in_stock ? '1' : '0')
   payload.append('is_active', formData.value.is_active ? '1' : '0')
   payload.append('sort_order', String(formData.value.sort_order))
-  
-  if (formData.value.image instanceof File) {
-    payload.append('image', formData.value.image)
-  }
+  if (formData.value.image instanceof File) payload.append('image', formData.value.image)
 
   try {
     const url = dialogMode.value === 'add' ? '/api/admin/products' : `/api/admin/products/${formData.value.id}`
-    if (dialogMode.value === 'edit') {
-        payload.append('_method', 'PUT')
-    }
+    if (dialogMode.value === 'edit') payload.append('_method', 'PUT')
 
-    const res = await apiFetch(url, {
-      method: 'POST',
-      body: payload,
-    })
+    const res = await apiFetch(url, { method: 'POST', body: payload })
+    const data = await res.json()
 
     if (res.ok) {
       showDialog.value = false
-      loadProducts(1) // Reload table data using the custom load function
+      loadProducts(1)
+    } else if (res.status === 422 && data.errors) {
+      formErrors.value = data.errors
     } else {
-        const errorData = await res.json()
-        alert('حدث خطأ: ' + JSON.stringify(errorData.errors || errorData.message))
+      generalError.value = data.message || 'حدث خطأ غير متوقع. حاول مرة أخرى.'
     }
-  } catch (error) {
-    console.error('Error saving product:', error)
+  } catch {
+    generalError.value = 'تعذّر الاتصال بالسيرفر.'
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -465,134 +474,237 @@ onMounted(() => {
   </VRow>
 
   <!-- Add/Edit Dialog -->
-  <VDialog v-model="showDialog" max-width="600" persistent>
+  <VDialog v-model="showDialog" max-width="640" persistent scrollable>
     <VCard rounded="lg" elevation="0">
+
+      <!-- Header -->
       <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
-        <span class="font-weight-bold text-h6">{{ dialogMode === 'add' ? 'إضافة منتج جديد' : 'تعديل بيانات المنتج' }}</span>
-        <VBtn icon="ri-close-line" variant="text" size="small" @click="showDialog = false" />
+        <div class="d-flex align-center gap-2">
+          <VIcon :icon="dialogMode === 'add' ? 'ri-add-circle-line' : 'ri-pencil-line'" color="primary" size="22" />
+          <span class="font-weight-bold text-h6">{{ dialogMode === 'add' ? 'إضافة منتج جديد' : 'تعديل بيانات المنتج' }}</span>
+        </div>
+        <VBtn icon="ri-close-line" variant="text" size="small" :disabled="isSaving" @click="showDialog = false" />
       </VCardTitle>
-      
-      <VCardText class="pa-6">
+
+      <VCardText class="pa-5">
         <input type="file" ref="fileInputRef" class="d-none" accept="image/*" @change="handleImageSelection">
 
-        <VRow spacing="4">
-          <VCol cols="12" class="text-center mb-4">
-            <div 
-              class="image-upload-wrapper mx-auto position-relative" 
+        <!-- General Error -->
+        <VAlert
+          v-if="generalError"
+          type="error"
+          variant="tonal"
+          rounded="lg"
+          density="compact"
+          class="mb-4"
+          closable
+          @click:close="generalError = ''"
+        >
+          {{ generalError }}
+        </VAlert>
+
+        <!-- Validation summary -->
+        <VAlert
+          v-if="Object.keys(formErrors).length"
+          type="warning"
+          variant="tonal"
+          rounded="lg"
+          density="compact"
+          class="mb-4"
+        >
+          <div class="font-weight-bold mb-1">يرجى تصحيح الحقول التالية:</div>
+          <ul class="mb-0 ps-4">
+            <li v-for="(msgs, field) in formErrors" :key="field">
+              {{ Array.isArray(msgs) ? msgs[0] : msgs }}
+            </li>
+          </ul>
+        </VAlert>
+
+        <VRow dense>
+          <!-- Image Upload -->
+          <VCol cols="12" class="d-flex justify-center mb-2">
+            <div
+              class="image-upload-wrapper position-relative"
               @click="triggerFileInput"
               :class="{'has-image': imagePreviewUrl}"
             >
               <VImg v-if="imagePreviewUrl" :src="imagePreviewUrl" cover class="product-image-preview" />
               <div v-else class="upload-placeholder d-flex flex-column align-center justify-center h-100">
-                <VIcon icon="ri-image-add-line" size="32" color="secondary" class="mb-2" />
-                <span class="text-caption text-secondary">صورة المنتج</span>
+                <VIcon icon="ri-image-add-line" size="36" color="secondary" class="mb-1" />
+                <span class="text-caption text-medium-emphasis">اضغط لرفع الصورة</span>
               </div>
+              <VBtn
+                v-if="imagePreviewUrl"
+                icon="ri-refresh-line"
+                size="x-small"
+                color="primary"
+                variant="elevated"
+                class="position-absolute"
+                style="bottom:6px;right:6px;"
+                @click.stop="triggerFileInput"
+              />
             </div>
           </VCol>
 
-          <VCol cols="12" md="6">
+          <!-- Row 1: Category + Filter -->
+          <VCol cols="12" sm="6">
             <VSelect
               v-model="formData.category_id"
               :items="categories"
               item-title="name"
               item-value="id"
-              label="التصنيف الرئيسي"
+              label="التصنيف الرئيسي *"
               placeholder="اختر التصنيف"
               variant="outlined"
+              density="comfortable"
               color="primary"
+              :error-messages="fieldError('category_id')"
             />
           </VCol>
-
-          <VCol cols="12" md="6">
+          <VCol cols="12" sm="6">
             <VSelect
               v-model="formData.filter_id"
               :items="filters"
               item-title="name"
               item-value="id"
-              label="الفلتر / التصنيف الفرعي"
+              label="الفلتر الفرعي"
               placeholder="اختر الفلتر"
               variant="outlined"
+              density="comfortable"
               color="info"
               clearable
               :disabled="!formData.category_id || filtersLoading"
               :loading="filtersLoading"
-              :hint="!formData.category_id ? 'اختر التصنيف أولاً' : (filters.length === 0 ? 'لا توجد فلاتر لهذا التصنيف' : '')"
+              :hint="!formData.category_id ? 'اختر التصنيف أولاً' : ''"
               persistent-hint
             />
           </VCol>
 
-          <VCol cols="12" md="6">
+          <!-- Row 2: Brand + SKU -->
+          <VCol cols="12" sm="6">
             <VSelect
               v-model="formData.brand_id"
               :items="brands"
               item-title="name"
               item-value="id"
-              label="الشركة (اختياري)"
-              placeholder="اختر الشركة"
+              label="الماركة (اختياري)"
+              placeholder="اختر الماركة"
               variant="outlined"
+              density="comfortable"
               color="secondary"
               clearable
             />
           </VCol>
-
-          <VCol cols="12" md="6">
+          <VCol cols="12" sm="6">
             <VTextField
               v-model="formData.sku"
               label="رمز المنتج (SKU)"
-              placeholder="يُولد تلقائياً إذا تُرك فارغاً"
+              placeholder="يُولد تلقائياً"
               variant="outlined"
+              density="comfortable"
               color="primary"
               :disabled="dialogMode === 'edit'"
-              hint="يفضل تركه فارغاً ليتم توليده تلقائياً"
+              hint="اتركه فارغاً للتوليد التلقائي"
               persistent-hint
+              :error-messages="fieldError('sku')"
             />
           </VCol>
 
-          <VCol cols="12" md="6">
-            <VTextField v-model="formData.name" label="اسم المنتج" variant="outlined" color="primary" />
-          </VCol>
-
+          <!-- Name -->
           <VCol cols="12">
-            <VTextarea v-model="formData.description" label="وصف المنتج" rows="2" variant="outlined" color="primary" />
+            <VTextField
+              v-model="formData.name"
+              label="اسم المنتج *"
+              placeholder="مثال: عبوة ماء 1.5 لتر"
+              variant="outlined"
+              density="comfortable"
+              color="primary"
+              :error-messages="fieldError('name')"
+              @input="delete formErrors['name']"
+            />
           </VCol>
 
-          <VCol cols="12" md="6">
-            <VTextField v-model.number="formData.price" label="السعر الأصلي (د.ع)" type="number" variant="outlined" color="primary" />
+          <!-- Description -->
+          <VCol cols="12">
+            <VTextarea
+              v-model="formData.description"
+              label="وصف المنتج"
+              placeholder="وصف مختصر للمنتج..."
+              rows="2"
+              variant="outlined"
+              density="comfortable"
+              color="primary"
+              :error-messages="fieldError('description')"
+              auto-grow
+            />
           </VCol>
 
-          <VCol cols="12" md="6">
+          <!-- Price + Discount -->
+          <VCol cols="12" sm="6">
+            <VTextField
+              v-model.number="formData.price"
+              label="السعر الأصلي (د.ع) *"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              color="primary"
+              :error-messages="fieldError('price')"
+              @input="delete formErrors['price']"
+            />
+          </VCol>
+          <VCol cols="12" sm="6">
             <VTextField
               v-model.number="formData.discount_percentage"
               label="نسبة الخصم (%)"
               type="number"
               variant="outlined"
+              density="comfortable"
               color="error"
-              :hint="formData.discount_percentage > 0 ? 'السعر بعد الخصم: ' + formatIQD(formData.price * (1 - formData.discount_percentage / 100)) : 'أدخل 0 لإلغاء الخصم'"
+              :min="0" :max="99"
+              :hint="formData.discount_percentage > 0
+                ? '← السعر بعد الخصم: ' + formatIQD(formData.price * (1 - formData.discount_percentage / 100))
+                : 'اتركه 0 إذا لا يوجد خصم'"
               persistent-hint
-              :min="0"
-              :max="99"
             />
           </VCol>
 
-          <VCol cols="12" md="6">
-             <VTextField v-model.number="formData.sort_order" label="الترتيب" type="number" variant="outlined" color="primary" />
+          <!-- Sort + Stock/Active -->
+          <VCol cols="12" sm="4">
+            <VTextField
+              v-model.number="formData.sort_order"
+              label="ترتيب العرض"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              color="primary"
+            />
           </VCol>
-
-          <VCol cols="12" md="6" class="d-flex align-center gap-4">
-            <VSwitch v-model="formData.in_stock" :label="formData.in_stock ? 'متوفر في المخزون' : 'نافذ (غير متوفر)'"
-              color="success" hide-details />
+          <VCol cols="12" sm="4" class="d-flex align-center">
+            <VSwitch
+              v-model="formData.in_stock"
+              :label="formData.in_stock ? 'متوفر' : 'نافذ'"
+              color="success"
+              hide-details
+            />
           </VCol>
-
-          <VCol cols="12">
-            <VSwitch v-model="formData.is_active" label="المنتج متاح للعرض" color="primary" hide-details />
+          <VCol cols="12" sm="4" class="d-flex align-center">
+            <VSwitch
+              v-model="formData.is_active"
+              :label="formData.is_active ? 'متاح للعرض' : 'مخفي'"
+              color="primary"
+              hide-details
+            />
           </VCol>
         </VRow>
       </VCardText>
-      
+
       <VCardActions class="pa-5 border-t">
         <VSpacer />
-        <VBtn color="secondary" variant="tonal" rounded="lg" @click="showDialog = false">إلغاء</VBtn>
-        <VBtn color="primary" variant="elevated" rounded="lg" class="px-8" @click="saveProduct">حفظ المنتج</VBtn>
+        <VBtn color="secondary" variant="tonal" rounded="lg" :disabled="isSaving" @click="showDialog = false">إلغاء</VBtn>
+        <VBtn color="primary" variant="elevated" rounded="lg" class="px-8" :loading="isSaving" @click="saveProduct">
+          <VIcon icon="ri-save-line" start />
+          {{ dialogMode === 'add' ? 'إضافة المنتج' : 'حفظ التعديلات' }}
+        </VBtn>
       </VCardActions>
     </VCard>
   </VDialog>
