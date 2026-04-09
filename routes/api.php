@@ -133,6 +133,15 @@ Route::prefix('app')->group(function () {
     Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discountedPublic']);
     Route::get('products', [\App\Http\Controllers\ProductController::class, 'indexPublic']);
 
+    // Store Status
+    Route::get('store-status', function () {
+        $isOpen = (bool) \App\Models\StoreSetting::get('is_store_open', true);
+        return response()->json([
+            'is_open' => $isOpen,
+            'message' => $isOpen ? 'المتجر مفتوح' : 'المتجر مغلق حالياً',
+        ]);
+    });
+
     // Store Branding Public API (no auth - used by login page & sidebar)
     Route::get('branding', function () {
         $settings = \App\Models\StoreSetting::allAsArray();

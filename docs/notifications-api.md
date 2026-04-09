@@ -1,89 +1,35 @@
 # 📲 Notifications API — توثيق كامل لمطور التطبيق
 
-**Base URL:** `https://wat.diyala.org/api/app`  
-**Auth:** Bearer Token (يُرسل في كل طلب محمي)
+**Base URL:** `https://wat.diyala.org/api/app`
 
 ---
 
-## 1. حفظ FCM Token (مطلوب عند كل تسجيل دخول)
+## ⚡ الإعداد الأساسي (سطر واحد يكفي)
 
-> يجب استدعاء هذا الـ endpoint بعد تسجيل الدخول مباشرةً لكي تصل الإشعارات للجهاز.
-
-**POST** `/api/app/fcm-token`  
-🔒 يتطلب: `Authorization: Bearer {token}`
-
-### Request Body
-```json
-{
-  "token": "d7k2p...FCM_DEVICE_TOKEN"
-}
-```
-
-### Response — نجاح ✅
-```json
-{
-  "success": true
-}
-```
-
-### Response — خطأ ❌
-```json
-{
-  "success": false,
-  "message": "The token field is required."
-}
-```
-
-### Flutter Code
 ```dart
-Future<void> saveFcmToken(String bearerToken) async {
-  final fcmToken = await FirebaseMessaging.instance.getToken();
-  if (fcmToken == null) return;
-
-  await http.post(
-    Uri.parse('https://wat.diyala.org/api/app/fcm-token'),
-    headers: {
-      'Authorization': 'Bearer $bearerToken',
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: jsonEncode({'token': fcmToken}),
-  );
-
-  // تحديث التوكن لو تجدد تلقائياً
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-    await http.post(
-      Uri.parse('https://wat.diyala.org/api/app/fcm-token'),
-      headers: {
-        'Authorization': 'Bearer $bearerToken',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({'token': newToken}),
-    );
-  });
-}
+// في main.dart — بعد initializeApp مباشرةً
+await FirebaseMessaging.instance.subscribeToTopic('all_users');
 ```
+
+> السيرفر يرسل الإشعارات لـ Topic `all_users` — هذا السطر يجعل الجهاز يستقبلها تلقائياً بدون أي login أو token.
 
 ---
 
-## 2. قائمة الإشعارات
+## Endpoints
+
+### 1. قائمة الإشعارات
 
 **GET** `/api/app/notifications`  
 🌐 لا يتطلب Auth
 
-### Query Parameters (اختياري)
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | int | 1 | رقم الصفحة |
-| `per_page` | int | 15 | عدد الإشعارات في الصفحة |
+**Query Parameters:**
 
-### Request Example
-```
-GET https://wat.diyala.org/api/app/notifications?page=1&per_page=15
-```
+| Parameter | Type | Default |
+|-----------|------|---------|
+| `page` | int | 1 |
+| `per_page` | int | 15 |
 
-### Response — نجاح ✅
+**Response:**
 ```json
 {
   "success": true,
@@ -95,14 +41,6 @@ GET https://wat.diyala.org/api/app/notifications?page=1&per_page=15
       "image_url": "https://wat.diyala.org/media/notifications/abc123.jpg",
       "sent_at": "2026-04-10 01:30:00",
       "created_at": "2026-04-10 01:29:55"
-    },
-    {
-      "id": 4,
-      "title": "طلبك في الطريق 🚗",
-      "message": "طلبك رقم #1042 خرج للتوصيل",
-      "image_url": null,
-      "sent_at": "2026-04-09 18:00:00",
-      "created_at": "2026-04-09 17:59:40"
     }
   ],
   "has_more": true,
@@ -114,37 +52,14 @@ GET https://wat.diyala.org/api/app/notifications?page=1&per_page=15
 }
 ```
 
-### Flutter Code
-```dart
-Future<List<AppNotification>> fetchNotifications({int page = 1}) async {
-  final response = await http.get(
-    Uri.parse('https://wat.diyala.org/api/app/notifications?page=$page&per_page=15'),
-    headers: {'Accept': 'application/json'},
-  );
-
-  final data = jsonDecode(response.body);
-  if (data['success'] == true) {
-    return (data['data'] as List)
-        .map((n) => AppNotification.fromJson(n))
-        .toList();
-  }
-  return [];
-}
-```
-
 ---
 
-## 3. تفاصيل إشعار واحد
+### 2. تفاصيل إشعار واحد
 
 **GET** `/api/app/notifications/{id}`  
 🌐 لا يتطلب Auth
 
-### Request Example
-```
-GET https://wat.diyala.org/api/app/notifications/5
-```
-
-### Response — نجاح ✅
+**Response نجاح:**
 ```json
 {
   "success": true,
@@ -152,24 +67,40 @@ GET https://wat.diyala.org/api/app/notifications/5
     "id": 5,
     "title": "عرض خاص! 🎉",
     "message": "خصم 20% على جميع المنتجات اليوم فقط",
-    "image_url": "https://wat.diyala.org/media/notifications/abc123.jpg",
+    "image_url": null,
     "sent_at": "2026-04-10 01:30:00",
     "created_at": "2026-04-10 01:29:55"
   }
 }
 ```
 
-### Response — إشعار غير موجود ❌
+**Response خطأ:**
 ```json
-{
-  "success": false,
-  "message": "الإشعار غير متاح."
-}
+{ "success": false, "message": "الإشعار غير متاح." }
 ```
 
 ---
 
-## 4. إعداد FCM في Flutter (إعداد أولي كامل)
+### 3. حفظ FCM Token (اختياري — backup إضافي)
+
+> **ليس ضرورياً** إذا التطبيق مشترك بالـ Topic. يُستخدم كطبقة إضافية فقط.
+
+**POST** `/api/app/fcm-token`  
+🔒 يتطلب: `Authorization: Bearer {token}`
+
+**Body:**
+```json
+{ "token": "FCM_DEVICE_TOKEN" }
+```
+
+**Response:**
+```json
+{ "success": true }
+```
+
+---
+
+## إعداد Flutter الكامل
 
 ### pubspec.yaml
 ```yaml
@@ -184,72 +115,64 @@ dependencies:
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  
-  // إعداد معالج الخلفية
-  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
-  
+  FirebaseMessaging.onBackgroundMessage(_bgHandler);
   runApp(MyApp());
 }
 
 @pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+Future<void> _bgHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  // يتم معالجة الإشعار تلقائياً في الخلفية
 }
 ```
 
 ### notification_service.dart
 ```dart
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  static final _local = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    // طلب الإذن
+    // 1. طلب الإذن
     await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+      alert: true, badge: true, sound: true,
     );
 
-    // إعداد Local Notifications لعرض الإشعار عندما يكون التطبيق مفتوح
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings();
-    await _localNotifications.initialize(
-      const InitializationSettings(android: androidInit, iOS: iosInit),
-    );
+    // 2. الاشتراك في topic الإشعارات العامة
+    await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
-    // إنشاء Channel لـ Android
-    const channel = AndroidNotificationChannel(
-      'high_importance_channel', // ← نفس channel_id المرسل من السيرفر
-      'إشعارات عامة',
-      importance: Importance.high,
-      playSound: true,
-    );
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    // 3. إنشاء Android Channel
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(const AndroidNotificationChannel(
+          'high_importance_channel', // ← يجب أن يطابق هذا بالضبط
+          'إشعارات عامة',
+          importance: Importance.high,
+          playSound: true,
+        ));
 
-    // عرض الإشعار عندما يكون التطبيق مفتوح (Foreground)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
-        _localNotifications.show(
-          message.hashCode,
-          message.notification!.title,
-          message.notification!.body,
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'high_importance_channel',
-              'إشعارات عامة',
-              importance: Importance.high,
-              priority: Priority.high,
-              playSound: true,
-            ),
-            iOS: DarwinNotificationDetails(sound: 'default'),
+    // 4. إعداد Local Notifications
+    await _local.initialize(const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    ));
+
+    // 5. عرض الإشعار عندما يكون التطبيق مفتوح (Foreground)
+    FirebaseMessaging.onMessage.listen((message) {
+      if (message.notification == null) return;
+      _local.show(
+        message.hashCode,
+        message.notification!.title,
+        message.notification!.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'إشعارات عامة',
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
           ),
-        );
-      }
+          iOS: DarwinNotificationDetails(sound: 'default'),
+        ),
+      );
     });
   }
 }
@@ -257,7 +180,7 @@ class NotificationService {
 
 ---
 
-## 5. نموذج البيانات (Dart Model)
+## نموذج البيانات (Dart Model)
 
 ```dart
 class AppNotification {
@@ -277,34 +200,35 @@ class AppNotification {
     required this.createdAt,
   });
 
-  factory AppNotification.fromJson(Map<String, dynamic> json) {
-    return AppNotification(
-      id:        json['id'],
-      title:     json['title'],
-      message:   json['message'],
-      imageUrl:  json['image_url'],
-      sentAt:    json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null,
-      createdAt: DateTime.parse(json['created_at']),
-    );
-  }
+  factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
+    id:        json['id'],
+    title:     json['title'],
+    message:   json['message'],
+    imageUrl:  json['image_url'],
+    sentAt:    json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null,
+    createdAt: DateTime.parse(json['created_at']),
+  );
 }
 ```
 
 ---
 
-## 6. ملخص الـ Endpoints
+## ملخص Endpoints
 
 | Method | URL | Auth | Description |
 |--------|-----|------|-------------|
-| `POST` | `/api/app/fcm-token` | ✅ Bearer | حفظ FCM token للجهاز |
 | `GET` | `/api/app/notifications` | ❌ | قائمة الإشعارات |
 | `GET` | `/api/app/notifications/{id}` | ❌ | تفاصيل إشعار |
+| `POST` | `/api/app/fcm-token` | ✅ Bearer | حفظ FCM token (اختياري) |
 
 ---
 
-## 7. ملاحظات مهمة
+## ملاحظات
 
-- **`channel_id`** في الكود Flutter يجب أن يكون `high_importance_channel` (نفس ما يرسله السيرفر)
-- **FCM Token** يجب إرساله بعد كل تسجيل دخول وعند تجديده تلقائياً
-- الإشعارات تُعرض تلقائياً عند الخلفية/الإغلاق — فقط Foreground يحتاج `flutter_local_notifications`
-- `has_more: true` تعني توجد صفحات إضافية — استخدم `page` للـ pagination
+| | |
+|--|--|
+| `channel_id` | يجب أن يكون `high_importance_channel` بالضبط |
+| Background/Killed | الإشعار يظهر تلقائياً بدون أي كود إضافي |
+| Foreground | يحتاج `flutter_local_notifications` لعرض الإشعار |
+| `has_more: true` | توجد صفحات إضافية — استخدم `?page=2` للتنقل |
+| تسجيل الخروج | السيرفر يحذف FCM token تلقائياً عند logout |

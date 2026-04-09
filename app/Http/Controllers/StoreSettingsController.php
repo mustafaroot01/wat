@@ -23,9 +23,10 @@ class StoreSettingsController extends Controller
             'thank_you_message'     => ['nullable', 'string', 'max:500'],
             'minimum_order_amount'  => ['nullable', 'numeric', 'min:0'],
             'logo'                  => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'is_store_open'         => ['nullable', 'boolean'],
         ]);
 
-        $keys = ['store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount'];
+        $keys = ['store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount', 'is_store_open'];
 
         foreach ($keys as $key) {
             if ($request->has($key)) {

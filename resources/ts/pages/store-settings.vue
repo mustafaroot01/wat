@@ -13,6 +13,7 @@ const form = ref({
   store_address:         '',
   thank_you_message:     '',
   minimum_order_amount:  0,
+  is_store_open:         true,
 })
 
 const logoFile        = ref<File | null>(null)
@@ -30,6 +31,7 @@ const loadSettings = async () => {
     form.value.store_address         = data.store_address         ?? ''
     form.value.thank_you_message     = data.thank_you_message     ?? ''
     form.value.minimum_order_amount  = Number(data.minimum_order_amount ?? 0)
+    form.value.is_store_open         = data.is_store_open !== '0' && data.is_store_open !== false
     currentLogo.value                = data.logo                  ?? null
   } finally {
     loading.value = false
@@ -63,6 +65,7 @@ const saveSettings = async () => {
     fd.append('store_address',        form.value.store_address)
     fd.append('thank_you_message',    form.value.thank_you_message)
     fd.append('minimum_order_amount', String(form.value.minimum_order_amount || 0))
+    fd.append('is_store_open',         form.value.is_store_open ? '1' : '0')
     if (logoFile.value) fd.append('logo', logoFile.value)
 
     const res  = await apiFetch('/api/admin/store-settings', { method: 'POST', body: fd })
@@ -185,6 +188,36 @@ const saveSettings = async () => {
             persistent-hint
           />
 
+          <VDivider class="my-5" />
+
+          <!-- Store Open/Close Toggle -->
+          <div class="d-flex align-center justify-space-between pa-4 rounded-lg store-toggle-box"
+               :class="form.is_store_open ? 'store-open' : 'store-closed'">
+            <div class="d-flex align-center gap-3">
+              <VIcon
+                :icon="form.is_store_open ? 'ri-store-2-line' : 'ri-store-line'"
+                :color="form.is_store_open ? 'success' : 'error'"
+                size="28"
+              />
+              <div>
+                <div class="font-weight-bold text-body-1">
+                  {{ form.is_store_open ? 'المتجر مفتوح' : 'المتجر مغلق' }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ form.is_store_open
+                    ? 'الزبائن يقدرون يضيفون منتجات للسلة'
+                    : 'الزبائن يشوفون رسالة: المتجر مغلق حالياً' }}
+                </div>
+              </div>
+            </div>
+            <VSwitch
+              v-model="form.is_store_open"
+              :color="form.is_store_open ? 'success' : 'error'"
+              hide-details
+              inset
+            />
+          </div>
+
           <VAlert v-if="success"  type="success" variant="tonal" class="mt-4" closable @click:close="success=''">{{ success }}</VAlert>
           <VAlert v-if="errorMsg" type="error"   variant="tonal" class="mt-4" closable @click:close="errorMsg=''">{{ errorMsg }}</VAlert>
         </VCardText>
@@ -227,3 +260,9 @@ const saveSettings = async () => {
     </VCol>
   </VRow>
 </template>
+
+<style scoped>
+.store-toggle-box { transition: all .2s; }
+.store-open   { background: rgba(46,125,50,.07);  border: 1.5px solid rgba(46,125,50,.2); }
+.store-closed { background: rgba(211,47,47,.07);  border: 1.5px solid rgba(211,47,47,.2); }
+</style>
