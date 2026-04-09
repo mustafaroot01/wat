@@ -37,26 +37,7 @@ class OrderController extends Controller
         $orders = $query->with('user:id,first_name,last_name')->paginate($perPage);
 
         return response()->json([
-            'data' => $orders->items()->map(fn($o) => [
-                'id' => $o->id,
-                'invoice_code' => $o->invoice_code,
-                'invoice_token' => $o->invoice_token,
-                'customer_name' => $o->customer_name,
-                'current_customer_name' => $o->user?->full_name ?? $o->customer_name,
-                'customer_phone' => $o->customer_phone,
-                'province' => $o->province,
-                'district' => $o->district,
-                'nearest_landmark' => $o->nearest_landmark,
-                'status' => $o->status,
-                'total_amount' => (float) $o->total_amount,
-                'discount_amount' => (float) $o->discount_amount,
-                'final_amount' => (float) $o->final_amount,
-                'coupon_id' => $o->coupon_id,
-                'notes' => $o->notes,
-                'rejection_reason' => $o->rejection_reason,
-                'created_at' => $o->created_at?->toDateTimeString(),
-                'updated_at' => $o->updated_at?->toDateTimeString(),
-            ]),
+            'data' => $orders->items()->each->append('current_customer_name'),
             'total' => $orders->total(),
             'current_page' => $orders->currentPage(),
             'last_page' => $orders->lastPage(),
