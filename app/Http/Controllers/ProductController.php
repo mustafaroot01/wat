@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Helpers\ImageHelper;
 use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -124,7 +125,7 @@ class ProductController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'products');
         }
 
         $product = Product::create($data);
@@ -145,7 +146,7 @@ class ProductController extends Controller
             if ($product->image) {
                 Storage::disk('public')->delete($product->image);
             }
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'products');
         }
 
         $product->update($data);

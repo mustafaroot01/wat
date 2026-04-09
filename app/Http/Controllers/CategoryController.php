@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use App\Helpers\ImageHelper;
 use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ class CategoryController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('categories', 'public');
+                $path = ImageHelper::compressAndStore($request->file('image'), 'categories');
                 $data['image'] = $path;
             }
 
@@ -101,7 +102,7 @@ class CategoryController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $newPath = $request->file('image')->store('categories', 'public');
+                $newPath = ImageHelper::compressAndStore($request->file('image'), 'categories');
                 $data['image'] = $newPath;
             }
 
@@ -185,7 +186,7 @@ class CategoryController extends Controller
         $oldImage = $category->featured_image;
 
         if ($request->hasFile('featured_image')) {
-            $path = $request->file('featured_image')->store('categories/featured', 'public');
+            $path = ImageHelper::compressAndStore($request->file('featured_image'), 'categories/featured');
             $data['featured_image'] = $path;
             if ($oldImage) \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
         }

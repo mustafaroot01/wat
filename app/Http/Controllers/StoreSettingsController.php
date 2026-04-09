@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +38,7 @@ class StoreSettingsController extends Controller
             if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
                 Storage::disk('public')->delete($oldLogo);
             }
-            $path = $request->file('logo')->store('store', 'public');
+            $path = ImageHelper::compressAndStore($request->file('logo'), 'store');
             StoreSetting::set('logo', $path);
         }
 

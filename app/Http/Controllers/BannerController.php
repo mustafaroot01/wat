@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Banner;
 use App\Http\Requests\StoreBannerRequest;
 use App\Http\Requests\UpdateBannerRequest;
@@ -37,7 +38,7 @@ class BannerController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('banners', 'public');
+                $path = ImageHelper::compressAndStore($request->file('image'), 'banners');
                 $data['image'] = $path;
             }
 
@@ -71,7 +72,7 @@ class BannerController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $newPath = $request->file('image')->store('banners', 'public');
+                $newPath = ImageHelper::compressAndStore($request->file('image'), 'banners');
                 $data['image'] = $newPath;
             }
 
