@@ -2,78 +2,115 @@
 
 namespace App\Services;
 
-use Kreait\Firebase\Contract\Messaging;
+use App\Models\User;
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 use Illuminate\Support\Facades\Log;
 
 class FirebaseNotificationService
 {
+    private function getMessaging()
+    {
+        return app('firebase.messaging');
+    }
+
+    private function buildPayload(string $title, string $body, ?string $imageUrl): array
+    {
+        $payload = [
+            'notification' => [
+                'title' => $title,
+                'body'  => $body,
+            ],
+            'android' => [
+                'priority' => 'high',
+                'notification' => [
+                    'sound'      => 'default',
+                    'channel_id' => 'high_importance_channel',
+                ],
+            ],
+            'apns' => [
+                'headers' => ['apns-priority' => '10'],
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                        'badge' => 1,
+                    ],
+                ],
+            ],
+        ];
+
+        if ($imageUrl) {
+            $payload['notification']['image']            = $imageUrl;
+            $payload['android']['notification']['image'] = $imageUrl;
+        }
+
+        return $payload;
+    }
+
     /**
-     * Send a notification to a specific topic.
+     * Send to all registered device tokens (multicast).
+     * Falls back to topic if no tokens found.
      */
     public function sendToTopic(string $topic, string $title, string $body, ?string $imageUrl = null): array
     {
         try {
-            try {
-                $messaging = app('firebase.messaging');
-            } catch (\Exception $e) {
-                return [
-                    'success' => false,
-                    'error' => 'لم يتم إعداد ملف Firebase JSON بشكل صحيح في الإعدادات.'
-                ];
-            }
-
-            $messageData = [
-                'topic' => $topic,
-                'notification' => [
-                    'title' => $title,
-                    'body'  => $body,
-                ],
-                'android' => [
-                    'priority' => 'high',
-                    'notification' => [
-                        'sound'      => 'default',
-                        'channel_id' => 'high_importance_channel',
-                    ],
-                ],
-                'apns' => [
-                    'headers' => [
-                        'apns-priority' => '10',
-                    ],
-                    'payload' => [
-                        'aps' => [
-                            'sound' => 'default',
-                            'badge' => 1,
-                        ],
-                    ],
-                ],
-            ];
-
-            if ($imageUrl) {
-                $messageData['notification']['image']              = $imageUrl;
-                $messageData['android']['notification']['image']   = $imageUrl;
-            }
-
-            $message = CloudMessage::fromArray($messageData);
-            $messaging->send($message);
-
-            return [
-                'success' => true,
-                'message' => 'Notification sent to topic: ' . $topic,
-            ];
-        } catch (\Kreait\Firebase\Exception\MessagingException $e) {
-            Log::error('Firebase Messaging Exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => 'خطأ من Firebase: ' . $e->getMessage()
-            ];
+            $messaging = $this->getMessaging();
         } catch (\Exception $e) {
-            Log::error('Firebase Generic Exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => 'فشل في الاتصال بـ Firebase: ' . $e->getMessage()
-            ];
+            return ['success' => false, 'error' => 'لم يتم إعداد ملف Firebase JSON بشكل صحيح في الإعدادات.'];
         }
+
+        $payload = $this->buildPayload($title, $body, $imageUrl);
+
+        // جلب كل التوكنز المسجّلة
+        $tokens = User::whereNotNull('fcm_token')
+            ->where('is_active', true)
+            ->pluck('fcm_token')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $sent = 0;
+        $errors = [];
+
+        // إرسال لكل الأجهزة المسجّلة
+        if (!empty($tokens)) {
+            $chunks = array_chunk($tokens, 500); // FCM limit per multicast
+            foreach ($chunks as $chunk) {
+                try {
+                    $messages = array_map(function ($token) use ($payload) {
+                        return CloudMessage::fromArray(array_merge($payload, ['token' => $token]));
+                    }, $chunk);
+
+                    $report = $messaging->sendAll($messages);
+                    $sent  += $report->successes()->count();
+
+                    foreach ($report->failures()->getItems() as $failure) {
+                        $errors[] = $failure->error()->getMessage();
+                        // حذف التوكن إذا أصبح غير صالح
+                        if (str_contains($failure->error()->getMessage(), 'registration-token-not-registered')) {
+                            User::where('fcm_token', $failure->target()->value())->update(['fcm_token' => null]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('FCM Multicast Error: ' . $e->getMessage());
+                }
+            }
+        }
+
+        // إرسال للـ Topic أيضاً (للأجهزة التي لم تُسجّل token بعد)
+        try {
+            $topicMessage = CloudMessage::fromArray(array_merge($payload, ['topic' => $topic]));
+            $messaging->send($topicMessage);
+        } catch (\Exception $e) {
+            Log::warning('FCM Topic fallback failed: ' . $e->getMessage());
+        }
+
+        if ($sent > 0 || empty($tokens)) {
+            return ['success' => true, 'message' => "تم الإرسال لـ {$sent} جهاز.", 'sent' => $sent];
+        }
+
+        return [
+            'success' => false,
+            'error'   => 'فشل الإرسال لجميع الأجهزة. ' . implode(' | ', array_slice($errors, 0, 3)),
+        ];
     }
 }

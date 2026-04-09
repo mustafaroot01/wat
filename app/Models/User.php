@@ -22,6 +22,7 @@ class User extends Authenticatable
         'area_id',
         'is_active',
         'is_self_deleted',
+        'fcm_token',
     ];
 
     protected $hidden = [

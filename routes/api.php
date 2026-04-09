@@ -187,5 +187,12 @@ Route::prefix('app')->group(function () {
         Route::put('profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
         Route::put('profile/password', [\App\Http\Controllers\Api\ProfileController::class, 'updatePassword']);
         Route::delete('profile', [\App\Http\Controllers\Api\ProfileController::class, 'deleteAccount']);
+
+        // FCM Token
+        Route::post('fcm-token', function (Request $request) {
+            $request->validate(['token' => 'required|string']);
+            $request->user()->update(['fcm_token' => $request->token]);
+            return response()->json(['success' => true]);
+        });
     });
 });
