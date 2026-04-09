@@ -21,6 +21,7 @@ interface Order {
   invoice_code: string
   invoice_token: string
   customer_name: string
+  current_customer_name?: string
   customer_phone: string
   province: string
   district: string
@@ -217,7 +218,7 @@ const printPage = () => window.print()
             <table class="inv-info-table">
               <tr>
                 <td class="inv-lbl">الاسم</td>
-                <td class="inv-val">{{ order.customer_name }}</td>
+                <td class="inv-val">{{ order.current_customer_name || order.customer_name }}</td>
               </tr>
               <tr>
                 <td class="inv-lbl">الهاتف</td>

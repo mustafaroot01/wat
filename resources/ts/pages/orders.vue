@@ -18,6 +18,7 @@ interface Order {
   invoice_code: string
   invoice_token: string
   customer_name: string
+  current_customer_name?: string
   customer_phone: string
   province: string
   district: string
@@ -26,10 +27,12 @@ interface Order {
   total_amount: string
   discount_amount: string
   final_amount: string
-  rejection_reason: string | null
+  coupon_id: number | null
   notes: string | null
+  rejection_reason: string | null
   created_at: string
-  items: OrderItem[]
+  updated_at: string
+  items?: OrderItem[]
   coupon?: { code: string } | null
 }
 
@@ -315,7 +318,7 @@ const copyPhone = async (phone: string) => {
 
             <template #item.customer="{ item }">
               <div>
-                <div class="font-weight-medium">{{ item.customer_name }}</div>
+                <div class="font-weight-medium">{{ item.current_customer_name || item.customer_name }}</div>
                 <div
                   class="text-caption text-primary d-flex align-center gap-1 cursor-pointer"
                   dir="ltr"
@@ -476,7 +479,7 @@ const copyPhone = async (phone: string) => {
           <VRow class="mb-4">
             <VCol cols="12" md="6">
               <div class="text-subtitle-2 font-weight-bold mb-2">بيانات الزبون</div>
-              <div class="text-body-2"><span class="font-weight-medium">الاسم:</span> {{ invoiceOrder.customer_name }}</div>
+              <div class="text-body-2"><span class="font-weight-medium">الاسم:</span> {{ invoiceOrder.current_customer_name || invoiceOrder.customer_name }}</div>
               <div class="text-body-2"><span class="font-weight-medium">الهاتف:</span> <span dir="ltr" style="unicode-bidi:embed;">{{ invoiceOrder.customer_phone }}</span></div>
               <div class="text-body-2"><span class="font-weight-medium">القضاء:</span> {{ invoiceOrder.province }}</div>
               <div class="text-body-2"><span class="font-weight-medium">المنطقة:</span> {{ invoiceOrder.district }}</div>
