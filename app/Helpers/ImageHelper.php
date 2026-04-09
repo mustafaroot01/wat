@@ -5,12 +5,11 @@ namespace App\Helpers;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image;
 
 class ImageHelper
 {
     /**
-     * ضغط الصورة وحفظها في disk public
+     * ضغط الصورة وحفظها في disk public باستخدام PHP GD المدمج
      *
      * @param  UploadedFile  $file
      * @param  string        $folder   مثال: 'products', 'banners'
@@ -24,23 +23,54 @@ class ImageHelper
         int $quality = 80,
         int $maxWidth = 1200
     ): string {
-        $image = Image::read($file);
+        $mimeType = $file->getMimeType();
+        $contents = file_get_contents($file->getRealPath());
 
-        // تصغير إذا تجاوز العرض الأقصى (مع الحفاظ على النسبة)
-        if ($image->width() > $maxWidth) {
-            $image->scaleDown(width: $maxWidth);
+        // إنشاء GD resource من محتوى الملف
+        $src = @imagecreatefromstring($contents);
+
+        // إذا فشل GD أو الملف SVG نحفظه مباشرةً
+        if (!$src || $mimeType === 'image/svg+xml') {
+            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'png';
+            $path = $folder . '/' . Str::uuid() . '.' . $ext;
+            Storage::disk('public')->put($path, $contents);
+            return $path;
         }
 
-        $extension = strtolower($file->getClientOriginalExtension());
-        $filename  = Str::uuid() . '.' . $extension;
-        $path      = $folder . '/' . $filename;
+        $origW = imagesx($src);
+        $origH = imagesy($src);
 
-        $encoded = $image->toWebp($quality);
+        // تصغير إذا تجاوز العرض الأقصى مع الحفاظ على النسبة
+        if ($origW > $maxWidth) {
+            $newW = $maxWidth;
+            $newH = (int) round($origH * ($maxWidth / $origW));
+            $dst  = imagecreatetruecolor($newW, $newH);
 
-        // نحفظ كـ webp لتوفير المساحة
-        $webpPath = $folder . '/' . Str::uuid() . '.webp';
-        Storage::disk('public')->put($webpPath, (string) $encoded);
+            // دعم الشفافية للـ PNG
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+            imagedestroy($src);
+            $src = $dst;
+        }
 
-        return $webpPath;
+        // حفظ كـ WebP إذا كان مدعوماً
+        if (function_exists('imagewebp')) {
+            $path = $folder . '/' . Str::uuid() . '.webp';
+            ob_start();
+            imagewebp($src, null, $quality);
+            $data = ob_get_clean();
+        } else {
+            // fallback: JPEG
+            $path = $folder . '/' . Str::uuid() . '.jpg';
+            ob_start();
+            imagejpeg($src, null, $quality);
+            $data = ob_get_clean();
+        }
+
+        imagedestroy($src);
+        Storage::disk('public')->put($path, $data);
+
+        return $path;
     }
 }
