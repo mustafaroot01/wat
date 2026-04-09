@@ -474,132 +474,76 @@ onMounted(() => {
   </VRow>
 
   <!-- Add/Edit Dialog -->
-  <VDialog v-model="showDialog" max-width="640" persistent scrollable>
-    <VCard rounded="lg" elevation="0">
+  <VDialog v-model="showDialog" max-width="680" persistent scrollable>
+    <VCard rounded="xl" elevation="4">
 
       <!-- Header -->
-      <VCardTitle class="pa-5 d-flex justify-space-between align-center border-b">
-        <div class="d-flex align-center gap-2">
-          <VIcon :icon="dialogMode === 'add' ? 'ri-add-circle-line' : 'ri-pencil-line'" color="primary" size="22" />
-          <span class="font-weight-bold text-h6">{{ dialogMode === 'add' ? 'إضافة منتج جديد' : 'تعديل بيانات المنتج' }}</span>
+      <div class="dialog-header d-flex align-center justify-space-between px-6 py-4">
+        <div class="d-flex align-center gap-3">
+          <div class="dialog-icon-wrap" :class="dialogMode === 'add' ? 'bg-primary' : 'bg-warning'">
+            <VIcon :icon="dialogMode === 'add' ? 'ri-add-line' : 'ri-pencil-line'" color="white" size="18" />
+          </div>
+          <div>
+            <div class="font-weight-bold text-body-1">{{ dialogMode === 'add' ? 'إضافة منتج جديد' : 'تعديل المنتج' }}</div>
+            <div class="text-caption text-medium-emphasis">{{ dialogMode === 'add' ? 'أدخل بيانات المنتج أدناه' : 'عدّل البيانات ثم احفظ' }}</div>
+          </div>
         </div>
         <VBtn icon="ri-close-line" variant="text" size="small" :disabled="isSaving" @click="showDialog = false" />
-      </VCardTitle>
+      </div>
+      <VDivider />
 
-      <VCardText class="pa-5">
+      <VCardText class="pa-0">
         <input type="file" ref="fileInputRef" class="d-none" accept="image/*" @change="handleImageSelection">
 
-        <!-- General Error -->
-        <VAlert
-          v-if="generalError"
-          type="error"
-          variant="tonal"
-          rounded="lg"
-          density="compact"
-          class="mb-4"
-          closable
-          @click:close="generalError = ''"
-        >
-          {{ generalError }}
-        </VAlert>
-
-        <!-- Validation summary -->
-        <VAlert
-          v-if="Object.keys(formErrors).length"
-          type="warning"
-          variant="tonal"
-          rounded="lg"
-          density="compact"
-          class="mb-4"
-        >
-          <div class="font-weight-bold mb-1">يرجى تصحيح الحقول التالية:</div>
-          <ul class="mb-0 ps-4">
-            <li v-for="(msgs, field) in formErrors" :key="field">
+        <!-- Alerts -->
+        <div v-if="generalError || Object.keys(formErrors).length" class="pa-5 pb-0">
+          <VAlert v-if="generalError" type="error" variant="tonal" rounded="lg" density="compact" closable class="mb-3" @click:close="generalError = ''">
+            {{ generalError }}
+          </VAlert>
+          <VAlert v-if="Object.keys(formErrors).length" type="warning" variant="tonal" rounded="lg" density="compact">
+            <span class="font-weight-bold">يرجى تصحيح: </span>
+            <span v-for="(msgs, field) in formErrors" :key="field" class="me-2">
               {{ Array.isArray(msgs) ? msgs[0] : msgs }}
-            </li>
-          </ul>
-        </VAlert>
+            </span>
+          </VAlert>
+        </div>
 
-        <VRow dense>
-          <!-- Image Upload -->
-          <VCol cols="12" class="d-flex justify-center mb-2">
-            <div
-              class="image-upload-wrapper position-relative"
-              @click="triggerFileInput"
-              :class="{'has-image': imagePreviewUrl}"
-            >
-              <VImg v-if="imagePreviewUrl" :src="imagePreviewUrl" cover class="product-image-preview" />
-              <div v-else class="upload-placeholder d-flex flex-column align-center justify-center h-100">
-                <VIcon icon="ri-image-add-line" size="36" color="secondary" class="mb-1" />
-                <span class="text-caption text-medium-emphasis">اضغط لرفع الصورة</span>
-              </div>
-              <VBtn
-                v-if="imagePreviewUrl"
-                icon="ri-refresh-line"
-                size="x-small"
-                color="primary"
-                variant="elevated"
-                class="position-absolute"
-                style="bottom:6px;right:6px;"
-                @click.stop="triggerFileInput"
-              />
+        <!-- Image + Name side by side -->
+        <div class="d-flex align-center gap-5 pa-5 pb-3">
+          <div
+            class="image-upload-wrapper position-relative flex-shrink-0"
+            @click="triggerFileInput"
+            :class="{'has-image': imagePreviewUrl}"
+          >
+            <VImg v-if="imagePreviewUrl" :src="imagePreviewUrl" cover class="product-image-preview" />
+            <div v-else class="upload-placeholder d-flex flex-column align-center justify-center h-100">
+              <VIcon icon="ri-image-add-line" size="30" color="secondary" class="mb-1" />
+              <span class="text-caption text-medium-emphasis">صورة المنتج</span>
             </div>
-          </VCol>
-
-          <!-- Row 1: Category + Filter -->
-          <VCol cols="12" sm="6">
-            <VSelect
-              v-model="formData.category_id"
-              :items="categories"
-              item-title="name"
-              item-value="id"
-              label="التصنيف الرئيسي *"
-              placeholder="اختر التصنيف"
+            <VBtn
+              v-if="imagePreviewUrl"
+              icon="ri-camera-line"
+              size="x-small"
+              color="primary"
+              variant="elevated"
+              class="position-absolute"
+              style="bottom:4px;right:4px;"
+              @click.stop="triggerFileInput"
+            />
+          </div>
+          <div class="flex-grow-1 d-flex flex-column gap-3">
+            <VTextField
+              v-model="formData.name"
+              label="اسم المنتج *"
               variant="outlined"
               density="comfortable"
               color="primary"
-              :error-messages="fieldError('category_id')"
+              :error-messages="fieldError('name')"
+              @input="delete formErrors['name']"
             />
-          </VCol>
-          <VCol cols="12" sm="6">
-            <VSelect
-              v-model="formData.filter_id"
-              :items="filters"
-              item-title="name"
-              item-value="id"
-              label="الفلتر الفرعي"
-              placeholder="اختر الفلتر"
-              variant="outlined"
-              density="comfortable"
-              color="info"
-              clearable
-              :disabled="!formData.category_id || filtersLoading"
-              :loading="filtersLoading"
-              :hint="!formData.category_id ? 'اختر التصنيف أولاً' : ''"
-              persistent-hint
-            />
-          </VCol>
-
-          <!-- Row 2: Brand + SKU -->
-          <VCol cols="12" sm="6">
-            <VSelect
-              v-model="formData.brand_id"
-              :items="brands"
-              item-title="name"
-              item-value="id"
-              label="الماركة (اختياري)"
-              placeholder="اختر الماركة"
-              variant="outlined"
-              density="comfortable"
-              color="secondary"
-              clearable
-            />
-          </VCol>
-          <VCol cols="12" sm="6">
             <VTextField
               v-model="formData.sku"
               label="رمز المنتج (SKU)"
-              placeholder="يُولد تلقائياً"
               variant="outlined"
               density="comfortable"
               color="primary"
@@ -608,100 +552,159 @@ onMounted(() => {
               persistent-hint
               :error-messages="fieldError('sku')"
             />
-          </VCol>
+          </div>
+        </div>
 
-          <!-- Name -->
-          <VCol cols="12">
-            <VTextField
-              v-model="formData.name"
-              label="اسم المنتج *"
-              placeholder="مثال: عبوة ماء 1.5 لتر"
-              variant="outlined"
-              density="comfortable"
-              color="primary"
-              :error-messages="fieldError('name')"
-              @input="delete formErrors['name']"
-            />
-          </VCol>
+        <VDivider class="mx-5 mb-1" />
 
-          <!-- Description -->
-          <VCol cols="12">
-            <VTextarea
-              v-model="formData.description"
-              label="وصف المنتج"
-              placeholder="وصف مختصر للمنتج..."
-              rows="2"
-              variant="outlined"
-              density="comfortable"
-              color="primary"
-              :error-messages="fieldError('description')"
-              auto-grow
-            />
-          </VCol>
+        <!-- Section: التصنيف -->
+        <div class="px-5 py-3">
+          <div class="section-label mb-3">
+            <VIcon icon="ri-folder-2-line" size="14" class="me-1" />
+            التصنيف والماركة
+          </div>
+          <VRow dense>
+            <VCol cols="12" sm="4">
+              <VSelect
+                v-model="formData.category_id"
+                :items="categories"
+                item-title="name"
+                item-value="id"
+                label="التصنيف *"
+                variant="outlined"
+                density="comfortable"
+                color="primary"
+                :error-messages="fieldError('category_id')"
+              />
+            </VCol>
+            <VCol cols="12" sm="4">
+              <VSelect
+                v-model="formData.filter_id"
+                :items="filters"
+                item-title="name"
+                item-value="id"
+                label="الفلتر الفرعي"
+                variant="outlined"
+                density="comfortable"
+                color="info"
+                clearable
+                :disabled="!formData.category_id || filtersLoading"
+                :loading="filtersLoading"
+                :hint="!formData.category_id ? 'اختر التصنيف أولاً' : ''"
+                persistent-hint
+              />
+            </VCol>
+            <VCol cols="12" sm="4">
+              <VSelect
+                v-model="formData.brand_id"
+                :items="brands"
+                item-title="name"
+                item-value="id"
+                label="الماركة"
+                variant="outlined"
+                density="comfortable"
+                color="secondary"
+                clearable
+              />
+            </VCol>
+          </VRow>
+        </div>
 
-          <!-- Price + Discount -->
-          <VCol cols="12" sm="6">
-            <VTextField
-              v-model.number="formData.price"
-              label="السعر الأصلي (د.ع) *"
-              type="number"
-              variant="outlined"
-              density="comfortable"
-              color="primary"
-              :error-messages="fieldError('price')"
-              @input="delete formErrors['price']"
-            />
-          </VCol>
-          <VCol cols="12" sm="6">
-            <VTextField
-              v-model.number="formData.discount_percentage"
-              label="نسبة الخصم (%)"
-              type="number"
-              variant="outlined"
-              density="comfortable"
-              color="error"
-              :min="0" :max="99"
-              :hint="formData.discount_percentage > 0
-                ? '← السعر بعد الخصم: ' + formatIQD(formData.price * (1 - formData.discount_percentage / 100))
-                : 'اتركه 0 إذا لا يوجد خصم'"
-              persistent-hint
-            />
-          </VCol>
+        <VDivider class="mx-5 mb-1" />
 
-          <!-- Sort + Stock/Active -->
-          <VCol cols="12" sm="4">
+        <!-- Section: وصف -->
+        <div class="px-5 py-3">
+          <div class="section-label mb-3">
+            <VIcon icon="ri-file-text-line" size="14" class="me-1" />
+            الوصف
+          </div>
+          <VTextarea
+            v-model="formData.description"
+            label="وصف المنتج"
+            rows="2"
+            variant="outlined"
+            density="comfortable"
+            color="primary"
+            :error-messages="fieldError('description')"
+            auto-grow
+          />
+        </div>
+
+        <VDivider class="mx-5 mb-1" />
+
+        <!-- Section: السعر -->
+        <div class="px-5 py-3">
+          <div class="section-label mb-3">
+            <VIcon icon="ri-money-dollar-circle-line" size="14" class="me-1" />
+            السعر والخصم
+          </div>
+          <VRow dense>
+            <VCol cols="12" sm="6">
+              <VTextField
+                v-model.number="formData.price"
+                label="السعر الأصلي (د.ع) *"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+                color="primary"
+                :error-messages="fieldError('price')"
+                @input="delete formErrors['price']"
+              />
+            </VCol>
+            <VCol cols="12" sm="6">
+              <VTextField
+                v-model.number="formData.discount_percentage"
+                label="نسبة الخصم (%)"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+                color="error"
+                :min="0" :max="99"
+                :hint="formData.discount_percentage > 0
+                  ? 'السعر بعد الخصم: ' + formatIQD(formData.price * (1 - formData.discount_percentage / 100))
+                  : '0 = لا يوجد خصم'"
+                persistent-hint
+              />
+            </VCol>
+          </VRow>
+        </div>
+
+        <VDivider class="mx-5 mb-1" />
+
+        <!-- Section: الحالة -->
+        <div class="px-5 py-4">
+          <div class="section-label mb-3">
+            <VIcon icon="ri-settings-3-line" size="14" class="me-1" />
+            الحالة والترتيب
+          </div>
+          <div class="d-flex align-center gap-4 flex-wrap">
             <VTextField
               v-model.number="formData.sort_order"
               label="ترتيب العرض"
               type="number"
               variant="outlined"
-              density="comfortable"
+              density="compact"
               color="primary"
-            />
-          </VCol>
-          <VCol cols="12" sm="4" class="d-flex align-center">
-            <VSwitch
-              v-model="formData.in_stock"
-              :label="formData.in_stock ? 'متوفر' : 'نافذ'"
-              color="success"
+              style="max-width:130px;"
               hide-details
             />
-          </VCol>
-          <VCol cols="12" sm="4" class="d-flex align-center">
-            <VSwitch
-              v-model="formData.is_active"
-              :label="formData.is_active ? 'متاح للعرض' : 'مخفي'"
-              color="primary"
-              hide-details
-            />
-          </VCol>
-        </VRow>
+            <div class="d-flex align-center gap-2 status-toggle" :class="formData.in_stock ? 'active' : 'inactive'" @click="formData.in_stock = !formData.in_stock">
+              <VIcon :icon="formData.in_stock ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'" size="18" />
+              <span class="text-body-2 font-weight-medium">{{ formData.in_stock ? 'متوفر في المخزون' : 'نافذ (غير متوفر)' }}</span>
+            </div>
+            <div class="d-flex align-center gap-2 status-toggle" :class="formData.is_active ? 'active-blue' : 'inactive'" @click="formData.is_active = !formData.is_active">
+              <VIcon :icon="formData.is_active ? 'ri-eye-line' : 'ri-eye-off-line'" size="18" />
+              <span class="text-body-2 font-weight-medium">{{ formData.is_active ? 'متاح للعرض' : 'مخفي' }}</span>
+            </div>
+          </div>
+        </div>
       </VCardText>
 
-      <VCardActions class="pa-5 border-t">
+      <VDivider />
+      <VCardActions class="pa-4 gap-2">
         <VSpacer />
         <VBtn color="secondary" variant="tonal" rounded="lg" :disabled="isSaving" @click="showDialog = false">إلغاء</VBtn>
-        <VBtn color="primary" variant="elevated" rounded="lg" class="px-8" :loading="isSaving" @click="saveProduct">
+        <VBtn color="primary" variant="elevated" rounded="lg" class="px-6" :loading="isSaving" @click="saveProduct">
           <VIcon icon="ri-save-line" start />
           {{ dialogMode === 'add' ? 'إضافة المنتج' : 'حفظ التعديلات' }}
         </VBtn>
@@ -726,17 +729,54 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.w-fit { width: fit-content; }
-.image-upload-wrapper {
-  width: 150px;
-  height: 150px;
-  border: 2px dashed rgba(var(--v-theme-on-surface), 0.1);
-  border-radius: 16px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.2s ease;
+/* ── Dialog Header ─────────────────────────────── */
+.dialog-header { background: rgba(var(--v-theme-surface-variant), 0.4); }
+.dialog-icon-wrap {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.image-upload-wrapper:hover { border-color: rgb(var(--v-theme-primary)); background: rgba(var(--v-theme-primary), 0.04); }
+
+/* ── Section Labels ────────────────────────────── */
+.section-label {
+  display: flex; align-items: center;
+  font-size: .72rem; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: #90a4ae;
+}
+
+/* ── Image Upload ──────────────────────────────── */
+.image-upload-wrapper {
+  width: 110px; height: 110px;
+  border: 2px dashed rgba(var(--v-theme-on-surface), 0.12);
+  border-radius: 14px; cursor: pointer;
+  overflow: hidden; transition: all .2s;
+}
+.image-upload-wrapper:hover {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.04);
+}
 .product-image-preview { width: 100%; height: 100%; object-fit: cover; }
 .image-upload-wrapper.has-image { border-style: solid; border-color: transparent; }
+
+/* ── Status Toggles ────────────────────────────── */
+.status-toggle {
+  padding: 6px 14px; border-radius: 10px;
+  cursor: pointer; transition: all .15s;
+  border: 1.5px solid transparent;
+  user-select: none;
+}
+.status-toggle.active {
+  background: rgba(46,125,50,.08);
+  border-color: rgba(46,125,50,.25);
+  color: #2e7d32;
+}
+.status-toggle.active-blue {
+  background: rgba(21,101,192,.08);
+  border-color: rgba(21,101,192,.25);
+  color: #1565c0;
+}
+.status-toggle.inactive {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.08);
+  color: #90a4ae;
+}
 </style>
