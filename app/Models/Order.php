@@ -41,8 +41,6 @@ class Order extends Model
         'rejection_reason',
     ];
 
-    protected $appends = ['current_customer_name'];
-
     protected $casts = [
         'total_amount'    => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -61,11 +59,6 @@ class Order extends Model
                 $order->invoice_token = Str::random(64);
             }
         });
-    }
-
-    public function getCurrentCustomerNameAttribute(): string
-    {
-        return $this->user?->full_name ?? $this->customer_name;
     }
 
     private static function generateInvoiceCode(): string

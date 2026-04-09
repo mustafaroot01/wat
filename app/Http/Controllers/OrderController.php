@@ -34,10 +34,10 @@ class OrderController extends Controller
         }
 
         $perPage = (int) $request->get('per_page', 15);
-        $orders = $query->with('user:id,first_name,last_name')->paginate($perPage);
+        $orders = $query->with(['items', 'coupon'])->paginate($perPage);
 
         return response()->json([
-            'data' => $orders->items()->each->append('current_customer_name'),
+            'data' => $orders->items(),
             'total' => $orders->total(),
             'current_page' => $orders->currentPage(),
             'last_page' => $orders->lastPage(),
@@ -46,7 +46,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with(['items.product', 'coupon', 'user:id,first_name,last_name'])->findOrFail($id);
+        $order = Order::with(['items.product', 'coupon'])->findOrFail($id);
         $settings = StoreSetting::allAsArray();
 
         return response()->json([
