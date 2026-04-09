@@ -47,8 +47,9 @@ class FirebaseNotificationService
     }
 
     /**
-     * Send to all registered device tokens (multicast).
-     * Falls back to topic if no tokens found.
+     * Send to Firebase Topic (primary) + stored device tokens (supplementary).
+     * Topic reaches all Flutter devices that called subscribeToTopic('all_users').
+     * Tokens are a backup for devices that didn't subscribe to the topic.
      */
     public function sendToTopic(string $topic, string $title, string $body, ?string $imageUrl = null): array
     {
@@ -60,7 +61,18 @@ class FirebaseNotificationService
 
         $payload = $this->buildPayload($title, $body, $imageUrl);
 
-        // جلب كل التوكنز المسجّلة
+        // 1) إرسال للـ Topic (الطريقة الرئيسية — تصل لكل الأجهزة المشتركة)
+        try {
+            $messaging->send(CloudMessage::fromArray(array_merge($payload, ['topic' => $topic])));
+        } catch (\Kreait\Firebase\Exception\MessagingException $e) {
+            Log::error('FCM Topic Error: ' . $e->getMessage());
+            return ['success' => false, 'error' => 'خطأ من Firebase: ' . $e->getMessage()];
+        } catch (\Exception $e) {
+            Log::error('FCM Generic Error: ' . $e->getMessage());
+            return ['success' => false, 'error' => 'فشل الاتصال بـ Firebase: ' . $e->getMessage()];
+        }
+
+        // 2) إرسال للتوكنز المخزّنة (إضافي — للأجهزة غير المشتركة بالـ Topic)
         $tokens = User::whereNotNull('fcm_token')
             ->where('is_active', true)
             ->pluck('fcm_token')
@@ -68,49 +80,25 @@ class FirebaseNotificationService
             ->values()
             ->toArray();
 
-        $sent = 0;
-        $errors = [];
-
-        // إرسال لكل الأجهزة المسجّلة
         if (!empty($tokens)) {
-            $chunks = array_chunk($tokens, 500); // FCM limit per multicast
-            foreach ($chunks as $chunk) {
+            foreach (array_chunk($tokens, 500) as $chunk) {
                 try {
-                    $messages = array_map(function ($token) use ($payload) {
-                        return CloudMessage::fromArray(array_merge($payload, ['token' => $token]));
-                    }, $chunk);
-
+                    $messages = array_map(
+                        fn($t) => CloudMessage::fromArray(array_merge($payload, ['token' => $t])),
+                        $chunk
+                    );
                     $report = $messaging->sendAll($messages);
-                    $sent  += $report->successes()->count();
-
                     foreach ($report->failures()->getItems() as $failure) {
-                        $errors[] = $failure->error()->getMessage();
-                        // حذف التوكن إذا أصبح غير صالح
                         if (str_contains($failure->error()->getMessage(), 'registration-token-not-registered')) {
                             User::where('fcm_token', $failure->target()->value())->update(['fcm_token' => null]);
                         }
                     }
                 } catch (\Exception $e) {
-                    Log::error('FCM Multicast Error: ' . $e->getMessage());
+                    Log::warning('FCM Token Batch Error: ' . $e->getMessage());
                 }
             }
         }
 
-        // إرسال للـ Topic أيضاً (للأجهزة التي لم تُسجّل token بعد)
-        try {
-            $topicMessage = CloudMessage::fromArray(array_merge($payload, ['topic' => $topic]));
-            $messaging->send($topicMessage);
-        } catch (\Exception $e) {
-            Log::warning('FCM Topic fallback failed: ' . $e->getMessage());
-        }
-
-        if ($sent > 0 || empty($tokens)) {
-            return ['success' => true, 'message' => "تم الإرسال لـ {$sent} جهاز.", 'sent' => $sent];
-        }
-
-        return [
-            'success' => false,
-            'error'   => 'فشل الإرسال لجميع الأجهزة. ' . implode(' | ', array_slice($errors, 0, 3)),
-        ];
+        return ['success' => true, 'message' => 'تم الإرسال بنجاح عبر Topic + ' . count($tokens) . ' جهاز مسجّل.'];
     }
 }
