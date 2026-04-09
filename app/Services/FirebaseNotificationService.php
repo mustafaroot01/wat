@@ -28,12 +28,32 @@ class FirebaseNotificationService
                 'topic' => $topic,
                 'notification' => [
                     'title' => $title,
-                    'body' => $body,
+                    'body'  => $body,
+                ],
+                'android' => [
+                    'priority' => 'high',
+                    'notification' => [
+                        'sound'      => 'default',
+                        'channel_id' => 'high_importance_channel',
+                        'priority'   => 'high',
+                    ],
+                ],
+                'apns' => [
+                    'headers' => [
+                        'apns-priority' => '10',
+                    ],
+                    'payload' => [
+                        'aps' => [
+                            'sound' => 'default',
+                            'badge' => 1,
+                        ],
+                    ],
                 ],
             ];
 
             if ($imageUrl) {
-                $messageData['notification']['image'] = $imageUrl;
+                $messageData['notification']['image']              = $imageUrl;
+                $messageData['android']['notification']['image']   = $imageUrl;
             }
 
             $message = CloudMessage::fromArray($messageData);
