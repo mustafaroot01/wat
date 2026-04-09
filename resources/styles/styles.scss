@@ -111,3 +111,127 @@ $nav-text-strong:  #EEF2FA;   // Strong white text (for active / hover)
 .v-card.border-s-xl {
   border-inline-start-color: $brand-blue !important;
 }
+
+// ─── Page Transition ────────────────────────────────────────────────
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  will-change: opacity, transform;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+// ─── Card Entrance Animation ─────────────────────────────────────────
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.layout-page-content .v-card {
+  animation: card-in 0.35s ease both;
+}
+
+// Stagger cards inside VRow
+.layout-page-content .v-row > .v-col:nth-child(1) .v-card { animation-delay: 0.04s; }
+.layout-page-content .v-row > .v-col:nth-child(2) .v-card { animation-delay: 0.09s; }
+.layout-page-content .v-row > .v-col:nth-child(3) .v-card { animation-delay: 0.14s; }
+.layout-page-content .v-row > .v-col:nth-child(4) .v-card { animation-delay: 0.19s; }
+.layout-page-content .v-row > .v-col:nth-child(5) .v-card { animation-delay: 0.24s; }
+.layout-page-content .v-row > .v-col:nth-child(6) .v-card { animation-delay: 0.29s; }
+
+// ─── Water Wave in Sidebar Header ────────────────────────────────────
+@keyframes wave-move {
+  0%   { transform: translateX(0) translateZ(0); }
+  50%  { transform: translateX(-25%) translateZ(0); }
+  100% { transform: translateX(-50%) translateZ(0); }
+}
+
+.layout-nav-type-vertical .layout-vertical-nav .nav-header {
+  position: relative;
+  overflow: hidden;
+
+  // Wave layer
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    inline-size: 200%;
+    block-size: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba($brand-blue, 0.9) 0%,
+      rgba($brand-green, 0.8) 25%,
+      rgba($brand-blue, 0.9) 50%,
+      rgba($brand-green, 0.8) 75%,
+      rgba($brand-blue, 0.9) 100%
+    );
+    border-radius: 50% 50% 0 0 / 4px 4px 0 0;
+    animation: wave-move 4s linear infinite;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+}
+
+// ─── Dashboard Stat Number Count-Up ──────────────────────────────────
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+// Welcome banner & stat numbers
+.welcome-banner,
+.dashboard-stat-value,
+.text-h4, .text-h5 {
+  animation: count-up 0.5s ease both;
+}
+
+// ─── Sidebar Nav Item hover micro-animation ───────────────────────────
+.layout-nav-type-vertical .layout-vertical-nav .nav-link > a,
+.layout-nav-type-vertical .layout-vertical-nav .nav-group > .nav-group-label {
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+
+  &:hover {
+    transform: translateX(-3px) !important;
+  }
+}
+
+// RTL: move right on hover
+[dir="rtl"] {
+  .layout-nav-type-vertical .layout-vertical-nav .nav-link > a:hover,
+  .layout-nav-type-vertical .layout-vertical-nav .nav-group > .nav-group-label:hover {
+    transform: translateX(3px) !important;
+  }
+}
+
+// ─── Button pulse on active state ────────────────────────────────────
+@keyframes btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba($brand-blue, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba($brand-blue, 0); }
+}
+
+.v-btn.v-btn--variant-elevated:active {
+  animation: btn-pulse 0.4s ease;
+}

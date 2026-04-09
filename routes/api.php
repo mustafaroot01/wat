@@ -129,8 +129,18 @@ Route::prefix('app')->group(function () {
     });
 
     // Products Public API
+    Route::get('products/search', [\App\Http\Controllers\ProductController::class, 'searchPublic']);
     Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discountedPublic']);
     Route::get('products', [\App\Http\Controllers\ProductController::class, 'indexPublic']);
+
+    // Store Branding Public API (no auth - used by login page & sidebar)
+    Route::get('branding', function () {
+        $settings = \App\Models\StoreSetting::allAsArray();
+        return response()->json([
+            'store_name' => $settings['store_name'] ?? 'امواج ديالى',
+            'logo_url'   => isset($settings['logo']) ? url('storage/' . $settings['logo']) : null,
+        ]);
+    });
 
     // --- Authentication ---
     Route::prefix('auth')->group(function () {

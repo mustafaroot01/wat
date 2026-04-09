@@ -90,6 +90,42 @@ class ProductController extends Controller
             ]);
     }
 
+    public function searchPublic(Request $request)
+    {
+        $term = trim($request->get('q', ''));
+
+        if (mb_strlen($term) < 2) {
+            return response()->json([
+                'data'    => [],
+                'message' => 'أدخل كلمتين على الأقل للبحث',
+                'total'   => 0,
+                'has_more'=> false,
+            ]);
+        }
+
+        $query = Product::with(['category', 'brand'])
+            ->active()
+            ->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('sku', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%")
+                  ->orWhereHas('category', fn($c) => $c->where('name', 'like', "%{$term}%"))
+                  ->orWhereHas('brand', fn($b) => $b->where('name', 'like', "%{$term}%"));
+            });
+
+        $products = $query
+            ->orderByRaw("CASE WHEN name LIKE ? THEN 0 ELSE 1 END", ["{$term}%"])
+            ->orderBy('name')
+            ->paginate($request->get('per_page', 20));
+
+        return ProductResource::collection($products)
+            ->additional([
+                'total'    => $products->total(),
+                'has_more' => $products->hasMorePages(),
+                'query'    => $term,
+            ]);
+    }
+
     public function discountedPublic(Request $request)
     {
         $query = Product::with(['category', 'brand', 'filter'])

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminPermissions } from '@/composables/useAdminPermissions'
+import { useStoreSettings } from '@/composables/useStoreSettings'
 
 const router = useRouter()
 const route  = useRoute()
 const { fetchPermissions } = useAdminPermissions()
+const { branding, fetchBranding } = useStoreSettings()
+onMounted(fetchBranding)
 
 const form = ref({ email: '', password: '' })
 const isPasswordVisible = ref(false)
@@ -60,8 +63,12 @@ const handleLogin = async () => {
       <div class="deco-circle deco-circle-3" />
 
       <div class="brand-content text-center">
-        <img src="/logo.png" alt="امواج ديالى" class="brand-logo mb-6" />
-        <h1 class="brand-title">معمل امواج ديالى</h1>
+        <img
+          :src="branding.logo_url || '/logo.png'"
+          :alt="branding.store_name"
+          class="brand-logo mb-6"
+        />
+        <h1 class="brand-title">{{ branding.store_name }}</h1>
         <p class="brand-subtitle">لإنتاج وتعبئة المياه</p>
 
         <div class="brand-divider my-6" />
@@ -97,8 +104,8 @@ const handleLogin = async () => {
 
         <!-- Mobile logo -->
         <div class="mobile-logo d-flex d-md-none flex-column align-center mb-6">
-          <img src="/logo.png" alt="امواج ديالى" style="width:80px;" />
-          <h2 class="mt-2 font-weight-bold text-primary">معمل امواج ديالى</h2>
+          <img :src="branding.logo_url || '/logo.png'" :alt="branding.store_name" style="width:80px;" />
+          <h2 class="mt-2 font-weight-bold text-primary">{{ branding.store_name }}</h2>
         </div>
 
         <!-- Heading -->

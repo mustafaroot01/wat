@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import NavItems from '@/layouts/components/NavItems.vue'
-import logo from '@images/logo.svg?raw'
 import VerticalNavLayout from '@layouts/components/VerticalNavLayout.vue'
+import { useStoreSettings } from '@/composables/useStoreSettings'
 
 // Components
 import Footer from '@/layouts/components/Footer.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
+
+const { branding, fetchBranding } = useStoreSettings()
+onMounted(fetchBranding)
 </script>
 
 <template>
@@ -56,15 +59,18 @@ import UserProfile from '@/layouts/components/UserProfile.vue'
         to="/"
         class="app-logo app-title-wrapper"
       >
-        <!-- eslint-disable vue/no-v-html -->
-        <div
-          class="d-flex"
-          v-html="logo"
+        <img
+          v-if="branding.logo_url"
+          :src="branding.logo_url"
+          alt="logo"
+          style="width:38px;height:38px;object-fit:contain;border-radius:6px;"
         />
-        <!-- eslint-enable -->
+        <div v-else class="nav-logo-placeholder">
+          <VIcon icon="ri-drop-line" size="30" color="white" />
+        </div>
 
-        <h1 class="font-weight-medium leading-normal text-xl text-uppercase">
-          امواج ديالى
+        <h1 class="font-weight-medium leading-normal text-xl">
+          {{ branding.store_name }}
         </h1>
       </RouterLink>
 
