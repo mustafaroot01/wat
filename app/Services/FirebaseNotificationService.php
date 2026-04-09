@@ -35,7 +35,6 @@ class FirebaseNotificationService
                     'notification' => [
                         'sound'      => 'default',
                         'channel_id' => 'high_importance_channel',
-                        'priority'   => 'high',
                     ],
                 ],
                 'apns' => [
