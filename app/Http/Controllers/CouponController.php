@@ -320,6 +320,7 @@ class CouponController extends Controller
     {
         $request->validate([
             'coupon_id'       => 'required|exists:coupons,id',
+            'order_id'        => 'nullable|exists:orders,id',
             'discount_amount' => 'required|numeric|min:0',
         ]);
 
@@ -330,18 +331,29 @@ class CouponController extends Controller
             return response()->json(['success' => false, 'message' => 'الكود لم يعد صالحاً.'], 422);
         }
 
-        $alreadyUsed = CouponUsage::where('coupon_id', $coupon->id)->where('user_id', $user->id)->exists();
+        // ── تحقق: استخدم مرة واحدة فقط لكل زبون ────────────
+        $alreadyUsed = CouponUsage::where('coupon_id', $coupon->id)
+            ->where('user_id', $user->id)
+            ->exists();
         if ($alreadyUsed) {
             return response()->json(['success' => false, 'message' => 'لقد استخدمت هذا الكود مسبقاً.'], 422);
         }
 
         DB::transaction(function () use ($coupon, $user, $request) {
+            // ── تسجيل الاستخدام ───────────────────────────────
             CouponUsage::create([
                 'coupon_id'       => $coupon->id,
                 'user_id'         => $user->id,
                 'discount_amount' => $request->discount_amount,
             ]);
             $coupon->increment('used_count');
+
+            // ── ربط الكوبون بالطلب إذا أُرسل order_id ────────
+            if ($request->order_id) {
+                \App\Models\Order::where('id', $request->order_id)
+                    ->where('user_id', $user->id)
+                    ->update(['coupon_id' => $request->coupon_id]);
+            }
         });
 
         return response()->json(['success' => true, 'message' => 'تم تطبيق كود الخصم بنجاح.']);

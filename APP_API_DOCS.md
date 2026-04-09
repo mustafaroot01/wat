@@ -597,7 +597,7 @@ POST /api/app/coupons/validate
 
 ---
 
-### 8.2 تطبيق الكوبون بعد الطلب 🔒
+### 8.2 تطبيق الكوبون بعد إنشاء الطلب 🔒
 
 ```
 POST /api/app/coupons/apply
@@ -607,10 +607,14 @@ Authorization: Bearer {token}
 **Body:**
 ```json
 {
-  "code": "SUMMER20",
-  "order_id": 15
+  "coupon_id": 2,
+  "order_id": 15,
+  "discount_amount": 3000
 }
 ```
+
+> `order_id` مطلوب لربط الكوبون بالطلب وعرضه في الفاتورة.
+> يُسمح باستخدام كل كوبون مرة واحدة فقط لكل زبون.
 
 ---
 

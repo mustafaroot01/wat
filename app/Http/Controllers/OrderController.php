@@ -218,16 +218,21 @@ class OrderController extends Controller
             $order->items()->create($item);
         }
 
-        // ─── تسجيل استخدام الكوبون ───────────────────────────
+        // ─── تسجيل استخدام الكوبون (إذا أُرسل في body الطلب) ──
         if ($request->coupon_id) {
             $coupon = \App\Models\Coupon::find($request->coupon_id);
             if ($coupon) {
-                \App\Models\CouponUsage::create([
-                    'coupon_id'       => $coupon->id,
-                    'user_id'         => $request->user()->id,
-                    'discount_amount' => $request->discount_amount ?? 0,
-                ]);
-                $coupon->increment('used_count');
+                $alreadyUsed = \App\Models\CouponUsage::where('coupon_id', $coupon->id)
+                    ->where('user_id', $request->user()->id)
+                    ->exists();
+                if (!$alreadyUsed) {
+                    \App\Models\CouponUsage::create([
+                        'coupon_id'       => $coupon->id,
+                        'user_id'         => $request->user()->id,
+                        'discount_amount' => $request->discount_amount ?? 0,
+                    ]);
+                    $coupon->increment('used_count');
+                }
             }
         }
         // ────────────────────────────────────────────────────
