@@ -197,6 +197,19 @@ class OrderController extends Controller
                 'minimum_order_amount' => $minimumOrder,
             ], 422);
         }
+
+        // ─── فحص: كل زبون يستخدم الكوبون مرة واحدة فقط ──
+        if ($request->coupon_id) {
+            $alreadyUsed = \App\Models\CouponUsage::where('coupon_id', $request->coupon_id)
+                ->where('user_id', $request->user()->id)
+                ->exists();
+            if ($alreadyUsed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'لقد استخدمت هذا الكود مسبقاً.',
+                ], 422);
+            }
+        }
         // ────────────────────────────────────────────────────
 
         $order = Order::create([
