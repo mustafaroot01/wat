@@ -129,6 +129,7 @@ Route::prefix('app')->group(function () {
     });
 
     // Products Public API
+    Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discountedPublic']);
     Route::get('products', [\App\Http\Controllers\ProductController::class, 'indexPublic']);
 
     // --- Authentication ---

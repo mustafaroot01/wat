@@ -90,6 +90,40 @@ class ProductController extends Controller
             ]);
     }
 
+    public function discountedPublic(Request $request)
+    {
+        $query = Product::with(['category', 'brand', 'filter'])
+            ->active()
+            ->discounted();
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('sku', 'like', "%{$term}%");
+            });
+        }
+
+        $sortBy  = $request->get('sort_by', 'discount_percentage');
+        $sortDir = $request->get('sort_dir', 'desc');
+        if (!in_array($sortBy, ['discount_percentage', 'price', 'name', 'created_at'])) {
+            $sortBy = 'discount_percentage';
+        }
+
+        $products = $query->orderBy($sortBy, $sortDir)
+            ->paginate($request->get('per_page', 20));
+
+        return ProductResource::collection($products)
+            ->additional([
+                'has_more'        => $products->hasMorePages(),
+                'total_discounted' => Product::active()->discounted()->count(),
+            ]);
+    }
+
     public function indexPublic(Request $request)
     {
         $query = Product::with(['category', 'brand', 'filter'])->active();

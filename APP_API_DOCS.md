@@ -434,7 +434,69 @@ GET /api/app/products?category_id=1&in_stock=true&per_page=20
 
 ---
 
-### 5.2 إضافة منتج للسلة (منطق السلة — Frontend Only)
+### 5.2 جلب المنتجات المخفضة (صفحة خصومات مميزة)
+
+```
+GET /api/app/products/discounted
+```
+
+**Query Parameters (اختياري):**
+
+| Parameter | Type | الوصف |
+|-----------|------|-------|
+| `category_id` | integer | فلترة حسب التصنيف |
+| `search` | string | بحث باسم المنتج |
+| `sort_by` | string | `discount_percentage` (افتراضي) أو `price` أو `name` |
+| `sort_dir` | string | `desc` (افتراضي) أو `asc` |
+| `page` | integer | رقم الصفحة |
+| `per_page` | integer | عدد في الصفحة (default: 20) |
+
+**مثال:**
+```
+GET /api/app/products/discounted?per_page=20
+GET /api/app/products/discounted?sort_by=price&sort_dir=asc
+```
+
+**Response 200:**
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "sku": "WAT-003",
+      "name": "عبوة الريان 5 لتر",
+      "description": "عبوة مياه 5 لتر",
+      "price": 5000.00,
+      "discount_percentage": 20,
+      "discounted_price": 4000.00,
+      "has_discount": true,
+      "in_stock": true,
+      "image_url": "https://wat.diyala.org/media/products/rayan.webp",
+      "is_active": true,
+      "category": { "id": 2, "name": "مياه حجم كبير" },
+      "brand": { "id": 1, "name": "الريان" }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 5
+  },
+  "total_discounted": 5,
+  "has_more": false
+}
+```
+
+> 💡 **كيف تعرض الخصم في التطبيق:**
+> - اعرض `price` كسعر قديم مشطوب
+> - اعرض `discounted_price` كسعر نهائي بلون أخضر أو أحمر
+> - اعرض `discount_percentage` كـ badge مثل `20%`
+> - الترتيب الافتراضي: الأعلى خصماً أولاً
+
+---
+
+### 5.3 إضافة منتج للسلة (منطق السلة — Frontend Only)
 
 > ⚠️ السلة تُدار **في التطبيق فقط** (Local State / SQLite) — لا يوجد Cart API.
 > عند الطلب يُرسل محتوى السلة كاملاً.
