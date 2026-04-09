@@ -3,8 +3,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
+import { useStoreSettings } from '@/composables/useStoreSettings'
 
 const router = useRouter()
+const { branding, fetchBranding } = useStoreSettings()
 
 // ── Data ────────────────────────────────────────────────
 const loading      = ref(true)
@@ -56,7 +58,7 @@ const load = async () => {
   }
 }
 
-onMounted(load)
+onMounted(() => { load(); fetchBranding() })
 
 const goToOrders = (status: string) =>
   router.push({ path: '/orders', query: { status } })
@@ -76,22 +78,22 @@ const goToOrders = (status: string) =>
         <VCol cols="12">
           <div class="welcome-banner">
             <div class="wb-deco wb-deco-1" /><div class="wb-deco wb-deco-2" />
-            <div class="d-flex align-center justify-space-between position-relative" style="z-index:1;">
-              <div>
-                <div class="d-flex align-center gap-3 mb-2">
-                  <img src="/logo.png" style="width:52px;height:52px;object-fit:contain;" />
-                  <div>
-                    <h2 class="wb-title">معمل امواج ديالى</h2>
-                    <p class="wb-sub">لوحة التحكم الإدارية</p>
-                  </div>
+            <div class="d-flex align-center justify-space-between position-relative" style="z-index:1;gap:12px;">
+              <div class="d-flex align-center gap-3" style="min-width:0;">
+                <img
+                  v-if="branding.logo_url"
+                  :src="branding.logo_url"
+                  style="width:54px;height:54px;object-fit:contain;border-radius:10px;flex-shrink:0;"
+                />
+                <div style="min-width:0;">
+                  <h2 class="wb-title">{{ branding.store_name }}</h2>
+                  <p class="wb-sub">لوحة التحكم الإدارية</p>
+                  <p class="wb-desc">إجمالي الطلبات: <strong>{{ orders.total }}</strong> طلب</p>
                 </div>
-                <p class="wb-desc">إجمالي الطلبات الكلي: <strong>{{ orders.total }}</strong> طلب</p>
               </div>
-              <div class="d-none d-sm-block text-end">
-                <div class="wb-stat-badge">
-                  <span class="wb-stat-num">{{ orders.today }}</span>
-                  <span class="wb-stat-lbl">طلب اليوم</span>
-                </div>
+              <div class="wb-stat-badge flex-shrink-0">
+                <span class="wb-stat-num">{{ orders.today }}</span>
+                <span class="wb-stat-lbl">طلب اليوم</span>
               </div>
             </div>
           </div>
@@ -351,40 +353,43 @@ const goToOrders = (status: string) =>
   position: relative;
   background: linear-gradient(130deg, #0d47a1 0%, #1565c0 55%, #1b7a3e 100%);
   border-radius: 16px;
-  padding: 28px 32px;
+  padding: 22px 24px;
   overflow: hidden;
   margin-bottom: 4px;
+  min-height: 90px;
 }
 .wb-deco {
   position: absolute;
   border-radius: 50%;
   background: rgba(255,255,255,0.06);
+  pointer-events: none;
 }
-.wb-deco-1 { width:260px;height:260px;top:-80px;right:-40px; }
-.wb-deco-2 { width:140px;height:140px;bottom:-40px;left:80px; }
-.wb-title  { color:#fff;font-size:1.35rem;font-weight:700;line-height:1.2; }
-.wb-sub    { color:rgba(255,255,255,.65);font-size:.82rem;margin-top:2px; }
-.wb-desc   { color:rgba(255,255,255,.8);font-size:.9rem;margin-top:10px; }
+.wb-deco-1 { width:220px;height:220px;top:-70px;right:-30px; }
+.wb-deco-2 { width:120px;height:120px;bottom:-30px;left:60px; }
+.wb-title  { color:#fff;font-size:1.2rem;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.wb-sub    { color:rgba(255,255,255,.65);font-size:.78rem;margin-top:2px; }
+.wb-desc   { color:rgba(255,255,255,.8);font-size:.85rem;margin-top:6px; }
 .wb-desc strong { color:#fff; }
 .wb-stat-badge {
   background:rgba(255,255,255,.15);
   border-radius:12px;
-  padding:12px 20px;
-  display:inline-block;
+  padding:10px 18px;
+  text-align:center;
   backdrop-filter:blur(8px);
+  white-space:nowrap;
 }
-.wb-stat-num { display:block;color:#fff;font-size:2rem;font-weight:700;line-height:1; }
-.wb-stat-lbl { color:rgba(255,255,255,.7);font-size:.78rem; }
+.wb-stat-num { display:block;color:#fff;font-size:1.8rem;font-weight:700;line-height:1; }
+.wb-stat-lbl { color:rgba(255,255,255,.7);font-size:.75rem; }
 
 /* ── Stat Cards ───────────────────────────────── */
 .stat-card   { border:1px solid rgba(0,0,0,.06); }
 .stat-icon-wrap {
-  width:42px;height:42px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.stat-num { font-size:1.6rem;font-weight:700;color:#1a237e;line-height:1.1; }
-.stat-lbl { font-size:.78rem;color:#78909c;margin-top:3px; }
-.stat-sub { font-size:.7rem;color:#90a4ae;background:#f5f5f5;padding:2px 8px;border-radius:99px; }
+.stat-num { font-size:1.5rem;font-weight:700;color:#1a237e;line-height:1.1;word-break:break-all; }
+.stat-lbl { font-size:.75rem;color:#78909c;margin-top:3px; }
+.stat-sub { font-size:.68rem;color:#90a4ae;background:#f5f5f5;padding:2px 7px;border-radius:99px;white-space:nowrap; }
 
 /* ── Status Cards ─────────────────────────────── */
 .status-card {
@@ -394,11 +399,11 @@ const goToOrders = (status: string) =>
 }
 .status-card:hover { transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.1) !important; }
 .status-icon-wrap {
-  width:48px;height:48px;border-radius:12px;
+  width:44px;height:44px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
 }
-.status-count { font-size:1.6rem;font-weight:700;line-height:1.1; }
-.status-lbl   { font-size:.72rem;color:#78909c;margin-top:4px; }
+.status-count { font-size:1.5rem;font-weight:700;line-height:1.1; }
+.status-lbl   { font-size:.7rem;color:#78909c;margin-top:4px;line-height:1.3; }
 
 /* ── Top Lists ────────────────────────────────── */
 .top-row        { transition: background .15s; }

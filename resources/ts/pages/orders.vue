@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
+
+const route = useRoute()
 
 interface OrderItem {
   id: number
@@ -42,7 +45,7 @@ const currentPage  = ref(1)
 const perPage      = ref(15)
 
 const searchQuery  = ref('')
-const statusFilter = ref<string | null>(null)
+const statusFilter = ref<string | null>((route.query.status as string) || null)
 const dateFrom     = ref('')
 const dateTo       = ref('')
 
@@ -100,6 +103,7 @@ const loadOrders = async (page = 1) => {
 }
 
 watch([searchQuery, statusFilter, dateFrom, dateTo], () => loadOrders(1))
+watch(() => route.query.status, (s) => { statusFilter.value = (s as string) || null })
 onMounted(() => loadOrders(1))
 
 // ── Invoice Dialog ──────────────────────────────────────────────────
