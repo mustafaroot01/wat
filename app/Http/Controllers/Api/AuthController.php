@@ -48,9 +48,6 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'حسابك معطل حالياً من قبل الإدارة.', 'code' => 'account_disabled'], 403);
         }
 
-        // طرد من جميع الأجهزة الأخرى (Single device policy)
-        $user->tokens()->delete();
-
         return response()->json([
             'success' => true,
             'message' => 'تم تسجيل الدخول بنجاح.',
