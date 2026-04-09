@@ -146,6 +146,132 @@ const saveStatus = async () => {
 }
 
 const printPage = () => window.print()
+
+const printThermal58 = () => {
+  const o = order.value
+  if (!o) return
+
+  const storeName    = settings.value.store_name    || 'المتجر'
+  const storePhone   = settings.value.store_phone   || ''
+  const storeAddress = settings.value.store_address || ''
+  const thankYou     = settings.value.thank_you_message || 'شكراً لثقتكم بنا'
+  const invoiceUrl   = pageUrl.value || window.location.href.split('?')[0]
+  const qrUrl        = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(invoiceUrl)}`
+
+  const formatMoney = (v: string) =>
+    Number(v).toLocaleString('ar-IQ') + ' د.ع'
+
+  const itemsHtml = o.items.map((item, i) => `
+    <tr>
+      <td style="text-align:center;color:#999;">${i + 1}</td>
+      <td>${item.product_name}</td>
+      <td style="text-align:center;">${item.quantity}</td>
+      <td style="text-align:left;font-weight:700;">${formatMoney(item.total_price)}</td>
+    </tr>
+  `).join('')
+
+  const discountRow = parseFloat(o.discount_amount) > 0
+    ? `<tr><td colspan="2">خصم${o.coupon ? ' (' + o.coupon.code + ')' : ''}</td><td colspan="2" style="text-align:left;color:#2e7d32;">- ${formatMoney(o.discount_amount)}</td></tr>`
+    : ''
+
+  const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>وصل ${o.invoice_code}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size: 58mm auto; margin: 2mm 1mm; }
+  body {
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    font-size: 10px;
+    width: 54mm;
+    color: #000;
+    direction: rtl;
+  }
+  .center { text-align: center; }
+  .bold   { font-weight: 700; }
+  .line   { border-top: 1px dashed #000; margin: 4px 0; }
+  .store-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .code   { font-size: 12px; font-weight: 700; font-family: monospace; letter-spacing: 1px; }
+  table  { width: 100%; border-collapse: collapse; }
+  th, td { padding: 2px 3px; font-size: 9px; }
+  thead th { font-weight: 700; border-bottom: 1px solid #000; }
+  .total-section { margin-top: 4px; }
+  .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .final { font-size: 12px; font-weight: 700; border-top: 1px solid #000; padding-top: 4px; margin-top: 2px; }
+  .qr-section { text-align: center; margin: 6px 0 4px; }
+  .qr-section img { width: 90px; height: 90px; }
+  .qr-lbl { font-size: 8px; color: #555; margin-top: 2px; }
+  .footer { text-align: center; margin-top: 4px; font-size: 9px; }
+  @media print { body { width: 54mm; } }
+</style>
+</head>
+<body>
+
+<div class="center">
+  <div class="store-name">${storeName}</div>
+  ${storePhone ? `<div>${storePhone}</div>` : ''}
+  ${storeAddress ? `<div>${storeAddress}</div>` : ''}
+</div>
+
+<div class="line"></div>
+
+<div class="center">
+  <div class="code">${o.invoice_code}</div>
+  <div style="font-size:9px;color:#555;">${new Date(o.created_at).toLocaleString('ar-IQ', {dateStyle:'short', timeStyle:'short'})}</div>
+</div>
+
+<div class="line"></div>
+
+<table>
+  <tr><td class="bold">الاسم</td><td style="text-align:left;">${o.customer_name}</td></tr>
+  <tr><td class="bold">الهاتف</td><td style="text-align:left;direction:ltr;">${o.customer_phone}</td></tr>
+  <tr><td class="bold">المنطقة</td><td style="text-align:left;">${o.district} - ${o.province}</td></tr>
+  ${o.nearest_landmark ? `<tr><td class="bold">أقرب نقطة</td><td style="text-align:left;">${o.nearest_landmark}</td></tr>` : ''}
+  ${o.notes ? `<tr><td class="bold">ملاحظات</td><td style="text-align:left;">${o.notes}</td></tr>` : ''}
+</table>
+
+<div class="line"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center;width:16px;">#</th>
+      <th style="text-align:right;">المنتج</th>
+      <th style="text-align:center;width:22px;">ك</th>
+      <th style="text-align:left;width:46px;">المبلغ</th>
+    </tr>
+  </thead>
+  <tbody>${itemsHtml}</tbody>
+</table>
+
+<div class="line"></div>
+
+<div class="total-section">
+  <div class="total-row"><span>المجموع</span><span>${formatMoney(o.total_amount)}</span></div>
+  ${parseFloat(o.discount_amount) > 0 ? `<div class="total-row" style="color:#2e7d32;"><span>الخصم${o.coupon ? ' (' + o.coupon.code + ')' : ''}</span><span>- ${formatMoney(o.discount_amount)}</span></div>` : ''}
+  <div class="total-row final"><span>الإجمالي</span><span>${formatMoney(o.final_amount)}</span></div>
+</div>
+
+<div class="qr-section">
+  <img src="${qrUrl}" alt="QR" />
+  <div class="qr-lbl">امسح للفاتورة الإلكترونية</div>
+</div>
+
+<div class="line"></div>
+<div class="footer">${thankYou}</div>
+<br/>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); }
+<\/script>
+</body>
+</html>`
+
+  const w = window.open('', '_blank', 'width=300,height=600')
+  if (w) { w.document.write(html); w.document.close() }
+}
 </script>
 
 <template>
@@ -175,6 +301,9 @@ const printPage = () => window.print()
           </VBtn>
           <VBtn color="primary" prepend-icon="ri-printer-line" @click="printPage">
             طباعة / PDF
+          </VBtn>
+          <VBtn color="teal" variant="tonal" prepend-icon="ri-receipt-line" @click="printThermal58">
+            طباعة 58mm
           </VBtn>
         </div>
       </div>

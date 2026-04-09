@@ -1,4 +1,4 @@
-# 📲 Notifications API — توثيق كامل لمطور التطبيق
+# 📲 API Documentation — توثيق كامل لمطور التطبيق
 
 **Base URL:** `https://wat.diyala.org/api/app`
 
@@ -232,3 +232,75 @@ class AppNotification {
 | Foreground | يحتاج `flutter_local_notifications` لعرض الإشعار |
 | `has_more: true` | توجد صفحات إضافية — استخدم `?page=2` للتنقل |
 | تسجيل الخروج | السيرفر يحذف FCM token تلقائياً عند logout |
+
+---
+
+# 🏪 Store Status API — حالة المتجر (مفتوح / مغلق)
+
+## Endpoint
+
+**GET** `/api/app/store-status`  
+🌐 لا يتطلب Auth — يُستدعى قبل كل إضافة للسلة
+
+---
+
+## Response — المتجر مفتوح ✅
+
+```json
+{
+  "is_open": true,
+  "message": "المتجر مفتوح"
+}
+```
+
+## Response — المتجر مغلق ❌
+
+```json
+{
+  "is_open": false,
+  "message": "المتجر مغلق حالياً"
+}
+```
+
+---
+
+## أين يُضاف في Flutter؟
+
+عند الضغط على زر **"أضف للسلة"** مباشرةً:
+
+```dart
+Future<void> addToCart(Product product) async {
+  // 1. تحقق من حالة المتجر أولاً
+  final res  = await http.get(
+    Uri.parse('https://wat.diyala.org/api/app/store-status'),
+    headers: {'Accept': 'application/json'},
+  );
+  final data = jsonDecode(res.body);
+
+  // 2. إذا مغلق — أظهر رسالة وأوقف
+  if (data['is_open'] == false) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('المتجر مغلق'),
+        content: const Text('المتجر مغلق حالياً، يرجى المحاولة لاحقاً.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('حسناً')),
+        ],
+      ),
+    );
+    return; // ← لا تضيف للسلة
+  }
+
+  // 3. المتجر مفتوح — أكمل الإضافة
+  cart.add(product);
+}
+```
+
+---
+
+## ملخص
+
+| Method | URL | Auth | متى يُستدعى |
+|--------|-----|------|------------|
+| `GET` | `/api/app/store-status` | ❌ | عند الضغط على زر إضافة للسلة |

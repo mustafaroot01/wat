@@ -128,9 +128,92 @@ const openInvoice = async (order: Order) => {
 const printInvoice = () => {
   const o = invoiceOrder.value
   if (!o) return
-
-  // Open the Vue public invoice page in a new print-ready tab
   window.open(invoiceUrl(o.invoice_token) + '?print=1', '_blank')
+}
+
+const printThermal58 = () => {
+  const o = invoiceOrder.value
+  if (!o) return
+
+  const s = invoiceSettings.value
+  const storeName    = s.store_name    || 'المتجر'
+  const storePhone   = s.store_phone   || ''
+  const storeAddress = s.store_address || ''
+  const thankYou     = s.thank_you_message || 'شكراً لثقتكم بنا'
+  const invoiceLink  = invoiceUrl(o.invoice_token)
+  const qrUrl        = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(invoiceLink)}`
+  const fmt          = (v: string) => Number(v).toLocaleString('ar-IQ') + ' د.ع'
+
+  const itemsHtml = o.items.map((item: any, i: number) => `
+    <tr>
+      <td style="text-align:center;color:#999;">${i + 1}</td>
+      <td>${item.product_name}</td>
+      <td style="text-align:center;">${item.quantity}</td>
+      <td style="text-align:left;font-weight:700;">${fmt(item.total_price)}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>وصل ${o.invoice_code}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  @page{size:58mm auto;margin:2mm 1mm;}
+  body{font-family:'Tahoma','Arial',sans-serif;font-size:10px;width:54mm;color:#000;direction:rtl;}
+  .c{text-align:center;} .b{font-weight:700;}
+  .line{border-top:1px dashed #000;margin:4px 0;}
+  .store-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+  .code{font-size:12px;font-weight:700;font-family:monospace;letter-spacing:1px;}
+  table{width:100%;border-collapse:collapse;}
+  th,td{padding:2px 3px;font-size:9px;}
+  thead th{font-weight:700;border-bottom:1px solid #000;}
+  .tr{display:flex;justify-content:space-between;padding:2px 0;}
+  .final{font-size:12px;font-weight:700;border-top:1px solid #000;padding-top:4px;margin-top:2px;}
+  .qr{text-align:center;margin:6px 0 4px;}
+  .qr img{width:90px;height:90px;}
+  .qrl{font-size:8px;color:#555;margin-top:2px;}
+  .ft{text-align:center;margin-top:4px;font-size:9px;}
+</style></head><body>
+<div class="c">
+  <div class="store-name">${storeName}</div>
+  ${storePhone ? `<div>${storePhone}</div>` : ''}
+  ${storeAddress ? `<div>${storeAddress}</div>` : ''}
+</div>
+<div class="line"></div>
+<div class="c">
+  <div class="code">${o.invoice_code}</div>
+  <div style="font-size:9px;color:#555;">${new Date(o.created_at).toLocaleString('ar-IQ',{dateStyle:'short',timeStyle:'short'})}</div>
+</div>
+<div class="line"></div>
+<table>
+  <tr><td class="b">الاسم</td><td style="text-align:left;">${o.customer_name}</td></tr>
+  <tr><td class="b">الهاتف</td><td style="text-align:left;direction:ltr;">${o.customer_phone}</td></tr>
+  <tr><td class="b">المنطقة</td><td style="text-align:left;">${o.district} - ${o.province}</td></tr>
+  ${o.nearest_landmark ? `<tr><td class="b">أقرب نقطة</td><td style="text-align:left;">${o.nearest_landmark}</td></tr>` : ''}
+  ${o.notes ? `<tr><td class="b">ملاحظات</td><td style="text-align:left;">${o.notes}</td></tr>` : ''}
+</table>
+<div class="line"></div>
+<table>
+  <thead><tr>
+    <th style="text-align:center;width:16px;">#</th>
+    <th style="text-align:right;">المنتج</th>
+    <th style="text-align:center;width:22px;">ك</th>
+    <th style="text-align:left;width:46px;">المبلغ</th>
+  </tr></thead>
+  <tbody>${itemsHtml}</tbody>
+</table>
+<div class="line"></div>
+<div>
+  <div class="tr"><span>المجموع</span><span>${fmt(o.total_amount)}</span></div>
+  ${parseFloat(o.discount_amount) > 0 ? `<div class="tr" style="color:#2e7d32;"><span>الخصم${o.coupon ? ' (' + o.coupon.code + ')' : ''}</span><span>- ${fmt(o.discount_amount)}</span></div>` : ''}
+  <div class="tr final"><span>الإجمالي</span><span>${fmt(o.final_amount)}</span></div>
+</div>
+<div class="qr"><img src="${qrUrl}" alt="QR"/><div class="qrl">امسح للفاتورة الإلكترونية</div></div>
+<div class="line"></div>
+<div class="ft">${thankYou}</div><br/>
+<script>window.onload=()=>{window.focus();window.print();}<\/script>
+</body></html>`
+
+  const w = window.open('', '_blank', 'width=300,height=600')
+  if (w) { w.document.write(html); w.document.close() }
 }
 
 const invoiceUrl = (token: string) =>
@@ -449,6 +532,9 @@ const copyPhone = async (phone: string) => {
           <div class="d-flex gap-2">
             <VBtn color="primary" variant="elevated" rounded="lg" prepend-icon="ri-printer-line" @click="printInvoice">
               طباعة PDF
+            </VBtn>
+            <VBtn color="teal" variant="tonal" rounded="lg" prepend-icon="ri-receipt-line" @click="printThermal58">
+              58mm
             </VBtn>
             <VBtn icon variant="text" @click="invoiceDialog = false"><VIcon>ri-close-line</VIcon></VBtn>
           </div>
