@@ -62,7 +62,7 @@ class CouponController extends Controller
         $perPage = min((int) $request->get('per_page', 50), 200);
 
         $usages = CouponUsage::where('coupon_id', $coupon->id)
-            ->with('user:id,name,phone')
+            ->with('user:id,first_name,last_name,phone')
             ->latest()
             ->paginate($perPage);
 
@@ -70,7 +70,7 @@ class CouponController extends Controller
             'coupon'   => new CouponResource($coupon),
             'data'     => $usages->map(fn($u) => [
                 'id'              => $u->id,
-                'user_name'       => $u->user->name  ?? 'غير معروف',
+                'user_name'       => $u->user?->full_name ?? 'غير معروف',
                 'user_phone'      => $u->user->phone ?? '-',
                 'discount_amount' => (float) $u->discount_amount,
                 'used_at'         => $u->created_at?->toDateTimeString(),
@@ -89,7 +89,7 @@ class CouponController extends Controller
     public function exportExcel(Coupon $coupon)
     {
         $usages = CouponUsage::where('coupon_id', $coupon->id)
-            ->with('user:id,name,phone')
+            ->with('user:id,first_name,last_name,phone')
             ->latest()
             ->get();
 
@@ -197,7 +197,7 @@ class CouponController extends Controller
         // Data rows
         foreach ($usages as $i => $u) {
             $style  = $i % 2 === 0 ? 'rowEven' : 'rowOdd';
-            $name   = htmlspecialchars($u->user->name  ?? 'غير معروف');
+            $name   = htmlspecialchars($u->user?->full_name ?? 'غير معروف');
             $phone  = htmlspecialchars($u->user->phone ?? '-');
             $amount = number_format((float) $u->discount_amount, 0) . ' د.ع';
             $date   = $u->created_at?->format('Y-m-d H:i') ?? '-';
