@@ -156,15 +156,13 @@ Route::prefix('app')->group(function () {
         return response()->json($areas);
     });
 
-    // Coupons Public API
-    Route::post('coupons/validate', [\App\Http\Controllers\CouponController::class, 'validate']);
-
     // --- Protected Routes ---
     Route::middleware(['auth:sanctum', 'check.account.active'])->group(function () {
         // Logout
         Route::post('auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
 
-        // Coupons (apply after order confirmed)
+        // Coupons
+        Route::post('coupons/validate', [\App\Http\Controllers\CouponController::class, 'validate']);
         Route::post('coupons/apply', [\App\Http\Controllers\CouponController::class, 'apply']);
 
         // Orders (app)
