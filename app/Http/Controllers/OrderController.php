@@ -218,9 +218,23 @@ class OrderController extends Controller
             $order->items()->create($item);
         }
 
+        // ─── تسجيل استخدام الكوبون ───────────────────────────
+        if ($request->coupon_id) {
+            $coupon = \App\Models\Coupon::find($request->coupon_id);
+            if ($coupon) {
+                \App\Models\CouponUsage::create([
+                    'coupon_id'       => $coupon->id,
+                    'user_id'         => $request->user()->id,
+                    'discount_amount' => $request->discount_amount ?? 0,
+                ]);
+                $coupon->increment('used_count');
+            }
+        }
+        // ────────────────────────────────────────────────────
+
         return response()->json([
             'message' => 'تم إرسال الطلب بنجاح',
-            'order'   => $order->load('items'),
+            'order'   => $order->load(['items', 'coupon']),
         ], 201);
     }
 
