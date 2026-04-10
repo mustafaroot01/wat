@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
@@ -42,7 +42,7 @@ const orders       = ref<Order[]>([])
 const loading      = ref(false)
 const totalItems   = ref(0)
 const currentPage  = ref(1)
-const perPage      = ref(15)
+const perPage      = ref(25)
 
 const searchQuery  = ref('')
 const statusFilter = ref<string | null>((route.query.status as string) || null)
@@ -391,7 +391,7 @@ const copyPhone = async (phone: string) => {
             :items-length="totalItems"
             :loading="loading"
             :items-per-page="perPage"
-            @update:options="o => loadOrders(o.page)"
+            @update:options="o => { perPage.value = o.itemsPerPage; loadOrders(o.page) }"
             class="mt-2"
           >
             <template #item.seq="{ index }">

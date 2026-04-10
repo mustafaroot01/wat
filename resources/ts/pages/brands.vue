@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usePagination } from '@/composables/usePagination'
-import { apiFetch } from '@/utils/apiFetch'
+import { usePagination } from '@/composables/usePagination';
+import { apiFetch } from '@/utils/apiFetch';
+import { onMounted, ref } from 'vue';
 
 interface Brand {
   id: number | null;
@@ -20,11 +20,12 @@ const {
   loading,
   totalItems,
   fetchData: fetchBrands,
+  itemsPerPage: composablePerPage,
 } = usePagination<Brand>('/api/admin/brands')
 
 const sortState   = ref<{ sort_by?: string; sort_dir?: string }>({})
 const currentPage = ref(1)
-const perPage     = ref(15)
+const perPage     = ref(25)
 
 const loadBrands = (page = 1) => {
   currentPage.value = page
@@ -34,7 +35,10 @@ const loadBrands = (page = 1) => {
 const handleBrandsOptions = (options: any) => {
   const sort = options.sortBy?.[0]
   sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
-  if (options.itemsPerPage) perPage.value = options.itemsPerPage
+  if (options.itemsPerPage && options.itemsPerPage > 0) {
+    perPage.value = options.itemsPerPage
+    composablePerPage.value = options.itemsPerPage
+  }
   loadBrands(options.page)
 }
 

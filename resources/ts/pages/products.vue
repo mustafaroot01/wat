@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { usePagination } from '@/composables/usePagination'
-import { apiFetch } from '@/utils/apiFetch'
-import { formatIQD } from '@/utils/currency'
+import { usePagination } from '@/composables/usePagination';
+import { apiFetch } from '@/utils/apiFetch';
+import { formatIQD } from '@/utils/currency';
+import { onMounted, ref, watch } from 'vue';
 
 interface Product {
   id: number | null;
@@ -33,6 +33,7 @@ const {
   totalItems,
   fetchData: fetchProducts,
   handleOptionsChange,
+  itemsPerPage: composablePerPage,
 } = usePagination<Product>('/api/admin/products')
 
 const headers = [
@@ -54,7 +55,7 @@ const statusFilter = ref<string | null>(null)
 
 const sortState   = ref<{ sort_by?: string; sort_dir?: string }>({})
 const currentPage = ref(1)
-const perPage     = ref(15)
+const perPage     = ref(25)
 
 const loadProducts = (page = 1) => {
   currentPage.value = page
@@ -76,7 +77,10 @@ watch([searchQuery, categoryFilter, stockFilter, statusFilter], () => {
 const handleProductOptions = (options: any) => {
   const sort = options.sortBy?.[0]
   sortState.value = sort ? { sort_by: sort.key, sort_dir: sort.order } : {}
-  if (options.itemsPerPage) perPage.value = options.itemsPerPage
+  if (options.itemsPerPage && options.itemsPerPage > 0) {
+    perPage.value = options.itemsPerPage
+    composablePerPage.value = options.itemsPerPage
+  }
   loadProducts(options.page)
 }
 
