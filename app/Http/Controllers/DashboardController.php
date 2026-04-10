@@ -61,6 +61,41 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // ── Revenue chart: last 30 days ───────────────────────
+        $revenueRaw = Order::selectRaw('DATE(created_at) as date, SUM(final_amount) as total')
+            ->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay())
+            ->where('status', Order::STATUS_DELIVERED)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $revenueChart = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('Y-m-d');
+            $revenueChart[] = [
+                'date'  => Carbon::now()->subDays($i)->format('d/m'),
+                'total' => (float) ($revenueRaw[$date]->total ?? 0),
+            ];
+        }
+
+        // ── Orders chart: last 30 days ────────────────────────
+        $ordersRaw = Order::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay())
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $ordersChart = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('Y-m-d');
+            $ordersChart[] = [
+                'date'  => Carbon::now()->subDays($i)->format('d/m'),
+                'count' => (int) ($ordersRaw[$date]->count ?? 0),
+            ];
+        }
+
         return response()->json([
             'status_counts' => $statusCounts,
             'orders' => [
@@ -69,7 +104,9 @@ class DashboardController extends Controller
                 'month'  => $ordersMonth,
                 'total'  => $ordersTotal,
             ],
-            'revenue_month' => $revenueMonth,
+            'revenue_month'  => $revenueMonth,
+            'revenue_chart'  => $revenueChart,
+            'orders_chart'   => $ordersChart,
             'users' => [
                 'total' => $usersTotal,
                 'today' => $usersToday,

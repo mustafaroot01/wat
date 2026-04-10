@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
@@ -17,6 +17,8 @@ const users        = ref({ total: 0, today: 0 })
 const recentOrders = ref<any[]>([])
 const topProducts  = ref<any[]>([])
 const topDistricts = ref<any[]>([])
+const revenueChart = ref<{ date: string; total: number }[]>([])
+const ordersChart  = ref<{ date: string; count: number }[]>([])
 
 // ── Status config ────────────────────────────────────────
 const statusConfig = [
@@ -53,6 +55,8 @@ const load = async () => {
     recentOrders.value = data.recent_orders  ?? []
     topProducts.value  = data.top_products   ?? []
     topDistricts.value = data.top_districts  ?? []
+    revenueChart.value = data.revenue_chart  ?? []
+    ordersChart.value  = data.orders_chart   ?? []
   } finally {
     loading.value = false
   }
@@ -62,6 +66,89 @@ onMounted(() => { load(); fetchBranding() })
 
 const goToOrders = (status: string) =>
   router.push({ path: '/orders', query: { status } })
+
+// ── Chart: Revenue (Area) ────────────────────────────────
+const revenueChartOptions = computed(() => ({
+  chart: { type: 'area', toolbar: { show: false }, sparkline: { enabled: false }, fontFamily: 'Cairo, sans-serif', animations: { enabled: true } },
+  dataLabels: { enabled: false },
+  stroke: { curve: 'smooth', width: 2 },
+  fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05 } },
+  colors: ['#2e7d32'],
+  xaxis: {
+    categories: revenueChart.value.map(r => r.date),
+    labels: { rotate: 0, style: { fontSize: '9px' },
+      formatter: (_: string, i: number) => (i % 5 === 0 ? revenueChart.value[i]?.date ?? '' : '') },
+    axisBorder: { show: false }, axisTicks: { show: false },
+  },
+  yaxis: { labels: { formatter: (v: number) => v >= 1000 ? (v/1000).toFixed(0)+'k' : String(v) } },
+  tooltip: { y: { formatter: (v: number) => Number(v).toLocaleString('ar-IQ') + ' د.ع' } },
+  grid: { borderColor: '#f0f0f0', strokeDashArray: 3 },
+}))
+
+const revenueChartSeries = computed(() => [{
+  name: 'الإيرادات',
+  data: revenueChart.value.map(r => r.total),
+}])
+
+// ── Chart: Orders per day (Bar) ──────────────────────────
+const ordersChartOptions = computed(() => ({
+  chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Cairo, sans-serif', animations: { enabled: true } },
+  dataLabels: { enabled: false },
+  plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
+  colors: ['#1565c0'],
+  xaxis: {
+    categories: ordersChart.value.map(r => r.date),
+    labels: { rotate: 0, style: { fontSize: '9px' },
+      formatter: (_: string, i: number) => (i % 5 === 0 ? ordersChart.value[i]?.date ?? '' : '') },
+    axisBorder: { show: false }, axisTicks: { show: false },
+  },
+  yaxis: { labels: { formatter: (v: number) => Math.round(v).toString() } },
+  tooltip: { y: { formatter: (v: number) => v + ' طلب' } },
+  grid: { borderColor: '#f0f0f0', strokeDashArray: 3 },
+}))
+
+const ordersChartSeries = computed(() => [{
+  name: 'الطلبات',
+  data: ordersChart.value.map(r => r.count),
+}])
+
+// ── Chart: Orders by Status (Donut) ─────────────────────
+const statusDonutOptions = computed(() => ({
+  chart: { type: 'donut', fontFamily: 'Cairo, sans-serif', animations: { enabled: true } },
+  labels: statusConfig.map(s => s.label),
+  colors: statusConfig.map(s => s.color),
+  legend: { position: 'bottom', fontSize: '11px', fontFamily: 'Cairo, sans-serif' },
+  dataLabels: { enabled: true, formatter: (val: number) => val.toFixed(0) + '%' },
+  plotOptions: { pie: { donut: { size: '60%', labels: { show: true,
+    total: { show: true, label: 'الإجمالي', fontSize: '13px', fontFamily: 'Cairo, sans-serif',
+      formatter: () => statusConfig.reduce((a, s) => a + (statusCounts.value[s.key] ?? 0), 0).toString() }
+  } } } },
+  tooltip: { y: { formatter: (v: number) => v + ' طلب' } },
+}))
+
+const statusDonutSeries = computed(() =>
+  statusConfig.map(s => statusCounts.value[s.key] ?? 0)
+)
+
+// ── Chart: Top Products (Horizontal Bar) ────────────────
+const topProductsChartOptions = computed(() => ({
+  chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Cairo, sans-serif', animations: { enabled: true } },
+  plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%',
+    dataLabels: { position: 'top' } } },
+  dataLabels: { enabled: true, offsetX: -6, style: { fontSize: '10px', colors: ['#fff'] },
+    formatter: (v: number) => v + ' قطعة' },
+  colors: ['#1565c0'],
+  xaxis: { categories: topProducts.value.map(p => p.product_name),
+    labels: { style: { fontSize: '10px', fontFamily: 'Cairo, sans-serif' } } },
+  yaxis: { labels: { style: { fontSize: '10px', fontFamily: 'Cairo, sans-serif' }, maxWidth: 120 } },
+  tooltip: { y: { formatter: (v: number) => v + ' قطعة' } },
+  grid: { borderColor: '#f0f0f0', strokeDashArray: 3 },
+}))
+
+const topProductsChartSeries = computed(() => [{
+  name: 'الكمية المطلوبة',
+  data: topProducts.value.map(p => p.total_qty),
+}])
 </script>
 
 <template>
@@ -218,7 +305,51 @@ const goToOrders = (status: string) =>
           </VCard>
         </VCol>
 
-        <!-- ═══ Top Products + Top Districts ════════════════ -->
+        <!-- ═══ Revenue Chart + Orders per Day ════════════════ -->
+        <VCol cols="12" md="8">
+          <VCard rounded="lg" elevation="0">
+            <VCardItem class="py-4 px-5">
+              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
+                <VIcon icon="ri-money-dollar-circle-line" color="success" size="20" />
+                الإيرادات — آخر 30 يوم
+              </VCardTitle>
+            </VCardItem>
+            <VDivider />
+            <VCardText class="pa-3">
+              <div v-if="!revenueChart.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
+              <VueApexCharts
+                v-else
+                type="area"
+                height="220"
+                :options="revenueChartOptions"
+                :series="revenueChartSeries"
+              />
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <!-- Orders by Status Donut -->
+        <VCol cols="12" md="4">
+          <VCard rounded="lg" elevation="0" style="height:100%;">
+            <VCardItem class="py-4 px-5">
+              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
+                <VIcon icon="ri-pie-chart-2-line" color="primary" size="20" />
+                توزيع الطلبات
+              </VCardTitle>
+            </VCardItem>
+            <VDivider />
+            <VCardText class="pa-3">
+              <VueApexCharts
+                type="donut"
+                height="250"
+                :options="statusDonutOptions"
+                :series="statusDonutSeries"
+              />
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <!-- Top Products Bar Chart -->
         <VCol cols="12" md="6">
           <VCard rounded="lg" elevation="0">
             <VCardItem class="py-4 px-5">
@@ -228,27 +359,38 @@ const goToOrders = (status: string) =>
               </VCardTitle>
             </VCardItem>
             <VDivider />
-            <VCardText class="pa-0">
+            <VCardText class="pa-3">
               <div v-if="!topProducts.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
-              <div
-                v-for="(p, i) in topProducts"
-                :key="p.product_name"
-                class="top-row d-flex align-center gap-3 px-5 py-3"
-                :class="{ 'top-row-border': i < topProducts.length - 1 }"
-              >
-                <div class="rank-badge" :class="`rank-${i+1}`">{{ i + 1 }}</div>
-                <div class="flex-grow-1">
-                  <div class="font-weight-medium text-body-2">{{ p.product_name }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ p.order_count }} طلب</div>
-                </div>
-                <div class="top-qty">{{ p.total_qty }} قطعة</div>
-                <div class="top-bar-wrap">
-                  <div
-                    class="top-bar"
-                    :style="`width:${Math.round((p.total_qty / (topProducts[0]?.total_qty || 1)) * 100)}%;background:#1565c0`"
-                  />
-                </div>
-              </div>
+              <VueApexCharts
+                v-else
+                type="bar"
+                height="220"
+                :options="topProductsChartOptions"
+                :series="topProductsChartSeries"
+              />
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <!-- Orders per Day Bar Chart -->
+        <VCol cols="12" md="6">
+          <VCard rounded="lg" elevation="0">
+            <VCardItem class="py-4 px-5">
+              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
+                <VIcon icon="ri-bar-chart-2-line" color="info" size="20" />
+                الطلبات اليومية — آخر 30 يوم
+              </VCardTitle>
+            </VCardItem>
+            <VDivider />
+            <VCardText class="pa-3">
+              <div v-if="!ordersChart.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
+              <VueApexCharts
+                v-else
+                type="bar"
+                height="220"
+                :options="ordersChartOptions"
+                :series="ordersChartSeries"
+              />
             </VCardText>
           </VCard>
         </VCol>
