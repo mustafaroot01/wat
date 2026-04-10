@@ -19,7 +19,7 @@ trait VuetifyTrait
         Request $request,
         array   $searchableColumns = [],
         array   $allowedSortColumns = [],
-        int     $defaultPerPage = 15
+        int     $defaultPerPage = 25
     ) {
         // ── Search ────────────────────────────────────────────────
         $search = trim($request->get('search', ''));
@@ -40,7 +40,7 @@ trait VuetifyTrait
         }
 
         // ── Paginate ──────────────────────────────────────────────
-        $perPage = min((int) $request->get('per_page', $defaultPerPage), 200);
+        $perPage = max(1, min((int) $request->get('per_page', $defaultPerPage), 100));
 
         return $query->paginate($perPage)->withQueryString();
     }

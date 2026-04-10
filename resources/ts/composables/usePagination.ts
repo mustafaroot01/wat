@@ -7,7 +7,7 @@ export function usePagination<T>(endpoint: string) {
   const currentPage  = ref(1)
   const totalPages   = ref(1)
   const totalItems   = ref(0)
-  const itemsPerPage = ref(15)
+  const itemsPerPage = ref(25)
 
   const fetchData = async (page = 1, extraParams: Record<string, any> = {}) => {
     loading.value = true

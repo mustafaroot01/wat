@@ -33,7 +33,7 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $to);
         }
 
-        $perPage = (int) $request->get('per_page', 15);
+        $perPage = max(1, min((int) $request->get('per_page', 25), 100));
         $orders = $query->with(['items', 'coupon'])->paginate($perPage);
 
         return response()->json([
