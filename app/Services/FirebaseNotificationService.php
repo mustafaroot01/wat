@@ -31,16 +31,18 @@ class FirebaseNotificationService
                 'headers' => ['apns-priority' => '10'],
                 'payload' => [
                     'aps' => [
-                        'sound' => 'default',
-                        'badge' => 1,
+                        'sound'           => 'default',
+                        'badge'           => 1,
+                        'mutable-content' => 1,
                     ],
                 ],
             ],
         ];
 
         if ($imageUrl) {
-            $payload['notification']['image']            = $imageUrl;
-            $payload['android']['notification']['image'] = $imageUrl;
+            $payload['notification']['image']              = $imageUrl;
+            $payload['android']['notification']['image']   = $imageUrl;
+            $payload['apns']['fcm_options']['image']       = $imageUrl;
         }
 
         return $payload;
