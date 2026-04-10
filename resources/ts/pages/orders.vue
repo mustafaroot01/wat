@@ -83,6 +83,11 @@ const headers = [
   { title: 'الإجراءات',   key: 'actions',       align: 'center' as const, sortable: false },
 ]
 
+const handleOrderOptions = (options: { page: number; itemsPerPage: number }) => {
+  perPage.value = options.itemsPerPage
+  loadOrders(options.page)
+}
+
 const loadOrders = async (page = 1) => {
   loading.value = true
   currentPage.value = page
@@ -391,7 +396,7 @@ const copyPhone = async (phone: string) => {
             :items-length="totalItems"
             :loading="loading"
             :items-per-page="perPage"
-            @update:options="o => { perPage.value = o.itemsPerPage; loadOrders(o.page) }"
+            @update:options="handleOrderOptions"
             class="mt-2"
           >
             <template #item.seq="{ index }">
