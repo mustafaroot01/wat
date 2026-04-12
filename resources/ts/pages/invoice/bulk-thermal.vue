@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -101,7 +101,7 @@ const invoiceUrl = (token: string) => `${window.location.origin}/invoice/${token
 
       <!-- Toolbar (no-print) -->
       <div class="no-print toolbar">
-        <span class="font-weight-bold text-h6">طباعة حرارية 85mm — {{ orders.length }} وصل</span>
+        <span class="font-weight-bold text-h6">طباعة حرارية 58mm — {{ orders.length }} وصل</span>
         <VBtn color="primary" prepend-icon="ri-printer-line" @click="printPage" size="large">
           طباعة الكل
         </VBtn>
@@ -173,7 +173,7 @@ const invoiceUrl = (token: string) => `${window.location.origin}/invoice/${token
 
         <!-- QR -->
         <div class="r-center r-qr">
-          <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(invoiceUrl(order.invoice_token))}`" alt="QR" />
+          <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(invoiceUrl(order.invoice_token))}`" alt="QR" />
           <div class="r-muted" style="font-size:9px;margin-top:3px;">امسح للفاتورة الإلكترونية</div>
         </div>
 
@@ -208,7 +208,7 @@ const invoiceUrl = (token: string) => `${window.location.origin}/invoice/${token
 }
 
 .receipt {
-  width: 85mm;
+  width: 58mm;
   margin: 0 auto 16px;
   background: #fff;
   padding: 6mm 4mm;
@@ -263,7 +263,7 @@ const invoiceUrl = (token: string) => `${window.location.origin}/invoice/${token
 }
 
 .r-qr { margin: 8px 0 4px; }
-.r-qr img { width: 130px; height: 130px; }
+.r-qr img { width: 100px; height: 100px; }
 
 @media print {
   .no-print { display: none !important; }
@@ -271,7 +271,7 @@ const invoiceUrl = (token: string) => `${window.location.origin}/invoice/${token
   .receipt { margin: 0; box-shadow: none; }
 
   @page {
-    size: 85mm auto;
+    size: 58mm auto;
     margin: 2mm 1mm;
   }
 }

@@ -344,7 +344,7 @@ const copyPhone = async (phone: string) => {
                 prepend-icon="ri-receipt-line"
                 @click="bulkPrintThermal85"
               >
-                طباعة حرارية 85mm ({{ selectedOrders.length }})
+                طباعة حرارية 58mm ({{ selectedOrders.length }})
               </VBtn>
             </div>
           </VCardTitle>
