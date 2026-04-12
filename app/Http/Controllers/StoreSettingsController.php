@@ -36,7 +36,8 @@ class StoreSettingsController extends Controller
         }
 
         if ($request->has('weekly_schedule')) {
-            StoreSetting::set('weekly_schedule', json_encode($request->input('weekly_schedule')));
+            $ws = $request->input('weekly_schedule');
+            StoreSetting::set('weekly_schedule', is_array($ws) ? json_encode($ws) : $ws);
         }
 
         if ($request->hasFile('logo')) {

@@ -34,8 +34,11 @@ class StoreSetting extends Model
 
         $raw      = static::get('weekly_schedule');
         $schedule = $raw ? json_decode($raw, true) : null;
+        if (is_string($schedule)) {
+            $schedule = json_decode($schedule, true);
+        }
 
-        if ($schedule && isset($schedule[$dayKey])) {
+        if (is_array($schedule) && isset($schedule[$dayKey])) {
             $day = $schedule[$dayKey];
             if (empty($day['enabled'])) return false;
             $open  = $day['open']  ?? '00:00';
