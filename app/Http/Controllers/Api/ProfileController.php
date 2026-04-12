@@ -36,8 +36,9 @@ class ProfileController extends Controller
             'last_name'   => 'sometimes|required|string|max:100',
             'gender'      => 'sometimes|required|in:male,female',
             'birth_date'  => 'sometimes|required|date|before:today',
-            'district_id' => 'sometimes|required|exists:districts,id',
-            'area_id'     => ['sometimes', 'required', Rule::exists('areas', 'id')->where('district_id', $districtId)],
+            'district_id'      => 'sometimes|required|exists:districts,id',
+            'area_id'          => ['sometimes', 'required', Rule::exists('areas', 'id')->where('district_id', $districtId)],
+            'nearest_landmark' => 'sometimes|nullable|string|max:255',
         ]);
 
         $user->update($data);

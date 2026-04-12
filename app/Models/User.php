@@ -20,6 +20,7 @@ class User extends Authenticatable
         'birth_date',
         'district_id',
         'area_id',
+        'nearest_landmark',
         'is_active',
         'is_self_deleted',
         'fcm_token',

@@ -88,10 +88,11 @@ class AuthController extends Controller
             'last_name'   => 'required|string|max:100',
             'gender'      => 'required|in:male,female',
             'birth_date'  => 'required|date|before:today',
-            'district_id' => 'required|exists:districts,id',
-            'area_id'     => ['required', Rule::exists('areas', 'id')->where('district_id', $request->district_id)],
-            'phone'       => 'required|string|unique:users,phone',
-            'password'    => ['required', 'confirmed', Password::min(6)],
+            'district_id'      => 'required|exists:districts,id',
+            'area_id'          => ['required', Rule::exists('areas', 'id')->where('district_id', $request->district_id)],
+            'nearest_landmark' => 'nullable|string|max:255',
+            'phone'            => 'required|string|unique:users,phone',
+            'password'         => ['required', 'confirmed', Password::min(6)],
         ]);
 
         $result = $this->otp->sendOtp($data['phone']);

@@ -16,8 +16,9 @@ class CustomerResource extends JsonResource
             'phone'        => $this->phone,
             'gender'       => $this->gender,
             'birth_date'   => $this->birth_date?->format('Y-m-d'),
-            'district_id'  => $this->district_id,
-            'area_id'      => $this->area_id,
+            'district_id'      => $this->district_id,
+            'area_id'          => $this->area_id,
+            'nearest_landmark' => $this->nearest_landmark,
             'district'     => $this->whenLoaded('district', fn() => [
                 'id'   => $this->district->id,
                 'name' => $this->district->name,

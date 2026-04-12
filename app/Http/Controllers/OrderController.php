@@ -227,7 +227,7 @@ class OrderController extends Controller
             'customer_phone'   => $request->customer_phone,
             'province'         => $request->province,
             'district'         => $request->district,
-            'nearest_landmark' => $request->nearest_landmark,
+            'nearest_landmark' => $request->nearest_landmark ?? $request->user()->nearest_landmark,
             'status'           => Order::STATUS_SENT,
             'total_amount'     => $request->total_amount,
             'discount_amount'  => $request->discount_amount ?? 0,
