@@ -1,7 +1,24 @@
+import { useAdminPermissions } from '@/composables/useAdminPermissions'
 import type { App } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from './routes'
-import { useAdminPermissions } from '@/composables/useAdminPermissions'
+
+const ROUTE_PRIORITY = [
+  { path: '/dashboard',      permission: 'dashboard'      },
+  { path: '/orders',         permission: 'orders'         },
+  { path: '/products',       permission: 'products'       },
+  { path: '/categories',     permission: 'categories'     },
+  { path: '/brands',         permission: 'brands'         },
+  { path: '/discounts',      permission: 'discounts'      },
+  { path: '/customers',      permission: 'customers'      },
+  { path: '/notifications',  permission: 'notifications'  },
+  { path: '/coupons',        permission: 'coupons'        },
+  { path: '/banners',        permission: 'banners'        },
+  { path: '/districts',      permission: 'districts'      },
+  { path: '/store-settings', permission: 'store-settings' },
+  { path: '/settings',       permission: 'settings'       },
+  { path: '/admins',         permission: 'admins'         },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL || '/'),
@@ -45,6 +62,13 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (!can(to.meta.permission as string)) {
+      // إذا كان التحويل لصفحة الداشبورد (تحويل بعد تسجيل الدخول)، ابحث عن أول صفحة متاحة
+      if (to.path === '/dashboard') {
+        for (const r of ROUTE_PRIORITY) {
+          if (can(r.permission)) return next(r.path)
+        }
+        return next('/account-settings')
+      }
       return next('/403')
     }
   }
