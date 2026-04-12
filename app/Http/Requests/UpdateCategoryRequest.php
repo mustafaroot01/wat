@@ -15,7 +15,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
         ];
