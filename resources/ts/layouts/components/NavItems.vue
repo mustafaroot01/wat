@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import VerticalNavSectionTitle from '@/@layouts/components/VerticalNavSectionTitle.vue'
-import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
-import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
 import { useAdminPermissions } from '@/composables/useAdminPermissions'
+import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
+import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
 
 const { can, isSuperAdmin } = useAdminPermissions()
 </script>
@@ -31,7 +31,6 @@ const { can, isSuperAdmin } = useAdminPermissions()
   <VerticalNavLink v-if="can('coupons')"   :item="{ title: 'أكواد الخصم',        icon: 'ri-coupon-3-line',           to: '/coupons'   }" />
   <VerticalNavLink v-if="can('store-settings')" :item="{ title: 'إعدادات المتجر والفاتورة', icon: 'ri-store-3-line', to: '/store-settings' }" />
   <VerticalNavLink v-if="can('settings')"  :item="{ title: 'الإعدادات العامة',   icon: 'ri-settings-4-line',         to: '/settings'  }" />
-  <VerticalNavLink v-if="can('firebase-settings')" :item="{ title: 'إعدادات الفايربيس', icon: 'ri-settings-5-line', to: '/firebase-settings' }" />
 
   <!-- 👉 الإعدادات -->
   <VerticalNavSectionTitle :item="{ heading: 'الإعدادات' }" />

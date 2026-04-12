@@ -60,8 +60,7 @@ export const routes = [
       },
       {
         path: 'firebase-settings',
-        meta: { permission: 'firebase-settings' },
-        component: () => import('@/pages/firebase-settings.vue'),
+        redirect: '/settings',
       },
       {
         path: 'districts',
