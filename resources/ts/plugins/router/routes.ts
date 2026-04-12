@@ -122,6 +122,10 @@ export const routes = [
         component: () => import('@/pages/invoice/bulk.vue'),
       },
       {
+        path: 'invoice/bulk-thermal',
+        component: () => import('@/pages/invoice/bulk-thermal.vue'),
+      },
+      {
         path: 'invoice/:token',
         component: () => import('@/pages/invoice/[token].vue'),
       },

@@ -149,7 +149,7 @@ const printThermal58 = () => {
   const qrUrl        = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(invoiceLink)}`
   const fmt          = (v: string) => Number(v).toLocaleString('ar-IQ') + ' د.ع'
 
-  const itemsHtml = o.items.map((item: any, i: number) => `
+  const itemsHtml = (o.items ?? []).map((item: any, i: number) => `
     <tr>
       <td style="text-align:center;color:#999;">${i + 1}</td>
       <td>${item.product_name}</td>
@@ -228,6 +228,12 @@ const bulkPrint = () => {
   if (selectedOrders.value.length === 0) return
   const ids = selectedOrders.value.map(o => o.id).join(',')
   window.open(`${window.location.origin}/invoice/bulk?ids=${ids}&print=1`, '_blank')
+}
+
+const bulkPrintThermal85 = () => {
+  if (selectedOrders.value.length === 0) return
+  const ids = selectedOrders.value.map(o => o.id).join(',')
+  window.open(`${window.location.origin}/invoice/bulk-thermal?ids=${ids}&print=1`, '_blank')
 }
 
 // ── Delete ─────────────────────────────────────────────────────────
@@ -325,14 +331,22 @@ const copyPhone = async (phone: string) => {
               <VChip color="primary" variant="tonal">{{ totalItems }} طلب</VChip>
             </div>
             
-            <VBtn
-              v-if="selectedOrders.length > 0"
-              color="primary"
-              prepend-icon="ri-printer-line"
-              @click="bulkPrint"
-            >
-              طباعة الفواتير المحددة ({{ selectedOrders.length }})
-            </VBtn>
+            <div v-if="selectedOrders.length > 0" class="d-flex gap-2">
+              <VBtn
+                color="primary"
+                prepend-icon="ri-printer-line"
+                @click="bulkPrint"
+              >
+                طباعة A4 ({{ selectedOrders.length }})
+              </VBtn>
+              <VBtn
+                color="secondary"
+                prepend-icon="ri-receipt-line"
+                @click="bulkPrintThermal85"
+              >
+                طباعة حرارية 85mm ({{ selectedOrders.length }})
+              </VBtn>
+            </div>
           </VCardTitle>
 
           <!-- Filters -->
