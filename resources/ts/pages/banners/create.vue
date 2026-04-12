@@ -97,8 +97,8 @@ const handleImageSelection = (event: Event) => {
       imageError.value = 'الرجاء اختيار صورة بصيغة jpg أو png أو webp'
       return
     }
-    if (file.size > 2 * 1024 * 1024) {
-      imageError.value = 'حجم الصورة يجب ألا يتجاوز 2 ميجابايت'
+    if (file.size > 30 * 1024 * 1024) {
+      imageError.value = 'حجم الصورة يجب ألا يتجاوز 30 ميجابايت'
       return
     }
     imageFile.value = file
@@ -192,7 +192,7 @@ const submitForm = async () => {
                   <div v-else class="upload-placeholder d-flex flex-column align-center justify-center h-100 text-secondary">
                     <VIcon icon="ri-image-add-line" size="48" class="mb-3" />
                     <span class="text-h6 font-weight-bold">اضغط لاختيار صورة</span>
-                    <span class="text-caption mt-1">يجب أن لا يتجاوز الحجم 2MB (JPG, PNG, WebP)</span>
+                    <span class="text-caption mt-1">يجب أن لا يتجاوز الحجم 30MB (JPG, PNG, WebP)</span>
                   </div>
                   <div v-if="imagePreviewUrl" class="image-overlay d-flex align-center justify-center">
                     <VIcon icon="ri-camera-switch-line" color="white" size="32" />
