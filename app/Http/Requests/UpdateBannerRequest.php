@@ -15,7 +15,7 @@ class UpdateBannerRequest extends FormRequest
     {
         return [
             'type' => 'sometimes|string|in:none,link,category,product',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:30720',
             'url' => 'nullable|url|required_if:type,link',
             'category_id' => 'nullable|integer|exists:categories,id|required_if:type,category',
             'product_id' => 'nullable|integer|required_if:type,product',

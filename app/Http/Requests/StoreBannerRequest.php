@@ -15,7 +15,7 @@ class StoreBannerRequest extends FormRequest
     {
         return [
             'type' => 'required|string|in:none,link,category,product',
-            'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:30720',
             'url' => 'nullable|url|required_if:type,link',
             'category_id' => 'nullable|integer|exists:categories,id|required_if:type,category',
             'product_id' => 'nullable|integer|required_if:type,product', // Add exists:products,id once products exist

@@ -22,7 +22,7 @@ class StoreSettingsController extends Controller
             'store_address'         => ['nullable', 'string', 'max:500'],
             'thank_you_message'     => ['nullable', 'string', 'max:500'],
             'minimum_order_amount'  => ['nullable', 'numeric', 'min:0'],
-            'logo'                  => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:5120'],
+            'logo'                  => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:30720'],
             'open_time'  => ['nullable', 'date_format:H:i'],
             'close_time' => ['nullable', 'date_format:H:i'],
         ]);

@@ -23,7 +23,7 @@ class UpdateProductRequest extends FormRequest
             'price'               => 'sometimes|required|numeric|min:0',
             'discount_percentage' => 'sometimes|integer|min:0|max:99',
             'in_stock'            => 'sometimes|boolean',
-            'image'               => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'image'               => 'nullable|image|mimes:jpeg,png,jpg,gif|max:30720',
             'is_active'           => 'boolean',
             'sort_order'          => 'integer',
         ];
