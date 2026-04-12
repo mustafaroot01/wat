@@ -13,9 +13,34 @@ const form = ref({
   store_address:         '',
   thank_you_message:     '',
   minimum_order_amount:  0,
-  open_time:  '08:00',
-  close_time: '22:00',
 })
+
+type DaySchedule = { enabled: boolean; open: string; close: string }
+type WeeklySchedule = Record<string, DaySchedule>
+
+const days = [
+  { key: 'sunday',    label: 'الأحد' },
+  { key: 'monday',    label: 'الاثنين' },
+  { key: 'tuesday',   label: 'الثلاثاء' },
+  { key: 'wednesday', label: 'الأربعاء' },
+  { key: 'thursday',  label: 'الخميس' },
+  { key: 'friday',    label: 'الجمعة' },
+  { key: 'saturday',  label: 'السبت' },
+]
+
+const defaultSchedule = (): WeeklySchedule => Object.fromEntries(
+  days.map(d => [d.key, { enabled: true, open: '08:00', close: '22:00' }])
+)
+
+const weeklySchedule = ref<WeeklySchedule>(defaultSchedule())
+
+const to12h = (time: string): string => {
+  if (!time) return ''
+  const [h, m] = time.split(':').map(Number)
+  const period = h < 12 ? 'ص' : 'م'
+  const hour   = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
 
 const logoFile        = ref<File | null>(null)
 const logoPreview     = ref<string | null>(null)
@@ -32,9 +57,11 @@ const loadSettings = async () => {
     form.value.store_address         = data.store_address         ?? ''
     form.value.thank_you_message     = data.thank_you_message     ?? ''
     form.value.minimum_order_amount  = Number(data.minimum_order_amount ?? 0)
-    form.value.open_time  = data.open_time  ?? '08:00'
-    form.value.close_time = data.close_time ?? '22:00'
     currentLogo.value                = data.logo                  ?? null
+    if (data.weekly_schedule) {
+      try { weeklySchedule.value = { ...defaultSchedule(), ...JSON.parse(data.weekly_schedule) } }
+      catch { weeklySchedule.value = defaultSchedule() }
+    }
   } finally {
     loading.value = false
   }
@@ -67,8 +94,7 @@ const saveSettings = async () => {
     fd.append('store_address',        form.value.store_address)
     fd.append('thank_you_message',    form.value.thank_you_message)
     fd.append('minimum_order_amount', String(form.value.minimum_order_amount || 0))
-    fd.append('open_time',  form.value.open_time)
-    fd.append('close_time', form.value.close_time)
+    fd.append('weekly_schedule', JSON.stringify(weeklySchedule.value))
     if (logoFile.value) fd.append('logo', logoFile.value)
 
     const res  = await apiFetch('/api/admin/store-settings', { method: 'POST', body: fd })
@@ -193,38 +219,77 @@ const saveSettings = async () => {
 
           <VDivider class="my-5" />
 
-          <!-- Working Hours -->
+          <!-- Weekly Schedule -->
           <div class="mb-3">
             <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
-              <VIcon icon="ri-time-line" color="info" size="20" />
-              وقت العمل اليومي
+              <VIcon icon="ri-calendar-schedule-line" color="info" size="20" />
+              جدول الدوام الأسبوعي
             </div>
             <div class="text-caption text-medium-emphasis mt-1">
-              خارج هذا الوقت يظهر للزبون: <strong>المتجر مغلق حالياً</strong>
+              فعّل الأيام وحدد وقت الفتح والإغلاق — خارج هذه الأوقات يظهر للزبون: <strong>المتجر مغلق</strong>
             </div>
           </div>
-          <VRow class="mt-1">
-            <VCol cols="6">
-              <VTextField
-                v-model="form.open_time"
-                label="وقت الفتح"
-                type="time"
-                variant="outlined"
-                prepend-inner-icon="ri-sun-line"
-                color="success"
-              />
-            </VCol>
-            <VCol cols="6">
-              <VTextField
-                v-model="form.close_time"
-                label="وقت الإغلاق"
-                type="time"
-                variant="outlined"
-                prepend-inner-icon="ri-moon-line"
-                color="error"
-              />
-            </VCol>
-          </VRow>
+
+          <div
+            v-for="day in days"
+            :key="day.key"
+            class="day-row mb-2 pa-3 rounded-lg"
+            :class="weeklySchedule[day.key]?.enabled ? 'day-open' : 'day-closed'"
+          >
+            <VRow align="center" no-gutters>
+              <!-- Day name + toggle -->
+              <VCol cols="4" sm="3" class="d-flex align-center gap-2">
+                <VSwitch
+                  v-model="weeklySchedule[day.key].enabled"
+                  color="success"
+                  hide-details
+                  density="compact"
+                />
+                <span class="font-weight-bold text-body-2">{{ day.label }}</span>
+              </VCol>
+
+              <!-- Closed label -->
+              <VCol v-if="!weeklySchedule[day.key]?.enabled" cols="8" sm="9">
+                <VChip color="error" size="small" variant="tonal">مغلق</VChip>
+              </VCol>
+
+              <!-- Time inputs -->
+              <template v-else>
+                <VCol cols="4" sm="4" class="px-1">
+                  <VTextField
+                    v-model="weeklySchedule[day.key].open"
+                    type="time"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    color="success"
+                    prepend-inner-icon="ri-sun-line"
+                    :hint="to12h(weeklySchedule[day.key].open)"
+                  />
+                  <div class="text-caption text-center text-success mt-1 font-weight-medium">
+                    {{ to12h(weeklySchedule[day.key].open) }}
+                  </div>
+                </VCol>
+                <VCol cols="1" sm="1" class="text-center">
+                  <VIcon size="16" color="medium-emphasis">ri-arrow-left-line</VIcon>
+                </VCol>
+                <VCol cols="4" sm="4" class="px-1">
+                  <VTextField
+                    v-model="weeklySchedule[day.key].close"
+                    type="time"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    color="error"
+                    prepend-inner-icon="ri-moon-line"
+                  />
+                  <div class="text-caption text-center text-error mt-1 font-weight-medium">
+                    {{ to12h(weeklySchedule[day.key].close) }}
+                  </div>
+                </VCol>
+              </template>
+            </VRow>
+          </div>
 
           <VAlert v-if="success"  type="success" variant="tonal" class="mt-4" closable @click:close="success=''">{{ success }}</VAlert>
           <VAlert v-if="errorMsg" type="error"   variant="tonal" class="mt-4" closable @click:close="errorMsg=''">{{ errorMsg }}</VAlert>
@@ -269,3 +334,14 @@ const saveSettings = async () => {
   </VRow>
 </template>
 
+<style scoped>
+.day-open {
+  background: #f0faf0;
+  border: 1px solid #c8e6c9;
+}
+.day-closed {
+  background: #fafafa;
+  border: 1px dashed #e0e0e0;
+  opacity: 0.75;
+}
+</style>

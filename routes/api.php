@@ -135,13 +135,10 @@ Route::prefix('app')->group(function () {
 
     // Store Status
     Route::get('store-status', function () {
-        $openTime  = \App\Models\StoreSetting::get('open_time',  '00:00');
-        $closeTime = \App\Models\StoreSetting::get('close_time', '23:59');
-        $now       = now()->timezone('Asia/Baghdad')->format('H:i');
-        $isOpen    = $now >= $openTime && $now < $closeTime;
+        $isOpen = \App\Models\StoreSetting::isOpenNow();
         return response()->json([
             'is_open' => $isOpen,
-            'message' => $isOpen ? 'المتجر مفتوح' : 'المتجر مغلق حالياً',
+            'message' => $isOpen ? 'المتجر مفتوح' : 'المتجر مغلق حالياً، يُرجى المحاولة خلال أوقات الدوام.',
         ]);
     });
 

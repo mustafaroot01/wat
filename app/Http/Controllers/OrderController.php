@@ -189,14 +189,11 @@ class OrderController extends Controller
         ]);
 
         // ─── فحص ساعات الدوام ─────────────────────────────
-        $openTime  = StoreSetting::get('open_time',  '00:00');
-        $closeTime = StoreSetting::get('close_time', '23:59');
-        $now       = now()->timezone('Asia/Baghdad')->format('H:i');
-        if (!($now >= $openTime && $now < $closeTime)) {
+        if (!StoreSetting::isOpenNow()) {
             return response()->json([
-                'success'    => false,
+                'success'      => false,
                 'store_closed' => true,
-                'message'    => 'المتجر مغلق حالياً، يُرجى المحاولة خلال أوقات الدوام.',
+                'message'      => 'المتجر مغلق حالياً، يُرجى المحاولة خلال أوقات الدوام.',
             ], 422);
         }
 

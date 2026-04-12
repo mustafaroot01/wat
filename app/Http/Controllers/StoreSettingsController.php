@@ -27,12 +27,16 @@ class StoreSettingsController extends Controller
             'close_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        $keys = ['store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount', 'open_time', 'close_time'];
+        $keys = ['store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount'];
 
         foreach ($keys as $key) {
             if ($request->has($key)) {
                 StoreSetting::set($key, $request->input($key));
             }
+        }
+
+        if ($request->has('weekly_schedule')) {
+            StoreSetting::set('weekly_schedule', json_encode($request->input('weekly_schedule')));
         }
 
         if ($request->hasFile('logo')) {
