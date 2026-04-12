@@ -188,6 +188,18 @@ class OrderController extends Controller
             'items.*.total_price' => ['required', 'numeric', 'min:0'],
         ]);
 
+        // ─── فحص ساعات الدوام ─────────────────────────────
+        $openTime  = StoreSetting::get('open_time',  '00:00');
+        $closeTime = StoreSetting::get('close_time', '23:59');
+        $now       = now()->timezone('Asia/Baghdad')->format('H:i');
+        if (!($now >= $openTime && $now < $closeTime)) {
+            return response()->json([
+                'success'    => false,
+                'store_closed' => true,
+                'message'    => 'المتجر مغلق حالياً، يُرجى المحاولة خلال أوقات الدوام.',
+            ], 422);
+        }
+
         // ─── فحص أقل مبلغ للطلب ───────────────────────────
         $minimumOrder = (float) StoreSetting::get('minimum_order_amount', 0);
         if ($minimumOrder > 0 && $request->final_amount < $minimumOrder) {
