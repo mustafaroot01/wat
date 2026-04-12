@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/apiFetch'
+import { onMounted, ref } from 'vue'
 
 const loading = ref(false)
 const saving  = ref(false)
@@ -13,6 +13,10 @@ const form = ref({
   store_address:         '',
   thank_you_message:     '',
   minimum_order_amount:  0,
+  contact_phone2:        '',
+  contact_instagram:     '',
+  contact_facebook:      '',
+  about_us_description:  '',
 })
 
 type DaySchedule = { enabled: boolean; open: string; close: string }
@@ -57,6 +61,10 @@ const loadSettings = async () => {
     form.value.store_address         = data.store_address         ?? ''
     form.value.thank_you_message     = data.thank_you_message     ?? ''
     form.value.minimum_order_amount  = Number(data.minimum_order_amount ?? 0)
+    form.value.contact_phone2        = data.contact_phone2        ?? ''
+    form.value.contact_instagram     = data.contact_instagram     ?? ''
+    form.value.contact_facebook      = data.contact_facebook      ?? ''
+    form.value.about_us_description  = data.about_us_description  ?? ''
     currentLogo.value                = data.logo                  ?? null
     if (data.weekly_schedule) {
       try { weeklySchedule.value = { ...defaultSchedule(), ...JSON.parse(data.weekly_schedule) } }
@@ -94,6 +102,10 @@ const saveSettings = async () => {
     fd.append('store_address',        form.value.store_address)
     fd.append('thank_you_message',    form.value.thank_you_message)
     fd.append('minimum_order_amount', String(form.value.minimum_order_amount || 0))
+    fd.append('contact_phone2',       form.value.contact_phone2)
+    fd.append('contact_instagram',    form.value.contact_instagram)
+    fd.append('contact_facebook',     form.value.contact_facebook)
+    fd.append('about_us_description', form.value.about_us_description)
     fd.append('weekly_schedule', JSON.stringify(weeklySchedule.value))
     if (logoFile.value) fd.append('logo', logoFile.value)
 
@@ -190,6 +202,56 @@ const saveSettings = async () => {
             variant="outlined"
             rows="2"
             prepend-inner-icon="ri-chat-heart-line"
+          />
+
+          <VDivider class="my-5" />
+
+          <!-- Contact Info & About Us -->
+          <div class="mb-3">
+            <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
+              <VIcon icon="ri-contacts-line" color="primary" size="20" />
+              معلومات التواصل (تظهر في صفحة من نحن بالتطبيق)
+            </div>
+          </div>
+
+          <VTextField
+            v-model="form.contact_phone2"
+            label="رقم هاتف إضافي للتواصل"
+            variant="outlined"
+            class="mb-4"
+            prepend-inner-icon="ri-phone-line"
+            dir="ltr"
+            placeholder="+9647XXXXXXXXX"
+          />
+
+          <VTextField
+            v-model="form.contact_instagram"
+            label="معرف انستغرام"
+            variant="outlined"
+            class="mb-4"
+            prepend-inner-icon="ri-instagram-line"
+            dir="ltr"
+            placeholder="@amwaj_dialay"
+          />
+
+          <VTextField
+            v-model="form.contact_facebook"
+            label="رابط صفحة فيس بوك"
+            variant="outlined"
+            class="mb-4"
+            prepend-inner-icon="ri-facebook-line"
+            dir="ltr"
+            placeholder="https://facebook.com/amwajdialay"
+          />
+
+          <VTextarea
+            v-model="form.about_us_description"
+            label="نص من نحن (يظهر في صفحة التطبيق)"
+            variant="outlined"
+            rows="3"
+            class="mb-4"
+            prepend-inner-icon="ri-information-line"
+            placeholder="اكتب نبذة عن متجرك هنا..."
           />
 
           <VDivider class="my-5" />

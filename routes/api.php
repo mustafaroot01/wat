@@ -142,6 +142,51 @@ Route::prefix('app')->group(function () {
         ]);
     });
 
+    // Privacy Policy
+    Route::get('privacy-policy', function () {
+        $content = \App\Models\StoreSetting::get('privacy_policy', '');
+        return response()->json(['content' => $content]);
+    });
+
+    // About Us
+    Route::get('about-us', function () {
+        $s = \App\Models\StoreSetting::allAsArray();
+        return response()->json([
+            'store_name'           => $s['store_name']           ?? 'امواج ديالى',
+            'about_us_description' => $s['about_us_description'] ?? '',
+            'logo_url'             => isset($s['logo']) ? url('storage/' . $s['logo']) : null,
+            'contact_phone'        => $s['store_phone']          ?? '',
+            'contact_phone2'       => $s['contact_phone2']       ?? '',
+            'contact_instagram'    => $s['contact_instagram']    ?? '',
+            'contact_facebook'     => $s['contact_facebook']     ?? '',
+            'store_address'        => $s['store_address']        ?? '',
+        ]);
+    });
+
+    // Check for App Update
+    Route::get('check-update', function (\Illuminate\Http\Request $request) {
+        $platform  = in_array($request->query('platform'), ['android', 'ios'])
+                     ? $request->query('platform') : 'android';
+        $version   = $request->query('version', '1.0.0');
+        $minVer    = \App\Models\StoreSetting::get("min_version_{$platform}",     '1.0.0');
+        $latestVer = \App\Models\StoreSetting::get("current_version_{$platform}", '1.0.0');
+        $updateUrl = \App\Models\StoreSetting::get("update_url_{$platform}",      '');
+        $forceFlag = \App\Models\StoreSetting::get("force_update_{$platform}",    '0');
+        $needs     = version_compare($version, $minVer,    '<');
+        $has       = version_compare($version, $latestVer, '<');
+        return response()->json([
+            'latest_version' => $latestVer,
+            'min_version'    => $minVer,
+            'needs_update'   => $needs,
+            'has_update'     => $has,
+            'force_update'   => $needs && $forceFlag === '1',
+            'update_url'     => $updateUrl,
+            'message'        => $needs
+                ? 'يوجد تحديث إجباري، يرجى تحديث التطبيق للاستمرار.'
+                : ($has ? 'يوجد إصدار جديد متاح.' : 'التطبيق محدث.'),
+        ]);
+    });
+
     // Store Branding Public API (no auth - used by login page & sidebar)
     Route::get('branding', function () {
         $settings = \App\Models\StoreSetting::allAsArray();

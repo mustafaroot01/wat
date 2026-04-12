@@ -63,6 +63,11 @@ export const routes = [
         redirect: '/settings',
       },
       {
+        path: 'app-pages',
+        meta: { permission: 'store-settings' },
+        component: () => import('@/pages/app-pages.vue'),
+      },
+      {
         path: 'districts',
         meta: { permission: 'districts' },
         component: () => import('@/pages/districts.vue'),

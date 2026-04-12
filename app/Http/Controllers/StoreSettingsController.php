@@ -23,11 +23,29 @@ class StoreSettingsController extends Controller
             'thank_you_message'     => ['nullable', 'string', 'max:500'],
             'minimum_order_amount'  => ['nullable', 'numeric', 'min:0'],
             'logo'                  => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:30720'],
-            'open_time'  => ['nullable', 'date_format:H:i'],
-            'close_time' => ['nullable', 'date_format:H:i'],
+            'open_time'             => ['nullable', 'date_format:H:i'],
+            'close_time'            => ['nullable', 'date_format:H:i'],
+            'contact_phone2'        => ['nullable', 'string', 'max:50'],
+            'contact_instagram'     => ['nullable', 'string', 'max:255'],
+            'contact_facebook'      => ['nullable', 'string', 'max:255'],
+            'about_us_description'  => ['nullable', 'string'],
+            'privacy_policy'        => ['nullable', 'string'],
+            'min_version_android'   => ['nullable', 'string', 'max:20'],
+            'current_version_android' => ['nullable', 'string', 'max:20'],
+            'update_url_android'    => ['nullable', 'string', 'max:500'],
+            'force_update_android'  => ['nullable', 'in:0,1'],
+            'min_version_ios'       => ['nullable', 'string', 'max:20'],
+            'current_version_ios'   => ['nullable', 'string', 'max:20'],
+            'update_url_ios'        => ['nullable', 'string', 'max:500'],
+            'force_update_ios'      => ['nullable', 'in:0,1'],
         ]);
 
-        $keys = ['store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount'];
+        $keys = [
+            'store_name', 'store_phone', 'store_address', 'thank_you_message', 'minimum_order_amount',
+            'contact_phone2', 'contact_instagram', 'contact_facebook', 'about_us_description', 'privacy_policy',
+            'min_version_android', 'current_version_android', 'update_url_android', 'force_update_android',
+            'min_version_ios', 'current_version_ios', 'update_url_ios', 'force_update_ios',
+        ];
 
         foreach ($keys as $key) {
             if ($request->has($key)) {
