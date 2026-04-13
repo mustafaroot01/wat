@@ -32,6 +32,14 @@ const currNotificationId = ref<number | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
 const fileInputRef = ref<HTMLElement | null>(null)
 const isSending = ref(false)
+const notificationCredits = ref(0)
+
+const fetchCredits = async () => {
+  try {
+    const res = await apiFetch('/api/admin/settings')
+    if (res.ok) notificationCredits.value = (await res.json()).settings?.notification_credits ?? 0
+  } catch (e) { console.error(e) }
+}
 
 const formData = ref({
   title: '',
@@ -87,6 +95,8 @@ const sendNotification = async () => {
     })
 
     if (res.ok) {
+      const data = await res.json()
+      notificationCredits.value = data.credits_remaining ?? Math.max(0, notificationCredits.value - 1)
       showDialog.value = false
       fetchNotifications(currentPage.value)
     } else {
@@ -137,6 +147,7 @@ const getStatusText = (status: string) => {
 
 onMounted(() => {
   fetchNotifications(1)
+  fetchCredits()
 })
 </script>
 
@@ -150,14 +161,40 @@ onMounted(() => {
               <VIcon icon="ri-notification-badge-line" color="primary" size="20" />
               الأخبار والإشعارات
             </div>
-            <VBtn
-              color="primary"
-              prepend-icon="ri-send-plane-fill"
-              rounded="lg"
-              @click="openAddDialog"
-            >
-              بث إشعار جديد
-            </VBtn>
+            <div class="d-flex align-center gap-2">
+              <VChip
+                :color="notificationCredits > 5 ? 'success' : notificationCredits > 0 ? 'warning' : 'error'"
+                size="small"
+                variant="tonal"
+                prepend-icon="ri-coins-line"
+              >
+                رصيد: {{ notificationCredits }}
+              </VChip>
+              <VTooltip v-if="notificationCredits === 0" location="bottom">
+                <template #activator="{ props }">
+                  <span v-bind="props">
+                    <VBtn
+                      color="primary"
+                      prepend-icon="ri-send-plane-fill"
+                      rounded="lg"
+                      disabled
+                    >
+                      بث إشعار جديد
+                    </VBtn>
+                  </span>
+                </template>
+                رصيد الإشعارات نفد — أضف رصيداً من الإعدادات
+              </VTooltip>
+              <VBtn
+                v-else
+                color="primary"
+                prepend-icon="ri-send-plane-fill"
+                rounded="lg"
+                @click="openAddDialog"
+              >
+                بث إشعار جديد
+              </VBtn>
+            </div>
           </VCardTitle>
         </VCardItem>
         <VDivider />

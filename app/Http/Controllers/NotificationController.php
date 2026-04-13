@@ -7,6 +7,7 @@ use App\Models\AppNotification;
 use App\Http\Requests\StoreNotificationRequest;
 use App\Http\Resources\NotificationResource;
 use App\Services\FirebaseNotificationService;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,16 @@ class NotificationController extends Controller
 
     public function store(StoreNotificationRequest $request)
     {
+        // Block if no notification credits
+        $credits = (int) Setting::get('notification_credits', 0);
+        if ($credits <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'رصيد الإشعارات نفد. يرجى إضافة رصيد من صفحة الإعدادات.',
+                'code'    => 'no_credits',
+            ], 403);
+        }
+
         $data = $request->validated();
         $path = null;
         $imageUrl = null;
@@ -73,6 +84,8 @@ class NotificationController extends Controller
                 'delivery_status' => 'sent',
                 'sent_at' => now()
             ]);
+            // Decrement notification credits
+            Setting::set('notification_credits', max(0, $credits - 1));
         } else {
             $notification->update([
                 'delivery_status' => 'failed',
@@ -81,10 +94,11 @@ class NotificationController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'تم معالجة الإشعار.',
-            'firebase_status' => $notification->delivery_status,
-            'data' => new NotificationResource($notification)
+            'success'          => true,
+            'message'          => 'تم معالجة الإشعار.',
+            'firebase_status'  => $notification->delivery_status,
+            'credits_remaining'=> (int) Setting::get('notification_credits', 0),
+            'data'             => new NotificationResource($notification)
         ], 201);
     }
 

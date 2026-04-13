@@ -78,6 +78,7 @@ Route::prefix('admin')->group(function () {
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
+        Route::post('settings/top-up', [\App\Http\Controllers\SettingController::class, 'topUp']);
 
         // Orders (admin)
         Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);

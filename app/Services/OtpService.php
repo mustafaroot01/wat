@@ -61,6 +61,12 @@ class OtpService
 
             Cache::put('otp_' . $phone, $code, now()->addMinutes(5));
 
+            // Decrement OTP credits if available (non-blocking)
+            $credits = (int) Setting::get('otp_credits', 0);
+            if ($credits > 0) {
+                Setting::set('otp_credits', $credits - 1);
+            }
+
             return ['success' => true, 'messageId' => $phone];
 
         } catch (\Exception $e) {

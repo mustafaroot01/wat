@@ -19,6 +19,7 @@ const topProducts  = ref<any[]>([])
 const topDistricts = ref<any[]>([])
 const revenueChart = ref<{ date: string; total: number }[]>([])
 const ordersChart  = ref<{ date: string; count: number }[]>([])
+const credits      = ref({ otp: 0, notification: 0 })
 
 // ── Status config ────────────────────────────────────────
 const statusConfig = [
@@ -57,6 +58,7 @@ const load = async () => {
     topDistricts.value = data.top_districts  ?? []
     revenueChart.value = data.revenue_chart  ?? []
     ordersChart.value  = data.orders_chart   ?? []
+    credits.value      = data.credits        ?? { otp: 0, notification: 0 }
   } finally {
     loading.value = false
   }
@@ -274,6 +276,41 @@ const topProductsChartSeries = computed(() => [{
               </div>
               <div class="stat-num">{{ users.today }}</div>
               <div class="stat-lbl">مستخدمين جدد</div>
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <!-- ═══ Credits Cards ════════════════════════════════ -->
+        <VCol cols="6" sm="3">
+          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.otp === 0 ? 'border:1px solid #ff980020' : ''" @click="$router.push('/settings')" style="cursor:pointer;">
+            <VCardText class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div class="stat-icon-wrap" :style="credits.otp > 10 ? 'background:#e8f5e9;' : credits.otp > 0 ? 'background:#fff3e0;' : 'background:#ffebee;'">
+                  <VIcon icon="ri-message-3-line" :color="credits.otp > 10 ? '#2e7d32' : credits.otp > 0 ? '#f57c00' : '#c62828'" size="22" />
+                </div>
+                <VChip :color="credits.otp > 10 ? 'success' : credits.otp > 0 ? 'warning' : 'error'" size="x-small" variant="flat">
+                  {{ credits.otp > 0 ? 'متاح' : 'صفر' }}
+                </VChip>
+              </div>
+              <div class="stat-num">{{ credits.otp }}</div>
+              <div class="stat-lbl">رصيد OTP</div>
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <VCol cols="6" sm="3">
+          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.notification === 0 ? 'border:1px solid #f4433620' : ''" @click="$router.push('/settings')" style="cursor:pointer;">
+            <VCardText class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div class="stat-icon-wrap" :style="credits.notification > 5 ? 'background:#e3f0ff;' : credits.notification > 0 ? 'background:#fff3e0;' : 'background:#ffebee;'">
+                  <VIcon icon="ri-notification-badge-line" :color="credits.notification > 5 ? '#1565c0' : credits.notification > 0 ? '#f57c00' : '#c62828'" size="22" />
+                </div>
+                <VChip :color="credits.notification > 5 ? 'primary' : credits.notification > 0 ? 'warning' : 'error'" size="x-small" variant="flat">
+                  {{ credits.notification > 0 ? 'متاح' : 'منتهي' }}
+                </VChip>
+              </div>
+              <div class="stat-num">{{ credits.notification }}</div>
+              <div class="stat-lbl">رصيد الإشعارات</div>
             </VCardText>
           </VCard>
         </VCol>

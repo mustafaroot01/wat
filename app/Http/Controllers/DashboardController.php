@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\Setting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -110,6 +111,10 @@ class DashboardController extends Controller
             'users' => [
                 'total' => $usersTotal,
                 'today' => $usersToday,
+            ],
+            'credits' => [
+                'otp'          => (int) Setting::get('otp_credits', 0),
+                'notification' => (int) Setting::get('notification_credits', 0),
             ],
             'recent_orders' => $recentOrders,
             'top_products'  => $topProducts,
