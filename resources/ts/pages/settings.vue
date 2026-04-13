@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue'
 const activeTab = ref('general')
 
 // ── General Settings ─────────────────────────────────────────────
-const settings = ref({ arqam_api_key: '' })
+const settings = ref({ otpiq_api_key: '' })
 const loading   = ref(false)
 const saving    = ref(false)
 const showToken = ref(false)
@@ -162,7 +162,7 @@ onMounted(() => {
                       <span class="font-weight-medium">مفتاح خدمة الواتساب (OTP API Key)</span>
                     </div>
                     <VTextField
-                      v-model="settings.arqam_api_key"
+                      v-model="settings.otpiq_api_key"
                       placeholder="أدخل مفتاح التحقق (otplive_...)"
                       variant="outlined"
                       persistent-placeholder
@@ -188,7 +188,7 @@ onMounted(() => {
                         <div>
                           <div class="font-weight-bold mb-1 text-primary">لماذا هذا المفتاح؟</div>
                           <p class="text-body-2 mb-0" style="line-height:1.6;">
-                            يعتمد المتجر على مزود خدمة <strong>Arqam Tech</strong> لإرسال رسائل الواتساب.
+                            يعتمد المتجر على مزود خدمة <strong>OTPIQ</strong> لإرسال رسائل الواتساب.
                             الصق المفتاح هنا ليستلم الزبائن رموز التحقق (OTP).
                           </p>
                         </div>

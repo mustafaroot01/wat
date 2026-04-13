@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Setting;
 
 class OtpService
@@ -22,37 +23,45 @@ class OtpService
 
     private function getApiKey(): string
     {
-        $key = Setting::get('arqam_api_key')
-            ?: Setting::get('whatsapp_api_key')
-            ?: env('ARQAM_API_KEY', env('WHATSAPP_OTP_API_KEY', ''));
+        $key = Setting::get('otpiq_api_key', env('OTPIQ_API_KEY', ''));
 
         if (empty($key)) {
-            Log::critical('Arqam API key missing in settings/env.');
+            Log::critical('OTPIQ API key missing in settings/env.');
             throw new \Exception('خدمة الرسائل غير مهيأة حالياً. تواصل مع المشرف.');
         }
 
         return $key;
     }
 
+    /**
+     * Send OTP via OTPIQ — generates code locally, sends via WhatsApp, caches it.
+     */
     public function sendOtp(string $phone): array
     {
         try {
-            $response = Http::timeout(10)->retry(2, 200)
+            $phone = self::normalizePhone($phone);
+            $code  = (string) random_int(100000, 999999);
+
+            $response = Http::timeout(15)->retry(2, 300)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $this->getApiKey(),
                     'Accept'        => 'application/json',
                 ])
-                ->post('https://otp.arqam.tech/api/sms/otp', [
-                    'phoneNumber' => self::normalizePhone($phone),
-                    'channel'     => 'whatsapp',
+                ->post('https://api.otpiq.com/api/sms', [
+                    'phoneNumber'      => ltrim($phone, '+'),
+                    'smsType'          => 'verification',
+                    'verificationCode' => $code,
+                    'provider'         => 'whatsapp',
                 ]);
 
             if (!$response->successful()) {
-                Log::error('Arqam sendOtp failed: ' . $response->status() . ' — ' . $response->body());
+                Log::error('OTPIQ sendOtp failed: ' . $response->status() . ' — ' . $response->body());
                 return ['success' => false, 'message' => 'تعذر إرسال رمز التحقق، يرجى المحاولة مجدداً.'];
             }
 
-            return $response->json();
+            Cache::put('otp_' . $phone, $code, now()->addMinutes(5));
+
+            return ['success' => true, 'messageId' => $phone];
 
         } catch (\Exception $e) {
             Log::error('OtpService::sendOtp: ' . $e->getMessage());
@@ -60,28 +69,25 @@ class OtpService
         }
     }
 
+    /**
+     * Verify OTP locally from cache (OTPIQ has no verify endpoint).
+     * $messageId = phone number returned from sendOtp.
+     */
     public function verifyOtp(string $messageId, string $code): array
     {
-        try {
-            $response = Http::timeout(10)->retry(2, 200)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->getApiKey(),
-                    'Accept'        => 'application/json',
-                ])
-                ->post('https://otp.arqam.tech/api/sms/verify', [
-                    'messageId' => $messageId,
-                    'code'      => $code,
-                ]);
+        $phone    = self::normalizePhone($messageId);
+        $cacheKey = 'otp_' . $phone;
+        $stored   = Cache::get($cacheKey);
 
-            if (!$response->successful()) {
-                return ['success' => false, 'message' => 'خدمة التحقق غير متاحة لدى المزود حالياً.'];
-            }
-
-            return $response->json();
-
-        } catch (\Exception $e) {
-            Log::error('OtpService::verifyOtp: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'حدث خطأ أثناء فحص الرمز.'];
+        if (!$stored) {
+            return ['success' => false, 'message' => 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد.'];
         }
+
+        if ($stored !== trim($code)) {
+            return ['success' => false, 'message' => 'رمز التحقق غير صحيح.'];
+        }
+
+        Cache::forget($cacheKey);
+        return ['success' => true];
     }
 }

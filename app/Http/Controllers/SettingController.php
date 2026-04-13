@@ -15,7 +15,7 @@ class SettingController extends Controller
         return response()->json([
             'success' => true,
             'settings' => [
-                'arqam_api_key' => Setting::get('arqam_api_key', Setting::get('whatsapp_api_key', '')),
+                'otpiq_api_key' => Setting::get('otpiq_api_key', ''),
             ]
         ]);
     }
@@ -26,10 +26,10 @@ class SettingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'arqam_api_key' => 'nullable|string|max:200',
+            'otpiq_api_key' => 'nullable|string|max:200',
         ]);
 
-        foreach ($request->only(['arqam_api_key']) as $key => $value) {
+        foreach ($request->only(['otpiq_api_key']) as $key => $value) {
             Setting::set($key, $value);
         }
 
