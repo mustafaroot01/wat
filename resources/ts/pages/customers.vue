@@ -182,6 +182,28 @@ const restoreAccount = async (item: Customer) => {
   } catch (e) { console.error(e) }
 }
 
+// Delete
+const isDeleteDialogOpen = ref(false)
+const deletingCustomer = ref<Customer | null>(null)
+
+const openDeleteDialog = (item: Customer) => {
+  deletingCustomer.value = item
+  isDeleteDialogOpen.value = true
+}
+
+const confirmDelete = async () => {
+  if (!deletingCustomer.value) return
+  try {
+    const res = await apiFetch(`/api/admin/customers/${deletingCustomer.value.id}`, {
+      method: 'DELETE'
+    })
+    if (res.ok) {
+      isDeleteDialogOpen.value = false
+      loadCustomers(1)
+    }
+  } catch (e) { console.error(e) }
+}
+
 onMounted(() => {
   loadCustomers(1)
   fetchStaticData()
@@ -303,6 +325,11 @@ onMounted(() => {
                     <template #prepend><VIcon icon="ri-lock-password-line" color="warning" class="me-2"/></template>
                     <VListItemTitle>تغيير كلمة المرور</VListItemTitle>
                   </VListItem>
+                  <VDivider class="my-1" />
+                  <VListItem @click="openDeleteDialog(item)">
+                    <template #prepend><VIcon icon="ri-delete-bin-line" color="error" class="me-2"/></template>
+                    <VListItemTitle class="text-error">حذف العميل</VListItemTitle>
+                  </VListItem>
                 </template>
               </VList>
             </VMenu>
@@ -364,6 +391,25 @@ onMounted(() => {
         <VSpacer />
         <VBtn variant="text" @click="isEditModalOpen = false">إلغاء</VBtn>
         <VBtn color="primary" variant="elevated" @click="saveCustomer">حفظ التغييرات</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <VDialog v-model="isDeleteDialogOpen" max-width="420">
+    <VCard rounded="lg">
+      <VCardText class="pa-6 text-center">
+        <VIcon icon="ri-error-warning-line" color="error" size="56" class="mb-3" />
+        <h3 class="text-h6 font-weight-bold mb-2">تأكيد الحذف النهائي</h3>
+        <p class="text-body-2 text-medium-emphasis mb-0">
+          هل أنت متأكد من حذف حساب
+          <strong class="text-high-emphasis">{{ deletingCustomer?.full_name }}</strong>؟
+          <br>لا يمكن التراجع عن هذا الإجراء.
+        </p>
+      </VCardText>
+      <VCardActions class="pa-4 pt-0 justify-center gap-3">
+        <VBtn variant="tonal" @click="isDeleteDialogOpen = false" min-width="120">إلغاء</VBtn>
+        <VBtn color="error" variant="elevated" @click="confirmDelete" min-width="120" prepend-icon="ri-delete-bin-line">حذف نهائي</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

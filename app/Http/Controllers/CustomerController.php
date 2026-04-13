@@ -123,6 +123,18 @@ class CustomerController extends Controller
     }
 
     /**
+     * حذف نهائي لحساب العميل
+     */
+    public function destroy(int $id)
+    {
+        $user = User::findOrFail($id);
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json(['success' => true, 'message' => 'تم حذف العميل بنجاح.']);
+    }
+
+    /**
      * استعادة حساب self-deleted من قبل الإدارة
      */
     public function restore(int $id)

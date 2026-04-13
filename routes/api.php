@@ -61,6 +61,7 @@ Route::prefix('admin')->group(function () {
         Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
         Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
         Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
+        Route::delete('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'destroy']);
         // Coupons
         Route::get('coupons', [\App\Http\Controllers\CouponController::class, 'index']);
         Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
