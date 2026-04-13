@@ -39,6 +39,12 @@ class OtpService
     public function sendOtp(string $phone): array
     {
         try {
+            // Block if no OTP credits
+            if ((int) Setting::get('otp_credits', 0) <= 0) {
+                Log::warning('OtpService: otp_credits exhausted, blocking send.');
+                return ['success' => false, 'message' => 'خدمة التحقق متوقفة مؤقتاً، تواصل مع الإدارة.'];
+            }
+
             $phone = self::normalizePhone($phone);
             $code  = (string) random_int(100000, 999999);
 

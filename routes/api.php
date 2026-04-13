@@ -78,7 +78,11 @@ Route::prefix('admin')->group(function () {
         // General Settings
         Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
-        Route::post('settings/top-up', [\App\Http\Controllers\SettingController::class, 'topUp']);
+
+        // Credits
+        Route::get('credits', [\App\Http\Controllers\CreditController::class, 'index']);
+        Route::post('credits', [\App\Http\Controllers\CreditController::class, 'store']);
+        Route::get('credits/{creditTransaction}', [\App\Http\Controllers\CreditController::class, 'show']);
 
         // Orders (admin)
         Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);

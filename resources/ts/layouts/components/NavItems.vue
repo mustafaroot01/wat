@@ -32,6 +32,7 @@ const { can, isSuperAdmin } = useAdminPermissions()
   <VerticalNavLink v-if="can('store-settings')" :item="{ title: 'إعدادات المتجر والفاتورة', icon: 'ri-store-3-line', to: '/store-settings' }" />
   <VerticalNavLink v-if="can('store-settings')" :item="{ title: 'صفحات التطبيق والتحديث', icon: 'ri-pages-line', to: '/app-pages' }" />
   <VerticalNavLink v-if="can('settings')"  :item="{ title: 'الإعدادات العامة',   icon: 'ri-settings-4-line',         to: '/settings'  }" />
+  <VerticalNavLink v-if="can('settings')"  :item="{ title: 'إدارة الرصيد',        icon: 'ri-coins-line',               to: '/credits'   }" />
 
   <!-- 👉 الإعدادات -->
   <VerticalNavSectionTitle :item="{ heading: 'الإعدادات' }" />
