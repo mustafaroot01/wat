@@ -96,7 +96,7 @@ const revenueChartSeries = computed(() => [{
 const ordersChartOptions = computed(() => ({
   chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Cairo, sans-serif', animations: { enabled: true } },
   dataLabels: { enabled: false },
-  plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
+  plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
   colors: ['#1565c0'],
   xaxis: {
     categories: ordersChart.value.map(r => r.date),
@@ -104,7 +104,7 @@ const ordersChartOptions = computed(() => ({
       formatter: (_: string, i: number) => (i % 5 === 0 ? ordersChart.value[i]?.date ?? '' : '') },
     axisBorder: { show: false }, axisTicks: { show: false },
   },
-  yaxis: { labels: { formatter: (v: number) => Math.round(v).toString() } },
+  yaxis: { min: 0, tickAmount: 4, labels: { formatter: (v: number) => isFinite(v) ? Math.round(v).toString() : '0' } },
   tooltip: { y: { formatter: (v: number) => v + ' طلب' } },
   grid: { borderColor: '#f0f0f0', strokeDashArray: 3 },
 }))
@@ -342,22 +342,35 @@ const topProductsChartSeries = computed(() => [{
           </VCard>
         </VCol>
 
-        <!-- ═══ Revenue Chart + Orders per Day ════════════════ -->
+        <!-- ═══ Revenue Chart ════════════════════════════════ -->
         <VCol cols="12" md="8">
-          <VCard rounded="lg" elevation="0">
-            <VCardItem class="py-4 px-5">
-              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
-                <VIcon icon="ri-money-dollar-circle-line" color="success" size="20" />
-                الإيرادات — آخر 30 يوم
-              </VCardTitle>
-            </VCardItem>
-            <VDivider />
-            <VCardText class="pa-3">
-              <div v-if="!revenueChart.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
+          <VCard rounded="xl" elevation="0" class="chart-card" style="height:100%;">
+            <div class="chart-header chart-header-green">
+              <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                <div class="d-flex align-center gap-3">
+                  <div class="chart-icon-box" style="background:rgba(255,255,255,0.2);">
+                    <VIcon icon="ri-line-chart-line" color="white" size="22" />
+                  </div>
+                  <div>
+                    <div class="chart-header-title">الإيرادات</div>
+                    <div class="chart-header-sub">آخر 30 يوم</div>
+                  </div>
+                </div>
+                <div class="chart-kpi-box">
+                  <div class="chart-kpi-num">{{ formatIQD(revenueMonth) }}</div>
+                  <div class="chart-kpi-lbl">إجمالي الشهر</div>
+                </div>
+              </div>
+            </div>
+            <VCardText class="pa-4 pt-3">
+              <div v-if="!revenueChart.length" class="empty-chart-state">
+                <VIcon icon="ri-line-chart-line" size="40" color="grey-lighten-2" />
+                <div class="mt-2 text-caption text-medium-emphasis">لا توجد بيانات إيرادات بعد</div>
+              </div>
               <VueApexCharts
                 v-else
                 type="area"
-                height="220"
+                height="200"
                 :options="revenueChartOptions"
                 :series="revenueChartSeries"
               />
@@ -365,20 +378,24 @@ const topProductsChartSeries = computed(() => [{
           </VCard>
         </VCol>
 
-        <!-- Orders by Status Donut -->
+        <!-- ═══ Orders Donut ══════════════════════════════════ -->
         <VCol cols="12" md="4">
-          <VCard rounded="lg" elevation="0" style="height:100%;">
-            <VCardItem class="py-4 px-5">
-              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
-                <VIcon icon="ri-pie-chart-2-line" color="primary" size="20" />
-                توزيع الطلبات
-              </VCardTitle>
-            </VCardItem>
-            <VDivider />
-            <VCardText class="pa-3">
+          <VCard rounded="xl" elevation="0" class="chart-card" style="height:100%;">
+            <div class="chart-header chart-header-blue">
+              <div class="d-flex align-center gap-3">
+                <div class="chart-icon-box" style="background:rgba(255,255,255,0.2);">
+                  <VIcon icon="ri-pie-chart-2-line" color="white" size="22" />
+                </div>
+                <div>
+                  <div class="chart-header-title">توزيع الطلبات</div>
+                  <div class="chart-header-sub">حسب الحالة</div>
+                </div>
+              </div>
+            </div>
+            <VCardText class="pa-2 pt-1">
               <VueApexCharts
                 type="donut"
-                height="250"
+                height="248"
                 :options="statusDonutOptions"
                 :series="statusDonutSeries"
               />
@@ -386,45 +403,35 @@ const topProductsChartSeries = computed(() => [{
           </VCard>
         </VCol>
 
-        <!-- Top Products Bar Chart -->
+        <!-- ═══ Daily Orders Chart ════════════════════════════ -->
         <VCol cols="12" md="6">
-          <VCard rounded="lg" elevation="0">
-            <VCardItem class="py-4 px-5">
-              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
-                <VIcon icon="ri-fire-line" color="error" size="20" />
-                أكثر المنتجات طلباً
-              </VCardTitle>
-            </VCardItem>
-            <VDivider />
-            <VCardText class="pa-3">
-              <div v-if="!topProducts.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
+          <VCard rounded="xl" elevation="0" class="chart-card">
+            <div class="chart-header chart-header-indigo">
+              <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                <div class="d-flex align-center gap-3">
+                  <div class="chart-icon-box" style="background:rgba(255,255,255,0.2);">
+                    <VIcon icon="ri-bar-chart-2-line" color="white" size="22" />
+                  </div>
+                  <div>
+                    <div class="chart-header-title">الطلبات اليومية</div>
+                    <div class="chart-header-sub">آخر 30 يوم</div>
+                  </div>
+                </div>
+                <div class="chart-kpi-box">
+                  <div class="chart-kpi-num">{{ orders.month }}</div>
+                  <div class="chart-kpi-lbl">هذا الشهر</div>
+                </div>
+              </div>
+            </div>
+            <VCardText class="pa-4 pt-3">
+              <div v-if="!ordersChart.length" class="empty-chart-state">
+                <VIcon icon="ri-bar-chart-2-line" size="40" color="grey-lighten-2" />
+                <div class="mt-2 text-caption text-medium-emphasis">لا توجد بيانات بعد</div>
+              </div>
               <VueApexCharts
                 v-else
                 type="bar"
-                height="220"
-                :options="topProductsChartOptions"
-                :series="topProductsChartSeries"
-              />
-            </VCardText>
-          </VCard>
-        </VCol>
-
-        <!-- Orders per Day Bar Chart -->
-        <VCol cols="12" md="6">
-          <VCard rounded="lg" elevation="0">
-            <VCardItem class="py-4 px-5">
-              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
-                <VIcon icon="ri-bar-chart-2-line" color="info" size="20" />
-                الطلبات اليومية — آخر 30 يوم
-              </VCardTitle>
-            </VCardItem>
-            <VDivider />
-            <VCardText class="pa-3">
-              <div v-if="!ordersChart.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
-              <VueApexCharts
-                v-else
-                type="bar"
-                height="220"
+                height="200"
                 :options="ordersChartOptions"
                 :series="ordersChartSeries"
               />
@@ -432,32 +439,83 @@ const topProductsChartSeries = computed(() => [{
           </VCard>
         </VCol>
 
+        <!-- ═══ Top Products List ══════════════════════════════ -->
         <VCol cols="12" md="6">
-          <VCard rounded="lg" elevation="0">
-            <VCardItem class="py-4 px-5">
-              <VCardTitle class="font-weight-bold d-flex align-center gap-2">
-                <VIcon icon="ri-map-pin-2-line" color="success" size="20" />
-                أكثر المناطق طلباً
-              </VCardTitle>
-            </VCardItem>
-            <VDivider />
+          <VCard rounded="xl" elevation="0" class="chart-card" style="height:100%;">
+            <div class="chart-header chart-header-orange">
+              <div class="d-flex align-center gap-3">
+                <div class="chart-icon-box" style="background:rgba(255,255,255,0.2);">
+                  <VIcon icon="ri-fire-line" color="white" size="22" />
+                </div>
+                <div>
+                  <div class="chart-header-title">أكثر المنتجات طلباً</div>
+                  <div class="chart-header-sub">أعلى 5 منتجات</div>
+                </div>
+              </div>
+            </div>
             <VCardText class="pa-0">
-              <div v-if="!topDistricts.length" class="text-center text-medium-emphasis pa-6">لا توجد بيانات بعد</div>
+              <div v-if="!topProducts.length" class="empty-chart-state py-10">
+                <VIcon icon="ri-shopping-basket-line" size="40" color="grey-lighten-2" />
+                <div class="mt-2 text-caption text-medium-emphasis">لا توجد بيانات بعد</div>
+              </div>
+              <div
+                v-for="(p, i) in topProducts"
+                :key="p.product_name"
+                class="top-row px-5 py-3"
+                :class="{ 'top-row-border': i < topProducts.length - 1 }"
+              >
+                <div class="d-flex align-center gap-3 mb-2">
+                  <div class="rank-badge" :class="`rank-${i+1}`">{{ i + 1 }}</div>
+                  <div class="flex-grow-1 font-weight-medium text-body-2" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    {{ p.product_name }}
+                  </div>
+                  <div class="top-qty" style="color:#e65100;">{{ p.total_qty }} قطعة</div>
+                </div>
+                <div class="top-bar-wrap" style="width:100%;margin-right:0;">
+                  <div
+                    class="top-bar"
+                    :style="`width:${Math.round((p.total_qty / (topProducts[0]?.total_qty || 1)) * 100)}%;background:linear-gradient(90deg,#e65100,#ff8f00)`"
+                  />
+                </div>
+              </div>
+            </VCardText>
+          </VCard>
+        </VCol>
+
+        <!-- ═══ Top Districts List ════════════════════════════ -->
+        <VCol cols="12" md="6">
+          <VCard rounded="xl" elevation="0" class="chart-card">
+            <div class="chart-header chart-header-teal">
+              <div class="d-flex align-center gap-3">
+                <div class="chart-icon-box" style="background:rgba(255,255,255,0.2);">
+                  <VIcon icon="ri-map-pin-2-line" color="white" size="22" />
+                </div>
+                <div>
+                  <div class="chart-header-title">أكثر المناطق طلباً</div>
+                  <div class="chart-header-sub">أعلى 5 مناطق</div>
+                </div>
+              </div>
+            </div>
+            <VCardText class="pa-0">
+              <div v-if="!topDistricts.length" class="empty-chart-state py-10">
+                <VIcon icon="ri-map-pin-line" size="40" color="grey-lighten-2" />
+                <div class="mt-2 text-caption text-medium-emphasis">لا توجد بيانات بعد</div>
+              </div>
               <div
                 v-for="(d, i) in topDistricts"
                 :key="d.district"
-                class="top-row d-flex align-center gap-3 px-5 py-3"
+                class="top-row px-5 py-3"
                 :class="{ 'top-row-border': i < topDistricts.length - 1 }"
               >
-                <div class="rank-badge" :class="`rank-${i+1}`">{{ i + 1 }}</div>
-                <div class="flex-grow-1">
-                  <div class="font-weight-medium text-body-2">{{ d.district }}</div>
+                <div class="d-flex align-center gap-3 mb-2">
+                  <div class="rank-badge" :class="`rank-${i+1}`">{{ i + 1 }}</div>
+                  <div class="flex-grow-1 font-weight-medium text-body-2">{{ d.district }}</div>
+                  <div class="top-qty">{{ d.order_count }} طلب</div>
                 </div>
-                <div class="top-qty">{{ d.order_count }} طلب</div>
-                <div class="top-bar-wrap">
+                <div class="top-bar-wrap" style="width:100%;margin-right:0;">
                   <div
                     class="top-bar"
-                    :style="`width:${Math.round((d.order_count / (topDistricts[0]?.order_count || 1)) * 100)}%;background:#2e7d32`"
+                    :style="`width:${Math.round((d.order_count / (topDistricts[0]?.order_count || 1)) * 100)}%;background:linear-gradient(90deg,#00695c,#26a69a)`"
                   />
                 </div>
               </div>
@@ -583,6 +641,45 @@ const topProductsChartSeries = computed(() => [{
 }
 .status-count { font-size:1.5rem;font-weight:700;line-height:1.1; }
 .status-lbl   { font-size:.7rem;color:#78909c;margin-top:4px;line-height:1.3; }
+
+/* ── Chart Cards ──────────────────────────────── */
+.chart-card { border: 1px solid rgba(0,0,0,.06); overflow: hidden; }
+
+.chart-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chart-header-green  { background: linear-gradient(135deg,#2e7d32,#43a047); }
+.chart-header-blue   { background: linear-gradient(135deg,#1565c0,#1976d2); }
+.chart-header-indigo { background: linear-gradient(135deg,#283593,#3949ab); }
+.chart-header-orange { background: linear-gradient(135deg,#e65100,#fb8c00); }
+.chart-header-teal   { background: linear-gradient(135deg,#00695c,#00897b); }
+
+.chart-icon-box {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.chart-header-title { color:#fff; font-size:.95rem; font-weight:700; line-height:1.2; }
+.chart-header-sub   { color:rgba(255,255,255,.7); font-size:.72rem; margin-top:2px; }
+
+.chart-kpi-box {
+  background: rgba(255,255,255,.18);
+  border-radius: 10px;
+  padding: 8px 14px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+.chart-kpi-num { color:#fff; font-size:1rem; font-weight:700; line-height:1.1; }
+.chart-kpi-lbl { color:rgba(255,255,255,.75); font-size:.68rem; margin-top:1px; }
+
+.empty-chart-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #aaa;
+}
 
 /* ── Top Lists ────────────────────────────────── */
 .top-row        { transition: background .15s; }
