@@ -83,6 +83,11 @@ export const routes = [
         component: () => import('@/pages/settings.vue'),
       },
       {
+        path: 'credits',
+        meta: { permission: 'settings' },
+        component: () => import('@/pages/credits.vue'),
+      },
+      {
         path: 'coupons',
         meta: { permission: 'coupons' },
         component: () => import('@/pages/coupons.vue'),

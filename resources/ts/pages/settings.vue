@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue'
 const activeTab = ref('general')
 
 // ── General Settings ─────────────────────────────────────────────
-const settings = ref({ otpiq_api_key: '', otp_credits: 0, notification_credits: 0 })
+const settings = ref({ otpiq_api_key: '' })
 const loading   = ref(false)
 const saving    = ref(false)
 const showToken = ref(false)
@@ -114,36 +114,6 @@ const sendTestNotification = async () => {
   } catch (e) { fbError.value = 'خطأ في الاتصال بالسيرفر' } finally { fbTesting.value = false }
 }
 
-// ── Credits Top-Up ───────────────────────────────────────────────
-const topUpForm    = ref({ otp: 0, notification: 0 })
-const topUpSaving  = ref(false)
-const topUpSuccess = ref('')
-const topUpError   = ref('')
-
-const doTopUp = async (type: 'otp' | 'notification') => {
-  const amount = type === 'otp' ? topUpForm.value.otp : topUpForm.value.notification
-  if (!amount || amount <= 0) return
-  topUpSaving.value = true
-  topUpSuccess.value = ''
-  topUpError.value   = ''
-  try {
-    const res  = await apiFetch('/api/admin/settings/top-up', {
-      method: 'POST',
-      body: JSON.stringify({ type, amount }),
-    })
-    const data = await res.json()
-    if (res.ok) {
-      topUpSuccess.value = data.message
-      setTimeout(() => topUpSuccess.value = '', 3000)
-      if (type === 'otp')          settings.value.otp_credits          = data.new_value
-      else                         settings.value.notification_credits = data.new_value
-      topUpForm.value[type] = 0
-    } else {
-      topUpError.value = data.message || 'فشل إضافة الرصيد'
-    }
-  } catch (e) { topUpError.value = 'حدث خطأ في الاتصال' } finally { topUpSaving.value = false }
-}
-
 onMounted(() => {
   fetchSettings()
   fetchFirebase()
@@ -165,9 +135,6 @@ onMounted(() => {
         <VTabs v-model="activeTab" color="primary">
           <VTab value="general">
             <VIcon icon="ri-settings-4-line" size="18" class="me-2" />إعدادات عامة
-          </VTab>
-          <VTab value="credits">
-            <VIcon icon="ri-coins-line" size="18" class="me-2" />رصيد OTP و الإشعارات
           </VTab>
           <VTab value="firebase">
             <VIcon icon="ri-firebase-line" size="18" class="me-2" />Firebase
@@ -224,131 +191,6 @@ onMounted(() => {
                             يعتمد المتجر على مزود خدمة <strong>OTPIQ</strong> لإرسال رسائل الواتساب.
                             الصق المفتاح هنا ليستلم الزبائن رموز التحقق (OTP).
                           </p>
-                        </div>
-                      </div>
-                    </VCardText>
-                  </VCard>
-                </VCol>
-              </VRow>
-            </VWindowItem>
-
-            <!-- ═══ Credits Tab ═══ -->
-            <VWindowItem value="credits">
-              <VAlert v-if="topUpSuccess" type="success" variant="tonal" density="compact" class="mb-4" closable>{{ topUpSuccess }}</VAlert>
-              <VAlert v-if="topUpError"   type="error"   variant="tonal" density="compact" class="mb-4" closable>{{ topUpError }}</VAlert>
-
-              <VRow>
-                <!-- OTP Credits Card -->
-                <VCol cols="12" md="6">
-                  <VCard variant="outlined" rounded="lg">
-                    <VCardText class="pa-5">
-                      <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="d-flex align-center gap-2">
-                          <VIcon icon="ri-message-3-line" color="success" size="28" />
-                          <div>
-                            <div class="font-weight-bold">رصيد رسائل OTP</div>
-                            <div class="text-caption text-medium-emphasis">ينقص عند كل تسجيل جديد</div>
-                          </div>
-                        </div>
-                        <VChip
-                          :color="settings.otp_credits > 10 ? 'success' : settings.otp_credits > 0 ? 'warning' : 'error'"
-                          size="large"
-                          variant="flat"
-                          class="font-weight-bold text-h6 px-4"
-                        >
-                          {{ settings.otp_credits }}
-                        </VChip>
-                      </div>
-                      <VAlert v-if="settings.otp_credits === 0" type="warning" variant="tonal" density="compact" class="mb-3" rounded="lg">
-                        الرصيد صفر — التسجيل مستمر لكن لن ينقص العداد
-                      </VAlert>
-                      <div class="d-flex gap-2">
-                        <VTextField
-                          v-model.number="topUpForm.otp"
-                          type="number"
-                          min="1"
-                          placeholder="عدد الرسائل للإضافة"
-                          variant="outlined"
-                          density="compact"
-                          hide-details
-                          prepend-inner-icon="ri-add-line"
-                          style="flex:1"
-                        />
-                        <VBtn
-                          color="success"
-                          variant="elevated"
-                          :loading="topUpSaving"
-                          :disabled="!topUpForm.otp || topUpForm.otp <= 0"
-                          @click="doTopUp('otp')"
-                          prepend-icon="ri-add-circle-line"
-                        >
-                          إضافة
-                        </VBtn>
-                      </div>
-                    </VCardText>
-                  </VCard>
-                </VCol>
-
-                <!-- Notification Credits Card -->
-                <VCol cols="12" md="6">
-                  <VCard variant="outlined" rounded="lg">
-                    <VCardText class="pa-5">
-                      <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="d-flex align-center gap-2">
-                          <VIcon icon="ri-notification-badge-line" color="primary" size="28" />
-                          <div>
-                            <div class="font-weight-bold">رصيد الإشعارات</div>
-                            <div class="text-caption text-medium-emphasis">ينقص عند كل إشعار — يتوقف عند الصفر</div>
-                          </div>
-                        </div>
-                        <VChip
-                          :color="settings.notification_credits > 5 ? 'primary' : settings.notification_credits > 0 ? 'warning' : 'error'"
-                          size="large"
-                          variant="flat"
-                          class="font-weight-bold text-h6 px-4"
-                        >
-                          {{ settings.notification_credits }}
-                        </VChip>
-                      </div>
-                      <VAlert v-if="settings.notification_credits === 0" type="error" variant="tonal" density="compact" class="mb-3" rounded="lg">
-                        رصيد منتهي — زر الإرسال موقف حتى إضافة رصيد
-                      </VAlert>
-                      <div class="d-flex gap-2">
-                        <VTextField
-                          v-model.number="topUpForm.notification"
-                          type="number"
-                          min="1"
-                          placeholder="عدد الإشعارات للإضافة"
-                          variant="outlined"
-                          density="compact"
-                          hide-details
-                          prepend-inner-icon="ri-add-line"
-                          style="flex:1"
-                        />
-                        <VBtn
-                          color="primary"
-                          variant="elevated"
-                          :loading="topUpSaving"
-                          :disabled="!topUpForm.notification || topUpForm.notification <= 0"
-                          @click="doTopUp('notification')"
-                          prepend-icon="ri-add-circle-line"
-                        >
-                          إضافة
-                        </VBtn>
-                      </div>
-                    </VCardText>
-                  </VCard>
-                </VCol>
-
-                <!-- Info Card -->
-                <VCol cols="12">
-                  <VCard variant="tonal" color="secondary" rounded="lg">
-                    <VCardText class="pa-4">
-                      <div class="d-flex gap-3">
-                        <VIcon icon="ri-information-line" color="secondary" size="22" />
-                        <div class="text-body-2" style="line-height:1.8">
-                          <strong>رسائل OTP:</strong> تنقص عند كل تسجيل جديد — وصولها للصفر لا يوقف التسجيل بل فقط لا ينخفض العداد ما دام الرصيد صفر.<br>
-                          <strong>الإشعارات:</strong> عند وصولها للصفر سيتوقف زر البث تماماً حتى تضيف رصيد جديد.
                         </div>
                       </div>
                     </VCardText>
