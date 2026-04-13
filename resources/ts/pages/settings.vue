@@ -5,14 +5,7 @@ import { onMounted, ref } from 'vue'
 const activeTab = ref('general')
 
 // ── General Settings ─────────────────────────────────────────────
-const settings = ref({
-  otp_provider:              'arqam',
-  arqam_api_key:             '',
-  twilio_account_sid:        '',
-  twilio_auth_token:         '',
-  twilio_verify_service_sid: '',
-  otpiq_api_key:             '',
-})
+const settings = ref({ arqam_api_key: '' })
 const loading   = ref(false)
 const saving    = ref(false)
 const showToken = ref(false)
@@ -164,108 +157,24 @@ onMounted(() => {
                     {{ successMessage }}
                   </VAlert>
                   <VForm @submit.prevent="saveSettings">
-
-                    <!-- Provider Selector -->
-                    <div class="mb-5">
-                      <div class="text-body-2 font-weight-bold mb-3 d-flex align-center gap-2">
-                        <VIcon icon="ri-send-plane-line" color="primary" size="18" />
-                        مزود خدمة OTP (واتساب)
-                      </div>
-                      <VBtnToggle
-                        v-model="settings.otp_provider"
-                        mandatory
-                        color="primary"
-                        variant="outlined"
-                        rounded="lg"
-                        divided
-                      >
-                        <VBtn value="arqam"  prepend-icon="ri-whatsapp-line">Arqam</VBtn>
-                        <VBtn value="twilio" prepend-icon="ri-phone-line">Twilio</VBtn>
-                        <VBtn value="otpiq"  prepend-icon="ri-message-2-line">OTPIQ</VBtn>
-                      </VBtnToggle>
+                    <div class="d-flex align-center gap-2 mb-2">
+                      <VIcon icon="ri-whatsapp-line" color="success" size="20" />
+                      <span class="font-weight-medium">مفتاح خدمة الواتساب (OTP API Key)</span>
                     </div>
-
-                    <!-- Arqam Fields -->
-                    <template v-if="settings.otp_provider === 'arqam'">
-                      <VTextField
-                        v-model="settings.arqam_api_key"
-                        label="Arqam API Key"
-                        placeholder="otplive_xxxxxxxxxxxxxxxx"
-                        variant="outlined"
-                        persistent-placeholder
-                        hint="من لوحة Arqam Tech — يبدأ بـ otplive_"
-                        persistent-hint
-                        class="mb-5"
-                        prepend-inner-icon="ri-key-2-line"
-                        :type="showToken ? 'text' : 'password'"
-                        :append-inner-icon="showToken ? 'ri-eye-off-line' : 'ri-eye-line'"
-                        @click:append-inner="showToken = !showToken"
-                        dir="ltr"
-                      />
-                    </template>
-
-                    <!-- Twilio Fields -->
-                    <template v-else-if="settings.otp_provider === 'twilio'">
-                      <VTextField
-                        v-model="settings.twilio_account_sid"
-                        label="Account SID"
-                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        variant="outlined"
-                        persistent-placeholder
-                        hint="يبدأ بـ AC — من لوحة Twilio Console"
-                        persistent-hint
-                        class="mb-4"
-                        prepend-inner-icon="ri-account-circle-line"
-                        dir="ltr"
-                      />
-                      <VTextField
-                        v-model="settings.twilio_auth_token"
-                        label="Auth Token"
-                        placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        variant="outlined"
-                        persistent-placeholder
-                        hint="من لوحة Twilio Console — تحته مباشرة"
-                        persistent-hint
-                        class="mb-4"
-                        prepend-inner-icon="ri-key-2-line"
-                        :type="showToken ? 'text' : 'password'"
-                        :append-inner-icon="showToken ? 'ri-eye-off-line' : 'ri-eye-line'"
-                        @click:append-inner="showToken = !showToken"
-                        dir="ltr"
-                      />
-                      <VTextField
-                        v-model="settings.twilio_verify_service_sid"
-                        label="Verify Service SID"
-                        placeholder="VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        variant="outlined"
-                        persistent-placeholder
-                        hint="يبدأ بـ VA — من Twilio → Verify → Services"
-                        persistent-hint
-                        class="mb-5"
-                        prepend-inner-icon="ri-shield-check-line"
-                        dir="ltr"
-                      />
-                    </template>
-
-                    <!-- OTPIQ Fields -->
-                    <template v-else-if="settings.otp_provider === 'otpiq'">
-                      <VTextField
-                        v-model="settings.otpiq_api_key"
-                        label="OTPIQ API Key"
-                        placeholder="your-otpiq-api-key-here"
-                        variant="outlined"
-                        persistent-placeholder
-                        hint="من لوحة OTPIQ → API Keys"
-                        persistent-hint
-                        class="mb-5"
-                        prepend-inner-icon="ri-key-2-line"
-                        :type="showToken ? 'text' : 'password'"
-                        :append-inner-icon="showToken ? 'ri-eye-off-line' : 'ri-eye-line'"
-                        @click:append-inner="showToken = !showToken"
-                        dir="ltr"
-                      />
-                    </template>
-
+                    <VTextField
+                      v-model="settings.arqam_api_key"
+                      placeholder="أدخل مفتاح التحقق (otplive_...)"
+                      variant="outlined"
+                      persistent-placeholder
+                      hint="هذا المفتاح يستخدم لإرسال رموز التحقق عند تسجيل الزبائن."
+                      persistent-hint
+                      class="mb-4"
+                      prepend-inner-icon="ri-key-2-line"
+                      :type="showToken ? 'text' : 'password'"
+                      :append-inner-icon="showToken ? 'ri-eye-off-line' : 'ri-eye-line'"
+                      @click:append-inner="showToken = !showToken"
+                      dir="ltr"
+                    />
                     <VBtn color="primary" type="submit" :loading="saving" prepend-icon="ri-save-line" rounded="lg">
                       حفظ الإعدادات
                     </VBtn>
@@ -277,34 +186,11 @@ onMounted(() => {
                       <div class="d-flex gap-3 align-start">
                         <VIcon icon="ri-information-line" color="primary" size="28" />
                         <div>
-                          <template v-if="settings.otp_provider === 'arqam'">
-                            <div class="font-weight-bold mb-2 text-primary">إعداد Arqam Tech</div>
-                            <ol class="text-body-2 ps-4 mb-0" style="line-height:1.9;">
-                              <li>سجّل على <strong>otp.arqam.tech</strong></li>
-                              <li>اذهب لـ <strong>API Keys</strong> وأنشئ مفتاحاً جديداً</li>
-                              <li>انسخ المفتاح (يبدأ بـ otplive_) والصقه</li>
-                              <li>تأكد من تفعيل قناة <strong>WhatsApp</strong> في حسابك</li>
-                            </ol>
-                          </template>
-                          <template v-else-if="settings.otp_provider === 'twilio'">
-                            <div class="font-weight-bold mb-2 text-primary">إعداد Twilio Verify</div>
-                            <ol class="text-body-2 ps-4 mb-0" style="line-height:1.9;">
-                              <li>سجّل على <strong>console.twilio.com</strong></li>
-                              <li>انسخ <strong>Account SID</strong> و <strong>Auth Token</strong></li>
-                              <li>اذهب لـ <strong>Verify → Services</strong> وأنشئ Service جديد</li>
-                              <li>فعّل قناة <strong>WhatsApp</strong> على الـ Service</li>
-                              <li>انسخ الـ <strong>Service SID</strong> (يبدأ بـ VA)</li>
-                            </ol>
-                          </template>
-                          <template v-else>
-                            <div class="font-weight-bold mb-2 text-primary">إعداد OTPIQ</div>
-                            <ol class="text-body-2 ps-4 mb-0" style="line-height:1.9;">
-                              <li>سجّل على <strong>app.otpiq.com</strong></li>
-                              <li>اذهب لـ <strong>API Keys</strong></li>
-                              <li>انسخ المفتاح وألصقه في الحقل</li>
-                              <li>تأكد من وجود رصيد كافٍ في حسابك</li>
-                            </ol>
-                          </template>
+                          <div class="font-weight-bold mb-1 text-primary">لماذا هذا المفتاح؟</div>
+                          <p class="text-body-2 mb-0" style="line-height:1.6;">
+                            يعتمد المتجر على مزود خدمة <strong>Arqam Tech</strong> لإرسال رسائل الواتساب.
+                            الصق المفتاح هنا ليستلم الزبائن رموز التحقق (OTP).
+                          </p>
                         </div>
                       </div>
                     </VCardText>
