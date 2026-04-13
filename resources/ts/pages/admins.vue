@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { apiFetch } from '@/utils/apiFetch'
 import { useAdminPermissions } from '@/composables/useAdminPermissions'
+import { apiFetch } from '@/utils/apiFetch'
+import { computed, onMounted, ref } from 'vue'
 
-const { isSuperAdmin } = useAdminPermissions()
+const { adminInfo, isSuperAdmin, fetchPermissions } = useAdminPermissions()
 
 interface Admin {
   id: number
@@ -30,7 +30,22 @@ const ALL_PERMISSIONS: { key: string; label: string; icon: string }[] = [
   { key: 'store-settings',   label: 'إعدادات المتجر',        icon: 'ri-store-3-line' },
   { key: 'settings',         label: 'الإعدادات العامة',      icon: 'ri-settings-4-line' },
   { key: 'firebase-settings',label: 'إعدادات Firebase',      icon: 'ri-settings-5-line' },
+  { key: 'credits',          label: 'إدارة الرصيد',          icon: 'ri-coin-line' },
+  { key: 'admins',           label: 'إدارة المشرفين',        icon: 'ri-shield-user-line' },
 ]
+
+// Permissions the current admin can assign to others
+const assignablePermissions = computed(() =>
+  adminInfo.value?.assignable_permissions ?? []
+)
+
+// Filtered list for the form — only what current admin can assign
+const availablePermissions = computed(() =>
+  ALL_PERMISSIONS.filter(p => assignablePermissions.value.includes(p.key))
+)
+
+// Whether current admin can set is_super_admin on others
+const canSetSuperAdmin = computed(() => isSuperAdmin())
 
 // Data
 const admins     = ref<Admin[]>([])
@@ -156,7 +171,24 @@ const toggleActive = async (admin: Admin) => {
 
 const permissionLabel = (key: string) => ALL_PERMISSIONS.find(p => p.key === key)?.label || key
 
-onMounted(fetchAdmins)
+// Admin role label helper
+const adminRoleLabel = (admin: Admin) => {
+  if (admin.is_super_admin) return 'سوبر أدمن'
+  if (admin.permissions?.includes('admins')) return 'مالك'
+  return 'مشرف'
+}
+const adminRoleColor = (admin: Admin) => {
+  if (admin.is_super_admin) return 'warning'
+  if (admin.permissions?.includes('admins')) return 'purple'
+  return 'secondary'
+}
+const adminRoleIcon = (admin: Admin) => {
+  if (admin.is_super_admin) return 'ri-vip-crown-line'
+  if (admin.permissions?.includes('admins')) return 'ri-shield-star-line'
+  return 'ri-user-line'
+}
+
+onMounted(() => { fetchPermissions(); fetchAdmins() })
 </script>
 
 <template>
@@ -205,12 +237,12 @@ onMounted(fetchAdmins)
           <!-- Type -->
           <template #item.is_super_admin="{ item }">
             <VChip
-              :color="item.is_super_admin ? 'warning' : 'secondary'"
+              :color="adminRoleColor(item)"
               size="small"
               variant="tonal"
             >
-              <VIcon :icon="item.is_super_admin ? 'ri-vip-crown-line' : 'ri-user-line'" size="14" start />
-              {{ item.is_super_admin ? 'سوبر أدمن' : 'مشرف عادي' }}
+              <VIcon :icon="adminRoleIcon(item)" size="14" start />
+              {{ adminRoleLabel(item) }}
             </VChip>
           </template>
 
@@ -311,8 +343,8 @@ onMounted(fetchAdmins)
             />
           </VCol>
 
-          <!-- Super Admin Toggle -->
-          <VCol cols="12">
+          <!-- Super Admin Toggle — only for super admins -->
+          <VCol v-if="canSetSuperAdmin" cols="12">
             <VCard rounded="lg" color="warning" variant="tonal" class="pa-4">
               <div class="d-flex align-center justify-space-between">
                 <div>
@@ -331,13 +363,24 @@ onMounted(fetchAdmins)
 
           <!-- Permissions Grid -->
           <VCol v-if="!formData.is_super_admin" cols="12">
-            <div class="text-body-2 font-weight-semibold mb-3">
-              <VIcon icon="ri-key-2-line" size="16" class="me-1" />
-              تحديد الصفحات المسموح بها:
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="text-body-2 font-weight-semibold">
+                <VIcon icon="ri-key-2-line" size="16" class="me-1" />
+                تحديد الصفحات المسموح بها:
+              </div>
+              <VChip v-if="!isSuperAdmin()" size="x-small" color="info" variant="tonal">
+                <VIcon icon="ri-information-line" size="12" start />
+                تظهر الصلاحيات المتاحة لك فقط
+              </VChip>
             </div>
-            <VRow dense>
+
+            <div v-if="availablePermissions.length === 0" class="text-caption text-medium-emphasis pa-4 text-center">
+              لا توجد صلاحيات يمكنك تفويضها
+            </div>
+
+            <VRow v-else dense>
               <VCol
-                v-for="perm in ALL_PERMISSIONS"
+                v-for="perm in availablePermissions"
                 :key="perm.key"
                 cols="12" sm="6"
               >
@@ -368,7 +411,7 @@ onMounted(fetchAdmins)
             <div class="d-flex gap-2 mt-3">
               <VBtn
                 size="small" variant="tonal" color="primary" rounded="lg"
-                @click="formData.permissions = ALL_PERMISSIONS.map(p => p.key)"
+                @click="formData.permissions = availablePermissions.map(p => p.key)"
               >
                 تحديد الكل
               </VBtn>

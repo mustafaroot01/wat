@@ -14,36 +14,56 @@ class AdminController extends Controller
         'dashboard', 'orders', 'products', 'discounts', 'categories',
         'brands', 'customers', 'notifications', 'coupons', 'banners',
         'districts', 'store-settings', 'settings', 'firebase-settings',
+        'credits', 'admins',
     ];
+
+    /** True if requester can manage admins (super admin OR has 'admins' permission) */
+    private function canManageAdmins(Admin $requester): bool
+    {
+        return $requester->is_super_admin || $requester->hasPermission('admins');
+    }
+
+    /** Permissions the requester is allowed to assign to others */
+    private function assignablePermissions(Admin $requester): array
+    {
+        if ($requester->is_super_admin) return self::ALL_PERMISSIONS;
+        return $requester->permissions ?? [];
+    }
 
     public function index(Request $request)
     {
+        if (!$this->canManageAdmins($request->user())) {
+            return response()->json(['message' => 'ليس لديك صلاحية عرض المشرفين.'], 403);
+        }
+
         $admins = Admin::orderBy('id')
             ->select(['id', 'name', 'email', 'is_active', 'is_super_admin', 'permissions', 'created_at'])
-            ->paginate($request->get('per_page', 20));
+            ->paginate($request->get('per_page', 50));
 
         return response()->json($admins);
     }
 
     /**
-     * Returns current logged-in admin info + permissions
+     * Returns current logged-in admin info + permissions + what they can assign
      */
     public function me(Request $request)
     {
         $admin = $request->user();
         return response()->json([
-            'id'             => $admin->id,
-            'name'           => $admin->name,
-            'email'          => $admin->email,
-            'is_super_admin' => $admin->is_super_admin,
-            'permissions'    => $admin->is_super_admin ? self::ALL_PERMISSIONS : ($admin->permissions ?? []),
+            'id'                   => $admin->id,
+            'name'                 => $admin->name,
+            'email'                => $admin->email,
+            'is_super_admin'       => $admin->is_super_admin,
+            'permissions'          => $admin->is_super_admin ? self::ALL_PERMISSIONS : ($admin->permissions ?? []),
+            'can_manage_admins'    => $this->canManageAdmins($admin),
+            'assignable_permissions' => $this->assignablePermissions($admin),
         ]);
     }
 
     public function store(Request $request)
     {
-        // Only super admins can create admins
-        if (!$request->user()->is_super_admin) {
+        $requester = $request->user();
+        if (!$this->canManageAdmins($requester)) {
             return response()->json(['message' => 'ليس لديك صلاحية إضافة مشرفين.'], 403);
         }
 
@@ -56,13 +76,20 @@ class AdminController extends Controller
             'permissions.*'  => 'string|in:' . implode(',', self::ALL_PERMISSIONS),
         ]);
 
+        // Non-super-admin owners cannot create super admins
+        $makeSuperAdmin = ($data['is_super_admin'] ?? false) && $requester->is_super_admin;
+
+        // Restrict permissions to what the requester can assign
+        $allowedPerms = $this->assignablePermissions($requester);
+        $permissions  = array_values(array_intersect($data['permissions'] ?? [], $allowedPerms));
+
         $admin = Admin::create([
             'name'           => $data['name'],
             'email'          => $data['email'],
             'password'       => $data['password'],
             'is_active'      => true,
-            'is_super_admin' => $data['is_super_admin'] ?? false,
-            'permissions'    => $data['is_super_admin'] ?? false ? [] : ($data['permissions'] ?? []),
+            'is_super_admin' => $makeSuperAdmin,
+            'permissions'    => $makeSuperAdmin ? [] : $permissions,
         ]);
 
         return response()->json([
@@ -73,8 +100,14 @@ class AdminController extends Controller
 
     public function update(Request $request, Admin $admin)
     {
-        if (!$request->user()->is_super_admin) {
+        $requester = $request->user();
+        if (!$this->canManageAdmins($requester)) {
             return response()->json(['message' => 'ليس لديك صلاحية تعديل المشرفين.'], 403);
+        }
+
+        // Non-super-admin cannot edit a super admin
+        if (!$requester->is_super_admin && $admin->is_super_admin) {
+            return response()->json(['message' => 'لا يمكنك تعديل حساب مشرف رئيسي.'], 403);
         }
 
         $data = $request->validate([
@@ -86,14 +119,18 @@ class AdminController extends Controller
             'permissions.*'  => 'string|in:' . implode(',', self::ALL_PERMISSIONS),
         ]);
 
-        $updateData = array_filter([
-            'name'           => $data['name']           ?? null,
-            'email'          => $data['email']          ?? null,
-            'is_super_admin' => $data['is_super_admin'] ?? null,
-            'permissions'    => isset($data['is_super_admin']) && $data['is_super_admin']
-                                    ? []
-                                    : ($data['permissions'] ?? null),
-        ], fn($v) => $v !== null);
+        $makeSuperAdmin = isset($data['is_super_admin']) ? ($data['is_super_admin'] && $requester->is_super_admin) : $admin->is_super_admin;
+
+        $allowedPerms = $this->assignablePermissions($requester);
+        $permissions  = isset($data['permissions'])
+            ? array_values(array_intersect($data['permissions'], $allowedPerms))
+            : $admin->permissions;
+
+        $updateData = [];
+        if (isset($data['name']))  $updateData['name']  = $data['name'];
+        if (isset($data['email'])) $updateData['email'] = $data['email'];
+        $updateData['is_super_admin'] = $makeSuperAdmin;
+        $updateData['permissions']    = $makeSuperAdmin ? [] : $permissions;
 
         if (!empty($data['password'])) {
             $updateData['password'] = $data['password'];
@@ -109,12 +146,18 @@ class AdminController extends Controller
 
     public function destroy(Request $request, Admin $admin)
     {
-        if (!$request->user()->is_super_admin) {
+        $requester = $request->user();
+        if (!$this->canManageAdmins($requester)) {
             return response()->json(['message' => 'ليس لديك صلاحية حذف المشرفين.'], 403);
         }
 
-        if ($request->user()->id === $admin->id) {
+        if ($requester->id === $admin->id) {
             return response()->json(['message' => 'لا يمكنك حذف حسابك الخاص.'], 422);
+        }
+
+        // Non-super-admin cannot delete a super admin
+        if (!$requester->is_super_admin && $admin->is_super_admin) {
+            return response()->json(['message' => 'لا يمكنك حذف مشرف رئيسي.'], 403);
         }
 
         $admin->tokens()->delete();
@@ -125,12 +168,17 @@ class AdminController extends Controller
 
     public function toggleActive(Request $request, Admin $admin)
     {
-        if (!$request->user()->is_super_admin) {
+        $requester = $request->user();
+        if (!$this->canManageAdmins($requester)) {
             return response()->json(['message' => 'ليس لديك صلاحية تعديل المشرفين.'], 403);
         }
 
-        if ($request->user()->id === $admin->id) {
+        if ($requester->id === $admin->id) {
             return response()->json(['message' => 'لا يمكنك تعطيل حسابك الخاص.'], 422);
+        }
+
+        if (!$requester->is_super_admin && $admin->is_super_admin) {
+            return response()->json(['message' => 'لا يمكنك تعطيل مشرف رئيسي.'], 403);
         }
 
         $admin->update(['is_active' => !$admin->is_active]);

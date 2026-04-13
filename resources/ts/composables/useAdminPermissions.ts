@@ -1,5 +1,5 @@
-import { ref } from 'vue'
 import { apiFetch } from '@/utils/apiFetch'
+import { ref } from 'vue'
 
 interface AdminInfo {
   id: number
@@ -7,6 +7,8 @@ interface AdminInfo {
   email: string
   is_super_admin: boolean
   permissions: string[]
+  can_manage_admins: boolean
+  assignable_permissions: string[]
 }
 
 const adminInfo = ref<AdminInfo | null>(null)
