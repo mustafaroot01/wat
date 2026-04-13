@@ -23,7 +23,7 @@ class OtpService
 
     private function getProvider(): string
     {
-        return Setting::get('otp_provider', env('OTP_PROVIDER', 'twilio'));
+        return Setting::get('otp_provider', env('OTP_PROVIDER', 'arqam'));
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -130,7 +130,10 @@ class OtpService
 
     private function arqamApiKey(): string
     {
-        $key = Setting::get('arqam_api_key', env('ARQAM_API_KEY', ''));
+        // Fall back to old key name for backward compatibility
+        $key = Setting::get('arqam_api_key')
+            ?: Setting::get('whatsapp_api_key')
+            ?: env('ARQAM_API_KEY', env('WHATSAPP_OTP_API_KEY', ''));
 
         if (empty($key)) {
             Log::critical('Arqam API key missing in settings/env.');
