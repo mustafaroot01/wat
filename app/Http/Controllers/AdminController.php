@@ -36,9 +36,15 @@ class AdminController extends Controller
             return response()->json(['message' => 'ليس لديك صلاحية عرض المشرفين.'], 403);
         }
 
-        $admins = Admin::orderBy('id')
-            ->select(['id', 'name', 'email', 'is_active', 'is_super_admin', 'permissions', 'created_at'])
-            ->paginate($request->get('per_page', 50));
+        $query = Admin::orderBy('id')
+            ->select(['id', 'name', 'email', 'is_active', 'is_super_admin', 'permissions', 'created_at']);
+
+        // Non-super-admin owners cannot see super admins
+        if (!$request->user()->is_super_admin) {
+            $query->where('is_super_admin', false);
+        }
+
+        $admins = $query->paginate($request->get('per_page', 50));
 
         return response()->json($admins);
     }

@@ -84,7 +84,7 @@ export const routes = [
       },
       {
         path: 'credits',
-        meta: { permission: 'settings' },
+        meta: { permission: 'credits' },
         component: () => import('@/pages/credits.vue'),
       },
       {

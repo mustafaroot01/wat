@@ -32,14 +32,14 @@ const { can, isSuperAdmin } = useAdminPermissions()
   <VerticalNavLink v-if="can('store-settings')" :item="{ title: 'إعدادات المتجر والفاتورة', icon: 'ri-store-3-line', to: '/store-settings' }" />
   <VerticalNavLink v-if="can('store-settings')" :item="{ title: 'صفحات التطبيق والتحديث', icon: 'ri-pages-line', to: '/app-pages' }" />
   <VerticalNavLink v-if="can('settings')"  :item="{ title: 'الإعدادات العامة',   icon: 'ri-settings-4-line',         to: '/settings'  }" />
-  <VerticalNavLink v-if="can('settings')"  :item="{ title: 'إدارة الرصيد',        icon: 'ri-coins-line',               to: '/credits'   }" />
+  <VerticalNavLink v-if="can('credits')"   :item="{ title: 'إدارة الرصيد',        icon: 'ri-coins-line',               to: '/credits'   }" />
 
   <!-- 👉 الإعدادات -->
   <VerticalNavSectionTitle :item="{ heading: 'الإعدادات' }" />
   <VerticalNavLink :item="{ title: 'إعدادات الحساب', icon: 'ri-user-settings-line', to: '/account-settings' }" />
 
-  <!-- 👉 إدارة المشرفين — سوبر أدمن فقط -->
-  <template v-if="isSuperAdmin()">
+  <!-- 👉 إدارة المشرفين — سوبر أدمن أو صاحب صلاحية admins -->
+  <template v-if="can('admins')">
     <VerticalNavSectionTitle :item="{ heading: 'الصلاحيات' }" />
     <VerticalNavLink :item="{ title: 'المشرفون والصلاحيات', icon: 'ri-shield-user-line', to: '/admins' }" />
   </template>
