@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useStoreSettings } from '@/composables/useStoreSettings'
 import { apiFetch } from '@/utils/apiFetch'
 import { formatIQD } from '@/utils/currency'
-import { useStoreSettings } from '@/composables/useStoreSettings'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const { branding, fetchBranding } = useStoreSettings()
@@ -282,7 +282,7 @@ const topProductsChartSeries = computed(() => [{
 
         <!-- ═══ Credits Cards ════════════════════════════════ -->
         <VCol cols="6" sm="3">
-          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.otp === 0 ? 'border:1px solid #ff980020' : ''" @click="$router.push('/settings')" style="cursor:pointer;">
+          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.otp === 0 ? 'border:1px solid #ff980020' : ''">
             <VCardText class="pa-4">
               <div class="d-flex align-center justify-space-between mb-3">
                 <div class="stat-icon-wrap" :style="credits.otp > 10 ? 'background:#e8f5e9;' : credits.otp > 0 ? 'background:#fff3e0;' : 'background:#ffebee;'">
@@ -299,7 +299,7 @@ const topProductsChartSeries = computed(() => [{
         </VCol>
 
         <VCol cols="6" sm="3">
-          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.notification === 0 ? 'border:1px solid #f4433620' : ''" @click="$router.push('/settings')" style="cursor:pointer;">
+          <VCard class="stat-card" rounded="lg" elevation="0" :style="credits.notification === 0 ? 'border:1px solid #f4433620' : ''">
             <VCardText class="pa-4">
               <div class="d-flex align-center justify-space-between mb-3">
                 <div class="stat-icon-wrap" :style="credits.notification > 5 ? 'background:#e3f0ff;' : credits.notification > 0 ? 'background:#fff3e0;' : 'background:#ffebee;'">
