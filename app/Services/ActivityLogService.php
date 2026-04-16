@@ -26,22 +26,28 @@ class ActivityLogService
             return;
         }
 
-        $request = $request ?? request();
+        try {
+            $request = $request ?? request();
 
-        $description = ActivityLog::generateDescription($action, $modelType, $modelId, $context);
+            $description = ActivityLog::generateDescription($action, $modelType, $modelId, $context);
 
-        ActivityLog::create([
-            'admin_id'     => $admin->id,
-            'action'       => $action,
-            'model_type'   => $modelType,
-            'model_id'     => $modelId,
-            'description'  => $description,
-            'old_values'   => $oldValues ?: null,
-            'new_values'   => $newValues ?: null,
-            'ip_address'   => $request->ip(),
-            'user_agent'   => $request->userAgent(),
-            'device_type'  => self::detectDeviceType($request->userAgent()),
-        ]);
+            ActivityLog::create([
+                'admin_id'     => $admin->id,
+                'action'       => $action,
+                'model_type'   => $modelType,
+                'model_id'     => $modelId,
+                'description'  => $description,
+                'old_values'   => $oldValues ?: null,
+                'new_values'   => $newValues ?: null,
+                'ip_address'   => $request->ip(),
+                'user_agent'   => $request->userAgent(),
+                'device_type'  => self::detectDeviceType($request->userAgent()),
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail if activity logging fails (e.g., table doesn't exist)
+            // This prevents logging errors from breaking the application
+            \Log::warning('Activity logging failed: ' . $e->getMessage());
+        }
     }
 
     /**
