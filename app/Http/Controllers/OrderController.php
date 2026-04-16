@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\StoreSetting;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -63,6 +64,7 @@ class OrderController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
+        $oldStatus = $order->status;
         $order->status = $request->status;
 
         if ($request->status === Order::STATUS_REJECTED) {
@@ -70,6 +72,17 @@ class OrderController extends Controller
         }
 
         $order->save();
+
+        ActivityLogService::log(
+            $request->user(),
+            'status_changed',
+            'Order',
+            $order->id,
+            ['status' => $oldStatus],
+            ['status' => $order->status],
+            ['name' => $order->invoice_code, 'status' => $order->status],
+            $request
+        );
 
         return response()->json(['message' => 'تم تحديث حالة الطلب', 'order' => $order]);
     }
@@ -130,8 +143,21 @@ class OrderController extends Controller
     public function destroy($id)
     {
         $order = Order::findOrFail($id);
+        $invoiceCode = $order->invoice_code;
+        
         $order->items()->delete();
         $order->delete();
+
+        ActivityLogService::log(
+            request()->user(),
+            'deleted',
+            'Order',
+            null,
+            [],
+            [],
+            ['name' => $invoiceCode],
+            request()
+        );
 
         return response()->json(['message' => 'تم حذف الطلب بنجاح']);
     }

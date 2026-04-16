@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Helpers\ImageHelper;
+use App\Services\ActivityLogService;
 use App\Traits\VuetifyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -200,6 +201,17 @@ class ProductController extends Controller
 
         $product = Product::create($data);
 
+        ActivityLogService::log(
+            $request->user(),
+            'created',
+            'Product',
+            $product->id,
+            [],
+            $product->only(['name', 'sku', 'price']),
+            ['name' => $product->name],
+            $request
+        );
+
         return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
@@ -210,6 +222,7 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product)
     {
+        $oldValues = $product->only(['name', 'sku', 'price', 'is_active', 'in_stock']);
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
@@ -220,28 +233,78 @@ class ProductController extends Controller
         }
 
         $product->update($data);
+        $newValues = $product->only(['name', 'sku', 'price', 'is_active', 'in_stock']);
+
+        ActivityLogService::log(
+            $request->user(),
+            'updated',
+            'Product',
+            $product->id,
+            $oldValues,
+            $newValues,
+            ['name' => $product->name],
+            $request
+        );
 
         return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
     public function destroy(Product $product)
     {
+        $productName = $product->name;
+        
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
         $product->delete();
+
+        ActivityLogService::log(
+            request()->user(),
+            'deleted',
+            'Product',
+            null,
+            [],
+            [],
+            ['name' => $productName],
+            request()
+        );
+
         return response()->json(['message' => 'Product deleted successfully']);
     }
 
     public function toggleActive(Product $product)
     {
         $product->update(['is_active' => !$product->is_active]);
+
+        ActivityLogService::log(
+            request()->user(),
+            'toggled_active',
+            'Product',
+            $product->id,
+            [],
+            ['is_active' => $product->is_active],
+            ['name' => $product->name],
+            request()
+        );
+
         return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 
     public function toggleInStock(Product $product)
     {
         $product->update(['in_stock' => !$product->in_stock]);
+
+        ActivityLogService::log(
+            request()->user(),
+            'toggled_stock',
+            'Product',
+            $product->id,
+            [],
+            ['in_stock' => $product->in_stock],
+            ['name' => $product->name],
+            request()
+        );
+
         return new ProductResource($product->load(['category', 'brand', 'filter']));
     }
 }

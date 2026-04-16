@@ -105,6 +105,11 @@ Route::prefix('admin')->group(function () {
         Route::put('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'update']);
         Route::delete('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'destroy']);
         Route::patch('admins/{admin}/toggle', [\App\Http\Controllers\AdminController::class, 'toggleActive']);
+
+        // Activity Logs (super admin only)
+        Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index']);
+        Route::get('activity-logs/filter-options', [\App\Http\Controllers\ActivityLogController::class, 'filterOptions']);
+        Route::get('activity-logs/{log}', [\App\Http\Controllers\ActivityLogController::class, 'show']);
     });
 });
 

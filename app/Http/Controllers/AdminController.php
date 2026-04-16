@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -98,6 +99,17 @@ class AdminController extends Controller
             'permissions'    => $makeSuperAdmin ? [] : $permissions,
         ]);
 
+        ActivityLogService::log(
+            $requester,
+            'created',
+            'Admin',
+            $admin->id,
+            [],
+            ['name' => $admin->name, 'email' => $admin->email],
+            ['name' => $admin->name],
+            $request
+        );
+
         return response()->json([
             'message' => 'تم إنشاء المشرف بنجاح.',
             'data'    => $this->formatAdmin($admin),
@@ -142,7 +154,20 @@ class AdminController extends Controller
             $updateData['password'] = $data['password'];
         }
 
+        $oldValues = $admin->only(['name', 'email', 'permissions']);
         $admin->update($updateData);
+        $newValues = $admin->fresh()->only(['name', 'email', 'permissions']);
+
+        ActivityLogService::log(
+            $requester,
+            'updated',
+            'Admin',
+            $admin->id,
+            $oldValues,
+            $newValues,
+            ['name' => $admin->name],
+            $request
+        );
 
         return response()->json([
             'message' => 'تم تحديث المشرف بنجاح.',
@@ -166,8 +191,20 @@ class AdminController extends Controller
             return response()->json(['message' => 'لا يمكنك حذف مشرف رئيسي.'], 403);
         }
 
+        $adminName = $admin->name;
         $admin->tokens()->delete();
         $admin->delete();
+
+        ActivityLogService::log(
+            $requester,
+            'deleted',
+            'Admin',
+            null,
+            [],
+            [],
+            ['name' => $adminName],
+            $request
+        );
 
         return response()->json(['message' => 'تم حذف المشرف بنجاح.']);
     }
@@ -188,6 +225,17 @@ class AdminController extends Controller
         }
 
         $admin->update(['is_active' => !$admin->is_active]);
+
+        ActivityLogService::log(
+            $requester,
+            'toggled_active',
+            'Admin',
+            $admin->id,
+            [],
+            ['is_active' => $admin->is_active],
+            ['name' => $admin->name],
+            $request
+        );
 
         return response()->json([
             'message' => $admin->is_active ? 'تم تفعيل المشرف.' : 'تم تعطيل المشرف.',

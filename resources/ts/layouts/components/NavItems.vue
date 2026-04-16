@@ -43,5 +43,10 @@ const { can, isSuperAdmin } = useAdminPermissions()
     <VerticalNavSectionTitle :item="{ heading: 'الصلاحيات' }" />
     <VerticalNavLink :item="{ title: 'المشرفون والصلاحيات', icon: 'ri-shield-user-line', to: '/admins' }" />
   </template>
+
+  <!-- 👉 سجل الأنشطة — سوبر أدمن فقط -->
+  <template v-if="isSuperAdmin()">
+    <VerticalNavLink :item="{ title: 'سجل النشاطات', icon: 'ri-history-line', to: '/activity-logs' }" />
+  </template>
 </template>
 
