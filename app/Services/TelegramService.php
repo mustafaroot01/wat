@@ -110,14 +110,19 @@ class TelegramService
     {
         $invoiceUrl = url("/invoice/{$order->invoice_token}");
         $phoneNumber = preg_replace('/[^0-9]/', '', $order->customer_phone);
-        $whatsappUrl = "https://wa.me/964{$phoneNumber}?text=" . urlencode("مرحباً، بخصوص طلبك رقم {$order->invoice_code}");
+        
+        // Remove leading zero if exists and ensure it starts with 964
+        if (substr($phoneNumber, 0, 1) === '0') {
+            $phoneNumber = substr($phoneNumber, 1);
+        }
+        if (substr($phoneNumber, 0, 3) !== '964') {
+            $phoneNumber = '964' . $phoneNumber;
+        }
+        
+        $whatsappUrl = "https://wa.me/{$phoneNumber}?text=" . urlencode("مرحباً، بخصوص طلبك رقم {$order->invoice_code}");
 
         return [
             'inline_keyboard' => [
-                [
-                    ['text' => '📋 نسخ الرقم', 'callback_data' => "copy_phone_{$order->id}"],
-                    ['text' => '📞 اتصال', 'url' => "tel:{$order->customer_phone}"],
-                ],
                 [
                     ['text' => '💬 واتساب', 'url' => $whatsappUrl],
                     ['text' => '🔗 فتح الفاتورة', 'url' => $invoiceUrl],
