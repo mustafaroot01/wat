@@ -104,7 +104,14 @@ const testTelegramConnection = async () => {
   testingTelegram.value = true
   telegramTestResult.value = ''
   try {
-    const res = await apiFetch('/api/admin/store-settings/test-telegram', { method: 'POST' })
+    const res = await apiFetch('/api/admin/store-settings/test-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bot_token: form.value.telegram_bot_token,
+        chat_id: form.value.telegram_chat_id
+      })
+    })
     const data = await res.json()
     telegramTestResult.value = data.message ?? (res.ok ? 'تم الاتصال بنجاح!' : 'فشل الاتصال')
   } catch (err) {

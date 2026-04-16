@@ -78,11 +78,35 @@ class StoreSettingsController extends Controller
         ]);
     }
 
-    public function testTelegramConnection()
+    public function testTelegramConnection(Request $request)
     {
-        $telegramService = new TelegramService();
-        $result = $telegramService->testConnection();
-        
-        return response()->json($result, $result['success'] ? 200 : 400);
+        $request->validate([
+            'bot_token' => 'required|string',
+            'chat_id' => 'required|string',
+        ]);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::post(
+                "https://api.telegram.org/bot{$request->bot_token}/sendMessage",
+                [
+                    'chat_id' => $request->chat_id,
+                    'text' => "✅ تم الاتصال بنجاح!\n\nبوت التيليجرام جاهز لاستقبال الطلبات.",
+                ]
+            );
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'تم الاتصال بنجاح! ✓']);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل الاتصال. تحقق من Bot Token و Chat ID'
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ], 400);
+        }
     }
 }
