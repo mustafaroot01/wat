@@ -95,6 +95,7 @@ Route::prefix('admin')->group(function () {
         // Store Settings
         Route::get('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'index']);
         Route::post('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'update']);
+        Route::post('store-settings/test-telegram', [\App\Http\Controllers\StoreSettingsController::class, 'testTelegramConnection']);
 
         // Current admin info + permissions
         Route::get('me', [\App\Http\Controllers\AdminController::class, 'me']);

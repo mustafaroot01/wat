@@ -17,7 +17,13 @@ const form = ref({
   contact_instagram:     '',
   contact_facebook:      '',
   about_us_description:  '',
+  telegram_bot_token:    '',
+  telegram_chat_id:      '',
+  telegram_enabled:      false,
 })
+
+const testingTelegram = ref(false)
+const telegramTestResult = ref('')
 
 type DaySchedule = { enabled: boolean; open: string; close: string }
 type WeeklySchedule = Record<string, DaySchedule>
@@ -65,6 +71,9 @@ const loadSettings = async () => {
     form.value.contact_instagram     = data.contact_instagram     ?? ''
     form.value.contact_facebook      = data.contact_facebook      ?? ''
     form.value.about_us_description  = data.about_us_description  ?? ''
+    form.value.telegram_bot_token    = data.telegram_bot_token    ?? ''
+    form.value.telegram_chat_id      = data.telegram_chat_id      ?? ''
+    form.value.telegram_enabled      = Boolean(data.telegram_enabled ?? false)
     currentLogo.value                = data.logo                  ?? null
     if (data.weekly_schedule) {
       try { weeklySchedule.value = { ...defaultSchedule(), ...JSON.parse(data.weekly_schedule) } }
@@ -91,6 +100,20 @@ const removeLogo = () => {
   if (fileInputRef.value) fileInputRef.value.value = ''
 }
 
+const testTelegramConnection = async () => {
+  testingTelegram.value = true
+  telegramTestResult.value = ''
+  try {
+    const res = await apiFetch('/api/admin/store-settings/test-telegram', { method: 'POST' })
+    const data = await res.json()
+    telegramTestResult.value = data.message ?? (res.ok ? 'تم الاتصال بنجاح!' : 'فشل الاتصال')
+  } catch (err) {
+    telegramTestResult.value = 'حدث خطأ أثناء الاختبار'
+  } finally {
+    testingTelegram.value = false
+  }
+}
+
 const saveSettings = async () => {
   saving.value  = true
   success.value = ''
@@ -106,6 +129,9 @@ const saveSettings = async () => {
     fd.append('contact_instagram',    form.value.contact_instagram)
     fd.append('contact_facebook',     form.value.contact_facebook)
     fd.append('about_us_description', form.value.about_us_description)
+    fd.append('telegram_bot_token',   form.value.telegram_bot_token)
+    fd.append('telegram_chat_id',     form.value.telegram_chat_id)
+    fd.append('telegram_enabled',     form.value.telegram_enabled ? '1' : '0')
     fd.append('weekly_schedule', JSON.stringify(weeklySchedule.value))
     if (logoFile.value) fd.append('logo', logoFile.value)
 
@@ -278,6 +304,67 @@ const saveSettings = async () => {
             :hint="form.minimum_order_amount > 0 ? `الزبون لازم يطلب بمبلغ لا يقل عن ${form.minimum_order_amount.toLocaleString()} د.ع` : 'لا يوجد حد أدنى حالياً'"
             persistent-hint
           />
+
+          <VDivider class="my-5" />
+
+          <!-- Telegram Bot Settings -->
+          <div class="mb-3">
+            <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
+              <VIcon icon="ri-telegram-line" color="primary" size="20" />
+              🤖 إعدادات بوت التيليجرام
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              استقبل إشعارات فورية عند ورود طلبات جديدة على التيليجرام
+            </div>
+          </div>
+
+          <VSwitch
+            v-model="form.telegram_enabled"
+            label="تفعيل إشعارات التيليجرام"
+            color="success"
+            class="mb-4"
+            hide-details
+          />
+
+          <VTextField
+            v-model="form.telegram_bot_token"
+            label="Bot Token"
+            variant="outlined"
+            class="mb-4"
+            prepend-inner-icon="ri-key-line"
+            dir="ltr"
+            placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+            hint="احصل عليه من @BotFather في التيليجرام"
+            persistent-hint
+          />
+
+          <VTextField
+            v-model="form.telegram_chat_id"
+            label="Chat ID / Group ID"
+            variant="outlined"
+            class="mb-4"
+            prepend-inner-icon="ri-chat-3-line"
+            dir="ltr"
+            placeholder="-1001234567890"
+            hint="ID الخاص بك أو بالمجموعة - استخدم @userinfobot للحصول عليه"
+            persistent-hint
+          />
+
+          <div class="d-flex align-center gap-3">
+            <VBtn
+              variant="tonal"
+              color="primary"
+              prepend-icon="ri-send-plane-line"
+              :loading="testingTelegram"
+              :disabled="!form.telegram_bot_token || !form.telegram_chat_id"
+              @click="testTelegramConnection"
+            >
+              اختبار الاتصال
+            </VBtn>
+            <div v-if="telegramTestResult" class="text-body-2">
+              {{ telegramTestResult }}
+            </div>
+          </div>
 
           <VDivider class="my-5" />
 

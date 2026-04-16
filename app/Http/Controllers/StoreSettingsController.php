@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ImageHelper;
 use App\Models\StoreSetting;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -38,6 +39,9 @@ class StoreSettingsController extends Controller
             'current_version_ios'   => ['nullable', 'string', 'max:20'],
             'update_url_ios'        => ['nullable', 'string', 'max:500'],
             'force_update_ios'      => ['nullable', 'in:0,1'],
+            'telegram_bot_token'    => ['nullable', 'string', 'max:500'],
+            'telegram_chat_id'      => ['nullable', 'string', 'max:255'],
+            'telegram_enabled'      => ['nullable', 'in:0,1'],
         ]);
 
         $keys = [
@@ -45,6 +49,7 @@ class StoreSettingsController extends Controller
             'contact_phone2', 'contact_instagram', 'contact_facebook', 'about_us_description', 'privacy_policy',
             'min_version_android', 'current_version_android', 'update_url_android', 'force_update_android',
             'min_version_ios', 'current_version_ios', 'update_url_ios', 'force_update_ios',
+            'telegram_bot_token', 'telegram_chat_id', 'telegram_enabled',
         ];
 
         foreach ($keys as $key) {
@@ -71,5 +76,13 @@ class StoreSettingsController extends Controller
             'message'  => 'تم حفظ الإعدادات بنجاح',
             'settings' => StoreSetting::allAsArray(),
         ]);
+    }
+
+    public function testTelegramConnection()
+    {
+        $telegramService = new TelegramService();
+        $result = $telegramService->testConnection();
+        
+        return response()->json($result, $result['success'] ? 200 : 400);
     }
 }

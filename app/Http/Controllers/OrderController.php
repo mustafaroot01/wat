@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\StoreSetting;
 use App\Services\ActivityLogService;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -284,6 +285,14 @@ class OrderController extends Controller
             }
         }
         // ────────────────────────────────────────────────────
+
+        // إرسال إشعار تيليجرام
+        try {
+            $telegramService = new TelegramService();
+            $telegramService->sendNewOrderNotification($order);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send Telegram notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'تم إرسال الطلب بنجاح',
