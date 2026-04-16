@@ -74,7 +74,7 @@ class CustomerController extends Controller
             'first_name'  => 'sometimes|required|string|max:100',
             'last_name'   => 'sometimes|required|string|max:100',
             'gender'      => 'sometimes|required|in:male,female',
-            'birth_date'  => 'sometimes|required|date',
+            'birth_date'  => 'sometimes|nullable|date',
             'district_id' => 'sometimes|nullable|exists:districts,id',
             'area_id'     => ['sometimes', 'nullable', Rule::exists('areas', 'id')->where('district_id', $districtId)],
             'phone'       => "sometimes|required|string|unique:users,phone,{$id}",

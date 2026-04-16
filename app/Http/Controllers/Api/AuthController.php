@@ -87,7 +87,7 @@ class AuthController extends Controller
             'first_name'  => 'required|string|max:100',
             'last_name'   => 'required|string|max:100',
             'gender'      => 'required|in:male,female',
-            'birth_date'  => 'required|date|before:today',
+            'birth_date'  => 'nullable|date|before:today',
             'district_id'      => 'required|exists:districts,id',
             'area_id'          => ['required', Rule::exists('areas', 'id')->where('district_id', $request->district_id)],
             'nearest_landmark' => 'nullable|string|max:255',
