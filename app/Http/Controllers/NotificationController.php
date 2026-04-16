@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\AppNotification;
 use App\Http\Requests\StoreNotificationRequest;
 use App\Http\Resources\NotificationResource;
+use App\Services\ActivityLogService;
 use App\Services\FirebaseNotificationService;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
@@ -86,11 +87,35 @@ class NotificationController extends Controller
             ]);
             // Decrement notification credits
             Setting::set('notification_credits', max(0, $credits - 1));
+            
+            // Log activity
+            ActivityLogService::log(
+                $request->user(),
+                'created',
+                'Notification',
+                $notification->id,
+                [],
+                ['title' => $notification->title, 'status' => 'sent'],
+                ['name' => $notification->title],
+                $request
+            );
         } else {
             $notification->update([
                 'delivery_status' => 'failed',
                 'failure_reason' => $response['error'] ?? 'Unknown error'
             ]);
+            
+            // Log failed notification attempt
+            ActivityLogService::log(
+                $request->user(),
+                'created',
+                'Notification',
+                $notification->id,
+                [],
+                ['title' => $notification->title, 'status' => 'failed'],
+                ['name' => $notification->title],
+                $request
+            );
         }
 
         return response()->json([
@@ -104,11 +129,25 @@ class NotificationController extends Controller
 
     public function destroy(AppNotification $notification)
     {
+        $notificationTitle = $notification->title;
+        
         if ($notification->image) {
             Storage::disk('public')->delete($notification->image);
         }
         
         $notification->delete();
+
+        // Log activity
+        ActivityLogService::log(
+            request()->user(),
+            'deleted',
+            'Notification',
+            null,
+            [],
+            [],
+            ['name' => $notificationTitle],
+            request()
+        );
 
         return response()->json(['success' => true, 'message' => 'تم الحذف بنجاح.']);
     }
