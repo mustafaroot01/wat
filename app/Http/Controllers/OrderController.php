@@ -288,10 +288,14 @@ class OrderController extends Controller
 
         // إرسال إشعار تيليجرام
         try {
+            \Log::info("Attempting to send Telegram notification for order #{$order->invoice_code}");
             $telegramService = new TelegramService();
-            $telegramService->sendNewOrderNotification($order);
+            $result = $telegramService->sendNewOrderNotification($order);
+            if (!$result) {
+                \Log::warning("Telegram notification was not sent for order #{$order->invoice_code}");
+            }
         } catch (\Exception $e) {
-            \Log::warning('Failed to send Telegram notification: ' . $e->getMessage());
+            \Log::error('Failed to send Telegram notification: ' . $e->getMessage());
         }
 
         return response()->json([

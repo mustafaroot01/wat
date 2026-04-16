@@ -25,7 +25,18 @@ class TelegramService
      */
     public function sendNewOrderNotification(Order $order): bool
     {
-        if (!$this->enabled || !$this->botToken || !$this->chatId) {
+        if (!$this->enabled) {
+            Log::info('Telegram notifications are disabled');
+            return false;
+        }
+        
+        if (!$this->botToken) {
+            Log::warning('Telegram bot token is missing');
+            return false;
+        }
+        
+        if (!$this->chatId) {
+            Log::warning('Telegram chat ID is missing');
             return false;
         }
 
@@ -40,7 +51,13 @@ class TelegramService
                 'reply_markup' => json_encode($keyboard)
             ]);
 
-            return $response->successful();
+            if ($response->successful()) {
+                Log::info("Telegram notification sent successfully for order #{$order->invoice_code}");
+                return true;
+            }
+            
+            Log::error('Telegram API error: ' . $response->body());
+            return false;
         } catch (\Exception $e) {
             Log::error('Telegram notification failed: ' . $e->getMessage());
             return false;
@@ -52,7 +69,7 @@ class TelegramService
      */
     private function formatOrderMessage(Order $order): string
     {
-        $order->load(['items.product', 'district', 'area']);
+        $order->load(['items']);
 
         $message = "🆕 طلب جديد! #{$order->invoice_code}\n";
         $message .= "━━━━━━━━━━━━━━━━━━━\n";
@@ -60,8 +77,12 @@ class TelegramService
         $message .= "📞 {$order->customer_phone}\n\n";
 
         $message .= "📍 العنوان:\n";
-        $message .= "   🏛️ القضاء: {$order->district->name}\n";
-        $message .= "   🏘️ المنطقة: {$order->area->name}\n";
+        if ($order->province) {
+            $message .= "   🏛️ المحافظة: {$order->province}\n";
+        }
+        if ($order->district) {
+            $message .= "   🏘️ القضاء: {$order->district}\n";
+        }
         if ($order->nearest_landmark) {
             $message .= "   📌 قرب: {$order->nearest_landmark}\n";
         }
@@ -74,7 +95,7 @@ class TelegramService
         }
         $message .= "\n";
 
-        $message .= "💰 المبلغ الإجمالي: " . number_format($order->total) . " IQD\n\n";
+        $message .= "💰 المبلغ الإجمالي: " . number_format($order->final_amount) . " IQD\n\n";
 
         $message .= "⏰ " . $order->created_at->locale('ar')->isoFormat('D MMMM - h:mm A');
         $message .= "\n━━━━━━━━━━━━━━━━━━━";
