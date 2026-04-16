@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('store_settings', function (Blueprint $table) {
-            $table->string('telegram_bot_token')->nullable()->after('notification_credits');
-            $table->string('telegram_chat_id')->nullable()->after('telegram_bot_token');
-            $table->boolean('telegram_enabled')->default(false)->after('telegram_chat_id');
+            $table->string('telegram_bot_token')->nullable();
+            $table->string('telegram_chat_id')->nullable();
+            $table->boolean('telegram_enabled')->default(false);
         });
     }
 
