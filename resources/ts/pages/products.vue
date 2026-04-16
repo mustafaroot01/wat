@@ -2,7 +2,7 @@
 import { usePagination } from '@/composables/usePagination';
 import { apiFetch } from '@/utils/apiFetch';
 import { formatIQD } from '@/utils/currency';
-import { onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 
 interface Product {
   id: number | null;
@@ -136,8 +136,12 @@ const formData = ref<Product>({
   image_url: null,
 })
 
+const suppressFilterReset = ref(false)
+
 watch(() => formData.value.category_id, (newId) => {
-  formData.value.filter_id = null
+  if (!suppressFilterReset.value) {
+    formData.value.filter_id = null
+  }
   loadFiltersForCategory(newId)
 })
 
@@ -185,7 +189,8 @@ const openAddDialog = () => {
   showDialog.value = true
 }
 
-const openEditDialog = (item: Product) => {
+const openEditDialog = async (item: Product) => {
+  suppressFilterReset.value = true
   dialogMode.value = 'edit'
   formData.value = { ...item, image: null }
   imagePreviewUrl.value = item.image_url
@@ -193,6 +198,8 @@ const openEditDialog = (item: Product) => {
   generalError.value = ''
   if (item.category_id) loadFiltersForCategory(item.category_id)
   showDialog.value = true
+  await nextTick()
+  suppressFilterReset.value = false
 }
 
 const saveProduct = async () => {
