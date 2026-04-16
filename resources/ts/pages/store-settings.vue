@@ -154,18 +154,23 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <VRow>
-    <VCol cols="12" md="8" lg="6">
-      <VCard title="إعدادات المتجر والفاتورة">
-        <VCardText v-if="loading" class="text-center pa-8">
-          <VProgressCircular indeterminate color="primary" />
-        </VCardText>
+  <div v-if="loading" class="text-center pa-16">
+    <VProgressCircular indeterminate color="primary" size="64" />
+    <div class="text-h6 mt-4 text-medium-emphasis">جاري التحميل...</div>
+  </div>
 
-        <VCardText v-else>
-          <!-- Logo -->
-          <div class="mb-6">
-            <div class="text-subtitle-2 font-weight-bold mb-3">شعار المتجر (يظهر في الفاتورة)</div>
-
+  <VRow v-else>
+    <!-- Right Column: Main Settings -->
+    <VCol cols="12" lg="8">
+      <!-- 1. Store Basic Info -->
+      <VCard class="mb-4">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-store-2-line" color="primary" />
+          معلومات المتجر الأساسية
+        </VCardTitle>
+        <VCardText>
+          <div class="mb-4">
+            <div class="text-subtitle-2 font-weight-bold mb-3">📷 شعار المتجر</div>
             <div v-if="logoPreview || currentLogo" class="mb-3 d-flex align-center gap-3">
               <img
                 :src="logoPreview ?? `/storage/${currentLogo}`"
@@ -175,246 +180,118 @@ const saveSettings = async () => {
                 <VIcon size="16" class="me-1">ri-delete-bin-line</VIcon> إزالة
               </VBtn>
             </div>
-
-            <VBtn
-              variant="tonal"
-              color="primary"
-              prepend-icon="ri-upload-2-line"
-              @click="fileInputRef?.click()"
-            >
+            <VBtn variant="tonal" color="primary" prepend-icon="ri-upload-2-line" @click="fileInputRef?.click()">
               {{ logoPreview || currentLogo ? 'تغيير الشعار' : 'رفع الشعار' }}
             </VBtn>
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept="image/*"
-              style="display:none;"
-              @change="onLogoChange"
-            />
+            <input ref="fileInputRef" type="file" accept="image/*" style="display:none;" @change="onLogoChange" />
             <div class="text-caption text-medium-emphasis mt-1">PNG, JPG, SVG — بحد أقصى 2MB</div>
           </div>
 
-          <VDivider class="mb-5" />
+          <VTextField v-model="form.store_name" label="اسم المتجر" variant="outlined" class="mb-4" prepend-inner-icon="ri-store-2-line" />
+          <VTextField v-model="form.store_phone" label="رقم هاتف المتجر" variant="outlined" class="mb-4" prepend-inner-icon="ri-phone-line" dir="ltr" />
+          <VTextField v-model="form.store_address" label="عنوان المتجر" variant="outlined" class="mb-4" prepend-inner-icon="ri-map-pin-line" />
+          <VTextarea v-model="form.thank_you_message" label="رسالة الشكر (تظهر أسفل الفاتورة)" variant="outlined" rows="2" prepend-inner-icon="ri-chat-heart-line" />
+        </VCardText>
+      </VCard>
 
-          <!-- Fields -->
-          <VTextField
-            v-model="form.store_name"
-            label="اسم المتجر"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-store-2-line"
-          />
+      <!-- 2. Contact Info -->
+      <VCard class="mb-4">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-contacts-line" color="info" />
+          معلومات التواصل
+        </VCardTitle>
+        <VCardText>
+          <div class="text-caption text-medium-emphasis mb-4">تظهر هذه المعلومات في صفحة "من نحن" بالتطبيق</div>
+          <VTextField v-model="form.contact_phone2" label="رقم هاتف إضافي" variant="outlined" class="mb-4" prepend-inner-icon="ri-phone-line" dir="ltr" placeholder="+9647XXXXXXXXX" />
+          <VTextField v-model="form.contact_instagram" label="معرف انستغرام" variant="outlined" class="mb-4" prepend-inner-icon="ri-instagram-line" dir="ltr" placeholder="@amwaj_store" />
+          <VTextField v-model="form.contact_facebook" label="رابط صفحة فيس بوك" variant="outlined" class="mb-4" prepend-inner-icon="ri-facebook-line" dir="ltr" placeholder="https://facebook.com/amwajstore" />
+          <VTextarea v-model="form.about_us_description" label="نبذة عن المتجر" variant="outlined" rows="3" prepend-inner-icon="ri-information-line" placeholder="اكتب نبذة عن متجرك هنا..." />
+        </VCardText>
+      </VCard>
 
-          <VTextField
-            v-model="form.store_phone"
-            label="رقم هاتف المتجر"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-phone-line"
-            dir="ltr"
-          />
-
-          <VTextField
-            v-model="form.store_address"
-            label="عنوان المتجر"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-map-pin-line"
-          />
-
-          <VTextarea
-            v-model="form.thank_you_message"
-            label="رسالة الشكر (تظهر أسفل الفاتورة)"
-            variant="outlined"
-            rows="2"
-            prepend-inner-icon="ri-chat-heart-line"
-          />
-
-          <VDivider class="my-5" />
-
-          <!-- Contact Info & About Us -->
-          <div class="mb-3">
-            <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
-              <VIcon icon="ri-contacts-line" color="primary" size="20" />
-              معلومات التواصل (تظهر في صفحة من نحن بالتطبيق)
-            </div>
-          </div>
-
-          <VTextField
-            v-model="form.contact_phone2"
-            label="رقم هاتف إضافي للتواصل"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-phone-line"
-            dir="ltr"
-            placeholder="+9647XXXXXXXXX"
-          />
-
-          <VTextField
-            v-model="form.contact_instagram"
-            label="معرف انستغرام"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-instagram-line"
-            dir="ltr"
-            placeholder="@amwaj_dialay"
-          />
-
-          <VTextField
-            v-model="form.contact_facebook"
-            label="رابط صفحة فيس بوك"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-facebook-line"
-            dir="ltr"
-            placeholder="https://facebook.com/amwajdialay"
-          />
-
-          <VTextarea
-            v-model="form.about_us_description"
-            label="نص من نحن (يظهر في صفحة التطبيق)"
-            variant="outlined"
-            rows="3"
-            class="mb-4"
-            prepend-inner-icon="ri-information-line"
-            placeholder="اكتب نبذة عن متجرك هنا..."
-          />
-
-          <VDivider class="my-5" />
-
-          <!-- Minimum Order Amount -->
-          <div class="mb-2">
-            <div class="text-subtitle-2 font-weight-bold mb-1 d-flex align-center gap-2">
-              <VIcon icon="ri-money-dollar-circle-line" color="warning" size="20" />
-              الحد الأدنى لمبلغ الطلب
-            </div>
-            <div class="text-caption text-medium-emphasis mb-3">
-              إذا كان المبلغ 0 — لا يوجد حد أدنى (مفعّل دائماً)
-            </div>
-          </div>
+      <!-- 3. Order Settings -->
+      <VCard class="mb-4">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-shopping-bag-line" color="warning" />
+          إعدادات الطلبات
+        </VCardTitle>
+        <VCardText>
+          <div class="text-subtitle-2 font-weight-bold mb-2">الحد الأدنى لمبلغ الطلب</div>
+          <div class="text-caption text-medium-emphasis mb-4">إذا كان المبلغ 0 — لا يوجد حد أدنى</div>
           <VTextField
             v-model.number="form.minimum_order_amount"
             label="أقل مبلغ للطلب (بالدينار العراقي)"
-            type="number"
-            min="0"
-            step="500"
-            variant="outlined"
-            color="warning"
-            prepend-inner-icon="ri-shield-check-line"
-            :hint="form.minimum_order_amount > 0 ? `الزبون لازم يطلب بمبلغ لا يقل عن ${form.minimum_order_amount.toLocaleString()} د.ع` : 'لا يوجد حد أدنى حالياً'"
+            type="number" min="0" step="500" variant="outlined" color="warning"
+            prepend-inner-icon="ri-money-dollar-circle-line"
+            :hint="form.minimum_order_amount > 0 ? `الحد الأدنى: ${form.minimum_order_amount.toLocaleString()} د.ع` : 'لا يوجد حد أدنى'"
             persistent-hint
           />
+        </VCardText>
+      </VCard>
 
-          <VDivider class="my-5" />
+      <!-- 4. Telegram Bot -->
+      <VCard class="mb-4">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-telegram-line" color="#0088cc" />
+          🤖 بوت التيليجرام
+        </VCardTitle>
+        <VCardText>
+          <VAlert type="info" variant="tonal" class="mb-4">
+            استقبل إشعارات فورية عند ورود طلبات جديدة مباشرة على التيليجرام
+          </VAlert>
 
-          <!-- Telegram Bot Settings -->
-          <div class="mb-3">
-            <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
-              <VIcon icon="ri-telegram-line" color="primary" size="20" />
-              🤖 إعدادات بوت التيليجرام
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              استقبل إشعارات فورية عند ورود طلبات جديدة على التيليجرام
-            </div>
-          </div>
+          <VSwitch v-model="form.telegram_enabled" label="تفعيل الإشعارات" color="success" class="mb-4" hide-details />
 
-          <VSwitch
-            v-model="form.telegram_enabled"
-            label="تفعيل إشعارات التيليجرام"
-            color="success"
-            class="mb-4"
-            hide-details
+          <VTextField
+            v-model="form.telegram_bot_token" label="Bot Token" variant="outlined" class="mb-4"
+            prepend-inner-icon="ri-key-line" dir="ltr" placeholder="123456:ABC-DEF1234ghIkl..."
+            hint="احصل عليه من @BotFather" persistent-hint
           />
 
           <VTextField
-            v-model="form.telegram_bot_token"
-            label="Bot Token"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-key-line"
-            dir="ltr"
-            placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-            hint="احصل عليه من @BotFather في التيليجرام"
-            persistent-hint
+            v-model="form.telegram_chat_id" label="Chat ID / Group ID" variant="outlined" class="mb-4"
+            prepend-inner-icon="ri-chat-3-line" dir="ltr" placeholder="-1001234567890"
+            hint="استخدم @userinfobot للحصول عليه" persistent-hint
           />
 
-          <VTextField
-            v-model="form.telegram_chat_id"
-            label="Chat ID / Group ID"
-            variant="outlined"
-            class="mb-4"
-            prepend-inner-icon="ri-chat-3-line"
-            dir="ltr"
-            placeholder="-1001234567890"
-            hint="ID الخاص بك أو بالمجموعة - استخدم @userinfobot للحصول عليه"
-            persistent-hint
-          />
-
-          <div class="d-flex align-center gap-3">
-            <VBtn
-              variant="tonal"
-              color="primary"
-              prepend-icon="ri-send-plane-line"
-              :loading="testingTelegram"
-              :disabled="!form.telegram_bot_token || !form.telegram_chat_id"
-              @click="testTelegramConnection"
-            >
+          <div class="d-flex align-center gap-3 flex-wrap">
+            <VBtn variant="tonal" color="primary" prepend-icon="ri-send-plane-line"
+              :loading="testingTelegram" :disabled="!form.telegram_bot_token || !form.telegram_chat_id"
+              @click="testTelegramConnection">
               اختبار الاتصال
             </VBtn>
-            <div v-if="telegramTestResult" class="text-body-2">
+            <VChip v-if="telegramTestResult" :color="telegramTestResult.includes('نجاح') ? 'success' : 'error'" variant="tonal">
               {{ telegramTestResult }}
-            </div>
+            </VChip>
+          </div>
+        </VCardText>
+      </VCard>
+
+      <!-- 5. Weekly Schedule -->
+      <VCard class="mb-4">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-calendar-schedule-line" color="success" />
+          جدول الدوام الأسبوعي
+        </VCardTitle>
+        <VCardText>
+          <div class="text-caption text-medium-emphasis mb-4">
+            خارج أوقات الدوام يظهر للعميل: <strong>المتجر مغلق حالياً</strong>
           </div>
 
-          <VDivider class="my-5" />
-
-          <!-- Weekly Schedule -->
-          <div class="mb-3">
-            <div class="text-subtitle-2 font-weight-bold d-flex align-center gap-2">
-              <VIcon icon="ri-calendar-schedule-line" color="info" size="20" />
-              جدول الدوام الأسبوعي
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              فعّل الأيام وحدد وقت الفتح والإغلاق — خارج هذه الأوقات يظهر للزبون: <strong>المتجر مغلق</strong>
-            </div>
-          </div>
-
-          <div
-            v-for="day in days"
-            :key="day.key"
-            class="day-row mb-2 pa-3 rounded-lg"
-            :class="weeklySchedule[day.key]?.enabled ? 'day-open' : 'day-closed'"
-          >
+          <div v-for="day in days" :key="day.key" class="day-row mb-2 pa-3 rounded-lg"
+            :class="weeklySchedule[day.key]?.enabled ? 'day-open' : 'day-closed'">
             <VRow align="center" no-gutters>
-              <!-- Day name + toggle -->
               <VCol cols="4" sm="3" class="d-flex align-center gap-2">
-                <VSwitch
-                  v-model="weeklySchedule[day.key].enabled"
-                  color="success"
-                  hide-details
-                  density="compact"
-                />
+                <VSwitch v-model="weeklySchedule[day.key].enabled" color="success" hide-details density="compact" />
                 <span class="font-weight-bold text-body-2">{{ day.label }}</span>
               </VCol>
-
-              <!-- Closed label -->
               <VCol v-if="!weeklySchedule[day.key]?.enabled" cols="8" sm="9">
                 <VChip color="error" size="small" variant="tonal">مغلق</VChip>
               </VCol>
-
-              <!-- Time inputs -->
               <template v-else>
                 <VCol cols="4" sm="4" class="px-1">
-                  <VTextField
-                    v-model="weeklySchedule[day.key].open"
-                    type="time"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    color="success"
-                    prepend-inner-icon="ri-sun-line"
-                    :hint="to12h(weeklySchedule[day.key].open)"
-                  />
+                  <VTextField v-model="weeklySchedule[day.key].open" type="time" density="compact" variant="outlined"
+                    hide-details color="success" prepend-inner-icon="ri-sun-line" />
                   <div class="text-caption text-center text-success mt-1 font-weight-medium">
                     {{ to12h(weeklySchedule[day.key].open) }}
                   </div>
@@ -423,15 +300,8 @@ const saveSettings = async () => {
                   <VIcon size="16" color="medium-emphasis">ri-arrow-left-line</VIcon>
                 </VCol>
                 <VCol cols="4" sm="4" class="px-1">
-                  <VTextField
-                    v-model="weeklySchedule[day.key].close"
-                    type="time"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    color="error"
-                    prepend-inner-icon="ri-moon-line"
-                  />
+                  <VTextField v-model="weeklySchedule[day.key].close" type="time" density="compact" variant="outlined"
+                    hide-details color="error" prepend-inner-icon="ri-moon-line" />
                   <div class="text-caption text-center text-error mt-1 font-weight-medium">
                     {{ to12h(weeklySchedule[day.key].close) }}
                   </div>
@@ -439,43 +309,48 @@ const saveSettings = async () => {
               </template>
             </VRow>
           </div>
-
-          <VAlert v-if="success"  type="success" variant="tonal" class="mt-4" closable @click:close="success=''">{{ success }}</VAlert>
-          <VAlert v-if="errorMsg" type="error"   variant="tonal" class="mt-4" closable @click:close="errorMsg=''">{{ errorMsg }}</VAlert>
         </VCardText>
-
-        <VCardActions class="px-4 pb-4">
-          <VSpacer />
-          <VBtn color="primary" :loading="saving" prepend-icon="ri-save-line" @click="saveSettings">
-            حفظ الإعدادات
-          </VBtn>
-        </VCardActions>
       </VCard>
+
+      <!-- Save Button & Alerts -->
+      <div class="sticky-bottom mb-4">
+        <VAlert v-if="success" type="success" variant="tonal" class="mb-3" closable @click:close="success=''">{{ success }}</VAlert>
+        <VAlert v-if="errorMsg" type="error" variant="tonal" class="mb-3" closable @click:close="errorMsg=''">{{ errorMsg }}</VAlert>
+        <VBtn block color="primary" size="large" :loading="saving" prepend-icon="ri-save-line" @click="saveSettings">
+          💾 حفظ جميع الإعدادات
+        </VBtn>
+      </div>
     </VCol>
 
-    <!-- Preview -->
-    <VCol cols="12" md="4" lg="6">
-      <VCard title="معاينة رأس الفاتورة">
+    <!-- Left Column: Preview -->
+    <VCol cols="12" lg="4">
+      <VCard sticky class="sticky-preview">
+        <VCardTitle class="d-flex align-center gap-2">
+          <VIcon icon="ri-eye-line" color="primary" />
+          معاينة الفاتورة
+        </VCardTitle>
         <VCardText>
-          <div class="d-flex align-center justify-space-between pa-3" style="border:1px dashed #ccc;border-radius:8px;">
-            <div>
-              <img
-                v-if="logoPreview || currentLogo"
-                :src="logoPreview ?? `/storage/${currentLogo}`"
-                style="max-height:60px;max-width:140px;"
-              />
-              <div v-else class="text-h6 font-weight-bold">{{ form.store_name || 'اسم المتجر' }}</div>
-              <div class="text-body-2 text-medium-emphasis mt-1">{{ form.store_phone || 'رقم الهاتف' }}</div>
-              <div class="text-body-2 text-medium-emphasis">{{ form.store_address || 'العنوان' }}</div>
+          <div class="invoice-preview pa-4 rounded-lg">
+            <div class="d-flex align-center justify-space-between mb-4">
+              <div>
+                <img
+                  v-if="logoPreview || currentLogo"
+                  :src="logoPreview ?? `/storage/${currentLogo}`"
+                  style="max-height:60px;max-width:140px;"
+                />
+                <div v-else class="text-h6 font-weight-bold">{{ form.store_name || 'اسم المتجر' }}</div>
+                <div class="text-body-2 text-medium-emphasis mt-1">{{ form.store_phone || 'رقم الهاتف' }}</div>
+                <div class="text-body-2 text-medium-emphasis">{{ form.store_address || 'العنوان' }}</div>
+              </div>
+              <div class="text-end">
+                <div class="text-h6 font-weight-bold text-primary">INV-00001</div>
+                <div class="text-body-2 text-medium-emphasis">{{ new Date().toLocaleDateString('ar-IQ') }}</div>
+              </div>
             </div>
-            <div class="text-end">
-              <div class="text-h6 font-weight-bold text-primary">INV-00001</div>
-              <div class="text-body-2 text-medium-emphasis">{{ new Date().toLocaleDateString('ar-IQ') }}</div>
+            <VDivider class="my-3" />
+            <div class="text-center text-body-2 font-italic text-medium-emphasis">
+              {{ form.thank_you_message || 'شكراً لثقتكم بنا' }}
             </div>
-          </div>
-          <VDivider class="my-3" />
-          <div class="text-center text-body-2 font-italic text-medium-emphasis">
-            {{ form.thank_you_message || 'شكراً لثقتكم بنا' }}
           </div>
         </VCardText>
       </VCard>
@@ -485,12 +360,31 @@ const saveSettings = async () => {
 
 <style scoped>
 .day-open {
-  background: #f0faf0;
+  background: linear-gradient(135deg, #f0faf0 0%, #e8f5e9 100%);
   border: 1px solid #c8e6c9;
+  transition: all 0.2s ease;
+}
+.day-open:hover {
+  border-color: #81c784;
+  box-shadow: 0 2px 8px rgba(129, 199, 132, 0.2);
 }
 .day-closed {
   background: #fafafa;
   border: 1px dashed #e0e0e0;
-  opacity: 0.75;
+  opacity: 0.7;
+}
+.invoice-preview {
+  border: 2px dashed #e0e0e0;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+}
+.sticky-preview {
+  position: sticky;
+  top: 80px;
+}
+@media (max-width: 1280px) {
+  .sticky-preview {
+    position: relative;
+    top: 0;
+  }
 }
 </style>
