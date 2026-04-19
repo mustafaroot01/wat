@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useAdminNotifications } from '@/composables/useAdminNotifications'
 import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAdminNotifications } from '@/composables/useAdminNotifications'
 
 const router = useRouter()
 const {
@@ -41,7 +41,7 @@ const timeAgo = (dateStr: string) => {
   return `منذ ${Math.floor(diff / 86400)} ي`
 }
 
-onMounted(() => startPolling(30000))
+onMounted(() => startPolling(10000))
 onUnmounted(() => stopPolling())
 </script>
 
