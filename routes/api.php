@@ -112,6 +112,7 @@ Route::prefix('admin')->group(function () {
         Route::get('admin-notifications/unread', [\App\Http\Controllers\AdminNotificationController::class, 'unread']);
         Route::patch('admin-notifications/{id}/read', [\App\Http\Controllers\AdminNotificationController::class, 'markAsRead']);
         Route::post('admin-notifications/mark-all-read', [\App\Http\Controllers\AdminNotificationController::class, 'markAllAsRead']);
+        Route::delete('admin-notifications/delete-all', [\App\Http\Controllers\AdminNotificationController::class, 'destroyAll']);
         Route::delete('admin-notifications/{id}', [\App\Http\Controllers\AdminNotificationController::class, 'destroy']);
 
         // Activity Logs (super admin only)

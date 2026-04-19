@@ -65,6 +65,16 @@ class AdminNotificationController extends Controller
     }
 
     /**
+     * Delete all notifications
+     */
+    public function destroyAll()
+    {
+        AdminNotification::truncate();
+
+        return response()->json(['success' => true, 'message' => 'تم حذف جميع الإشعارات']);
+    }
+
+    /**
      * Delete a notification
      */
     public function destroy($id)

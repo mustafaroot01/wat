@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { apiFetch } from '@/utils/apiFetch'
 import { useAdminNotifications } from '@/composables/useAdminNotifications'
+import { apiFetch } from '@/utils/apiFetch'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const { markAsRead, markAllAsRead, fetchUnread } = useAdminNotifications()
@@ -24,7 +24,9 @@ const lastPage = ref(1)
 const total = ref(0)
 const filterStatus = ref<'all' | 'unread' | 'read'>('all')
 const confirmDeleteDialog = ref(false)
+const confirmDeleteAllDialog = ref(false)
 const deleteTargetId = ref<number | null>(null)
+const deleting = ref(false)
 
 const fetchNotifications = async (page = 1) => {
   loading.value = true
@@ -76,6 +78,7 @@ const confirmDelete = (id: number) => {
 
 const deleteNotification = async () => {
   if (!deleteTargetId.value) return
+  deleting.value = true
   try {
     const res = await apiFetch(`/api/admin/admin-notifications/${deleteTargetId.value}`, {
       method: 'DELETE',
@@ -88,6 +91,25 @@ const deleteNotification = async () => {
     }
   } catch (e) {
     console.error('Error deleting notification:', e)
+  } finally {
+    deleting.value = false
+  }
+}
+
+const deleteAllNotifications = async () => {
+  deleting.value = true
+  try {
+    const res = await apiFetch('/api/admin/admin-notifications/delete-all', { method: 'DELETE' })
+    if (res.ok) {
+      notifications.value = []
+      total.value = 0
+      confirmDeleteAllDialog.value = false
+      fetchUnread()
+    }
+  } catch (e) {
+    console.error('Error deleting all notifications:', e)
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -126,23 +148,31 @@ onMounted(() => fetchNotifications(1))
 <template>
   <VRow>
     <VCol cols="12">
-      <VCard rounded="lg" elevation="0">
-        <VCardItem class="py-4 px-5">
-          <VCardTitle class="font-weight-bold d-flex align-center justify-space-between flex-wrap gap-3">
-            <div class="d-flex align-center gap-2">
-              <VIcon icon="ri-notification-3-line" color="primary" size="22" />
-              إشعارات الطلبات
+      <!-- Header Card -->
+      <VCard class="mb-4" rounded="lg">
+        <VCardText>
+          <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+            <!-- Title -->
+            <div class="d-flex align-center gap-3">
+              <VAvatar color="primary" variant="tonal" size="42" rounded="lg">
+                <VIcon icon="ri-notification-3-line" size="22" />
+              </VAvatar>
+              <div>
+                <h5 class="text-h6 font-weight-bold mb-0">إشعارات الطلبات</h5>
+                <span class="text-caption text-medium-emphasis">{{ total }} إشعار إجمالي</span>
+              </div>
               <VChip
                 v-if="unreadCountLocal > 0"
                 color="error"
                 size="small"
                 variant="flat"
-                class="ms-2"
               >
                 {{ unreadCountLocal }} غير مقروء
               </VChip>
             </div>
-            <div class="d-flex align-center gap-2">
+
+            <!-- Actions -->
+            <div class="d-flex align-center gap-2 flex-wrap">
               <VBtnToggle
                 v-model="filterStatus"
                 mandatory
@@ -151,14 +181,24 @@ onMounted(() => fetchNotifications(1))
                 divided
                 rounded="lg"
               >
-                <VBtn value="all" size="small">الكل</VBtn>
-                <VBtn value="unread" size="small">غير مقروء</VBtn>
-                <VBtn value="read" size="small">مقروء</VBtn>
+                <VBtn value="all" size="small">
+                  <VIcon icon="ri-list-check" size="16" class="me-1" />
+                  الكل
+                </VBtn>
+                <VBtn value="unread" size="small">
+                  <VIcon icon="ri-mail-unread-line" size="16" class="me-1" />
+                  غير مقروء
+                </VBtn>
+                <VBtn value="read" size="small">
+                  <VIcon icon="ri-mail-open-line" size="16" class="me-1" />
+                  مقروء
+                </VBtn>
               </VBtnToggle>
+
               <VBtn
                 v-if="unreadCountLocal > 0"
                 variant="tonal"
-                color="primary"
+                color="success"
                 size="small"
                 prepend-icon="ri-check-double-line"
                 rounded="lg"
@@ -166,152 +206,182 @@ onMounted(() => fetchNotifications(1))
               >
                 تحديد الكل مقروء
               </VBtn>
-            </div>
-          </VCardTitle>
-        </VCardItem>
-        <VDivider />
 
-        <VCardText class="pa-0">
-          <!-- Loading -->
-          <div v-if="loading" class="text-center py-12">
-            <VProgressCircular indeterminate color="primary" size="36" />
-            <p class="text-body-2 text-medium-emphasis mt-3">جاري التحميل...</p>
-          </div>
-
-          <!-- Empty -->
-          <div v-else-if="filteredNotifications.length === 0" class="text-center py-12">
-            <VIcon icon="ri-notification-off-line" size="56" color="disabled" class="mb-3" />
-            <p class="text-body-1 text-medium-emphasis">لا توجد إشعارات</p>
-          </div>
-
-          <!-- Notifications List -->
-          <div v-else>
-            <div
-              v-for="notif in filteredNotifications"
-              :key="notif.id"
-              class="notification-row d-flex align-center gap-4 pa-4"
-              :class="{ 'unread-row': !notif.is_read }"
-            >
-              <!-- Icon -->
-              <VAvatar
-                :color="notif.is_read ? 'grey-lighten-2' : 'primary'"
-                :variant="notif.is_read ? 'flat' : 'tonal'"
-                size="46"
+              <VBtn
+                v-if="total > 0"
+                variant="tonal"
+                color="error"
+                size="small"
+                prepend-icon="ri-delete-bin-line"
                 rounded="lg"
+                @click="confirmDeleteAllDialog = true"
               >
-                <VIcon
-                  :icon="notif.type === 'order' ? 'ri-shopping-bag-3-line' : 'ri-notification-3-line'"
-                  size="22"
-                />
-              </VAvatar>
-
-              <!-- Content -->
-              <div class="flex-grow-1 cursor-pointer" style="min-width: 0;" @click="goToOrder(notif)">
-                <div class="d-flex align-center gap-2 mb-1">
-                  <span
-                    class="text-body-1"
-                    :class="notif.is_read ? 'text-medium-emphasis' : 'font-weight-bold'"
-                  >
-                    {{ notif.title }}
-                  </span>
-                  <VChip v-if="!notif.is_read" color="primary" size="x-small" variant="flat">
-                    جديد
-                  </VChip>
-                </div>
-                <p class="text-body-2 text-medium-emphasis mb-1">{{ notif.body }}</p>
-                <span class="text-caption text-disabled">{{ timeAgo(notif.created_at) }}</span>
-              </div>
-
-              <!-- Actions -->
-              <div class="d-flex align-center gap-1">
-                <VTooltip location="top">
-                  <template #activator="{ props }">
-                    <VBtn
-                      v-if="!notif.is_read"
-                      v-bind="props"
-                      icon="ri-check-line"
-                      variant="text"
-                      size="small"
-                      color="success"
-                      @click="handleMarkAsRead(notif)"
-                    />
-                  </template>
-                  تحديد كمقروء
-                </VTooltip>
-                <VTooltip location="top">
-                  <template #activator="{ props }">
-                    <VBtn
-                      v-bind="props"
-                      icon="ri-delete-bin-line"
-                      variant="text"
-                      size="small"
-                      color="error"
-                      @click="confirmDelete(notif.id)"
-                    />
-                  </template>
-                  حذف
-                </VTooltip>
-              </div>
+                حذف الكل
+              </VBtn>
             </div>
-          </div>
-
-          <!-- Pagination -->
-          <VDivider v-if="lastPage > 1" />
-          <div v-if="lastPage > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
-            <span class="text-caption text-medium-emphasis">
-              عرض الصفحة {{ currentPage }} من {{ lastPage }} ({{ total }} إشعار)
-            </span>
-            <VPagination
-              v-model="currentPage"
-              :length="lastPage"
-              :total-visible="5"
-              density="comfortable"
-              variant="tonal"
-              active-color="primary"
-              @update:model-value="handlePageChange"
-            />
           </div>
         </VCardText>
+      </VCard>
+
+      <!-- Notifications Card -->
+      <VCard rounded="lg">
+        <!-- Loading -->
+        <div v-if="loading" class="text-center py-12">
+          <VProgressCircular indeterminate color="primary" size="40" />
+          <p class="text-body-2 text-medium-emphasis mt-3">جاري التحميل...</p>
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="filteredNotifications.length === 0" class="text-center py-16">
+          <VAvatar color="grey-lighten-3" size="80" rounded="lg" class="mb-4">
+            <VIcon icon="ri-notification-off-line" size="40" color="grey" />
+          </VAvatar>
+          <h6 class="text-h6 text-medium-emphasis mb-1">لا توجد إشعارات</h6>
+          <p class="text-body-2 text-disabled">ستظهر الإشعارات هنا عند استلام طلبات جديدة</p>
+        </div>
+
+        <!-- Notifications Table -->
+        <VTable v-else hover class="text-no-wrap">
+          <thead>
+            <tr>
+              <th style="width: 50px;" class="text-center">#</th>
+              <th>الإشعار</th>
+              <th>التفاصيل</th>
+              <th>الوقت</th>
+              <th>الحالة</th>
+              <th class="text-center" style="width: 120px;">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(notif, index) in filteredNotifications"
+              :key="notif.id"
+              :class="{ 'unread-row': !notif.is_read }"
+              class="cursor-pointer"
+              @click="goToOrder(notif)"
+            >
+              <td class="text-center text-medium-emphasis">
+                {{ (currentPage - 1) * 20 + index + 1 }}
+              </td>
+              <td>
+                <div class="d-flex align-center gap-3">
+                  <VAvatar
+                    :color="notif.is_read ? 'grey-lighten-2' : 'primary'"
+                    :variant="notif.is_read ? 'flat' : 'tonal'"
+                    size="38"
+                    rounded="lg"
+                  >
+                    <VIcon icon="ri-shopping-bag-3-line" size="18" />
+                  </VAvatar>
+                  <div>
+                    <span
+                      class="d-block text-body-2"
+                      :class="notif.is_read ? 'text-medium-emphasis' : 'font-weight-bold text-high-emphasis'"
+                    >
+                      {{ notif.title }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="text-body-2 text-medium-emphasis">{{ notif.body }}</span>
+              </td>
+              <td>
+                <span class="text-caption text-medium-emphasis">{{ timeAgo(notif.created_at) }}</span>
+              </td>
+              <td>
+                <VChip
+                  :color="notif.is_read ? 'default' : 'primary'"
+                  :variant="notif.is_read ? 'outlined' : 'flat'"
+                  size="small"
+                  label
+                >
+                  {{ notif.is_read ? 'مقروء' : 'جديد' }}
+                </VChip>
+              </td>
+              <td class="text-center" @click.stop>
+                <VBtn
+                  v-if="!notif.is_read"
+                  icon="ri-check-line"
+                  variant="text"
+                  size="x-small"
+                  color="success"
+                  class="me-1"
+                  @click="handleMarkAsRead(notif)"
+                />
+                <VBtn
+                  icon="ri-delete-bin-line"
+                  variant="text"
+                  size="x-small"
+                  color="error"
+                  @click="confirmDelete(notif.id)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </VTable>
+
+        <!-- Pagination -->
+        <VDivider v-if="lastPage > 1" />
+        <div v-if="lastPage > 1" class="pa-4 d-flex align-center justify-space-between flex-wrap gap-4">
+          <span class="text-caption text-medium-emphasis">
+            الصفحة {{ currentPage }} من {{ lastPage }} — ({{ total }} إشعار)
+          </span>
+          <VPagination
+            v-model="currentPage"
+            :length="lastPage"
+            :total-visible="5"
+            density="comfortable"
+            variant="tonal"
+            active-color="primary"
+            @update:model-value="handlePageChange"
+          />
+        </div>
       </VCard>
     </VCol>
   </VRow>
 
-  <!-- Delete Confirmation -->
+  <!-- Delete Single Confirmation -->
   <VDialog v-model="confirmDeleteDialog" max-width="400">
-    <VCard rounded="lg" elevation="0">
-      <VCardItem class="text-center pt-8">
+    <VCard rounded="lg">
+      <VCardText class="text-center pt-8 pb-4">
         <VAvatar color="error" variant="tonal" size="64" class="mb-4">
           <VIcon icon="ri-delete-bin-line" size="32" />
         </VAvatar>
-        <VCardTitle class="text-h6 font-weight-bold">تأكيد الحذف</VCardTitle>
-      </VCardItem>
-      <VCardText class="text-center pb-6">
-        <p class="text-body-1">هل تريد حذف هذا الإشعار؟</p>
+        <h6 class="text-h6 font-weight-bold mb-2">حذف الإشعار</h6>
+        <p class="text-body-2 text-medium-emphasis">هل تريد حذف هذا الإشعار؟</p>
       </VCardText>
-      <VCardActions class="pa-5 border-t justify-center gap-3">
+      <VCardActions class="pa-5 justify-center gap-3">
         <VBtn variant="tonal" color="secondary" rounded="lg" class="px-6" @click="confirmDeleteDialog = false">إلغاء</VBtn>
-        <VBtn variant="elevated" color="error" rounded="lg" class="px-6" @click="deleteNotification">نعم، احذفه</VBtn>
+        <VBtn variant="elevated" color="error" rounded="lg" class="px-6" :loading="deleting" @click="deleteNotification">حذف</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+  <!-- Delete All Confirmation -->
+  <VDialog v-model="confirmDeleteAllDialog" max-width="420">
+    <VCard rounded="lg">
+      <VCardText class="text-center pt-8 pb-4">
+        <VAvatar color="error" variant="tonal" size="64" class="mb-4">
+          <VIcon icon="ri-delete-bin-2-line" size="32" />
+        </VAvatar>
+        <h6 class="text-h6 font-weight-bold mb-2">حذف جميع الإشعارات</h6>
+        <p class="text-body-2 text-medium-emphasis">سيتم حذف جميع الإشعارات ({{ total }} إشعار). هذا الإجراء لا يمكن التراجع عنه.</p>
+      </VCardText>
+      <VCardActions class="pa-5 justify-center gap-3">
+        <VBtn variant="tonal" color="secondary" rounded="lg" class="px-6" @click="confirmDeleteAllDialog = false">إلغاء</VBtn>
+        <VBtn variant="elevated" color="error" rounded="lg" class="px-6" :loading="deleting" @click="deleteAllNotifications">حذف الكل</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>
 </template>
 
 <style scoped>
-.notification-row {
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
-  transition: background-color 0.2s ease;
-}
-
-.notification-row:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.03);
-}
-
-.notification-row:last-child {
-  border-bottom: none;
-}
-
 .unread-row {
-  background-color: rgba(var(--v-theme-primary), 0.03);
-  border-inline-start: 3px solid rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.03) !important;
+}
+
+.unread-row:hover {
+  background-color: rgba(var(--v-theme-primary), 0.06) !important;
 }
 </style>
