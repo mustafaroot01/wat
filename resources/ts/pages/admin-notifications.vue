@@ -181,18 +181,9 @@ onMounted(() => fetchNotifications(1))
                 divided
                 rounded="lg"
               >
-                <VBtn value="all" size="small">
-                  <VIcon icon="ri-list-check" size="16" class="me-1" />
-                  الكل
-                </VBtn>
-                <VBtn value="unread" size="small">
-                  <VIcon icon="ri-mail-unread-line" size="16" class="me-1" />
-                  غير مقروء
-                </VBtn>
-                <VBtn value="read" size="small">
-                  <VIcon icon="ri-mail-open-line" size="16" class="me-1" />
-                  مقروء
-                </VBtn>
+                <VBtn value="all" size="small">الكل</VBtn>
+                <VBtn value="unread" size="small">غير مقروء</VBtn>
+                <VBtn value="read" size="small">مقروء</VBtn>
               </VBtnToggle>
 
               <VBtn
