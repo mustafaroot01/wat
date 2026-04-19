@@ -15,6 +15,7 @@ const { can, isSuperAdmin } = useAdminPermissions()
   <!-- 👉 إدارة المتجر -->
   <VerticalNavSectionTitle :item="{ heading: 'إدارة المتجر' }" />
   <VerticalNavLink v-if="can('orders')"   :item="{ title: 'الطلبات',           icon: 'ri-shopping-cart-2-line',    to: '/orders'    }" />
+  <VerticalNavLink v-if="can('orders')"   :item="{ title: 'إشعارات الطلبات',   icon: 'ri-notification-3-line',     to: '/admin-notifications' }" />
   <VerticalNavLink v-if="can('categories')" :item="{ title: 'الأقسام',          icon: 'ri-layout-grid-line',        to: '/categories' }" />
   <VerticalNavLink v-if="can('brands')"   :item="{ title: 'الشركات',            icon: 'ri-verified-badge-line',     to: '/brands'    }" />
 

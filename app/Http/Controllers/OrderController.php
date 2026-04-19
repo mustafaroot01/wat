@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\AdminNotification;
 use App\Models\StoreSetting;
 use App\Services\ActivityLogService;
 use App\Services\TelegramService;
@@ -285,6 +286,18 @@ class OrderController extends Controller
             }
         }
         // ────────────────────────────────────────────────────
+
+        // إنشاء إشعار للوحة التحكم
+        try {
+            AdminNotification::create([
+                'title'    => 'طلب جديد #' . $order->invoice_code,
+                'body'     => $order->customer_name . ' — ' . number_format($order->final_amount) . ' د.ع — ' . $order->district,
+                'type'     => 'order',
+                'order_id' => $order->id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create admin notification: ' . $e->getMessage());
+        }
 
         // إرسال إشعار تيليجرام
         try {

@@ -107,6 +107,13 @@ Route::prefix('admin')->group(function () {
         Route::delete('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'destroy']);
         Route::patch('admins/{admin}/toggle', [\App\Http\Controllers\AdminController::class, 'toggleActive']);
 
+        // Admin Notifications (order alerts)
+        Route::get('admin-notifications', [\App\Http\Controllers\AdminNotificationController::class, 'index']);
+        Route::get('admin-notifications/unread', [\App\Http\Controllers\AdminNotificationController::class, 'unread']);
+        Route::patch('admin-notifications/{id}/read', [\App\Http\Controllers\AdminNotificationController::class, 'markAsRead']);
+        Route::post('admin-notifications/mark-all-read', [\App\Http\Controllers\AdminNotificationController::class, 'markAllAsRead']);
+        Route::delete('admin-notifications/{id}', [\App\Http\Controllers\AdminNotificationController::class, 'destroy']);
+
         // Activity Logs (super admin only)
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index']);
         Route::get('activity-logs/filter-options', [\App\Http\Controllers\ActivityLogController::class, 'filterOptions']);

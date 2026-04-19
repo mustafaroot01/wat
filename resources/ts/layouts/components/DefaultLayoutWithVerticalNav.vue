@@ -1,11 +1,12 @@
 <script lang="ts" setup>
+import { useStoreSettings } from '@/composables/useStoreSettings'
 import NavItems from '@/layouts/components/NavItems.vue'
 import VerticalNavLayout from '@layouts/components/VerticalNavLayout.vue'
-import { useStoreSettings } from '@/composables/useStoreSettings'
 
 // Components
 import Footer from '@/layouts/components/Footer.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
+import NotificationBell from '@/layouts/components/NotificationBell.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 
 const { branding, fetchBranding } = useStoreSettings()
@@ -44,9 +45,7 @@ onMounted(fetchBranding)
         <VSpacer />
 
 
-        <IconBtn>
-          <VIcon icon="ri-notification-line" />
-        </IconBtn>
+        <NotificationBell />
 
         <NavbarThemeSwitcher class="me-2" />
 
