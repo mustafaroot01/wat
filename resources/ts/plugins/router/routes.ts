@@ -39,6 +39,11 @@ export const routes = [
         component: () => import('@/pages/orders.vue'),
       },
       {
+        path: 'admin-notifications',
+        meta: { permission: 'orders' },
+        component: () => import('@/pages/admin-notifications.vue'),
+      },
+      {
         path: 'products',
         meta: { permission: 'products' },
         component: () => import('@/pages/products.vue'),
