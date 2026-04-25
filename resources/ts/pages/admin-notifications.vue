@@ -150,8 +150,9 @@ onMounted(() => fetchNotifications(1))
     <VCol cols="12">
       <!-- Header Card -->
       <VCard class="mb-4" rounded="lg">
-        <VCardText>
-          <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+        <VCardText class="py-4 px-5">
+          <div class="d-flex align-center justify-space-between flex-wrap gap-3">
+
             <!-- Title -->
             <div class="d-flex align-center gap-3">
               <VAvatar color="primary" variant="tonal" size="42" rounded="lg">
@@ -161,75 +162,58 @@ onMounted(() => fetchNotifications(1))
                 <h5 class="text-h6 font-weight-bold mb-0">إشعارات الطلبات</h5>
                 <span class="text-caption text-medium-emphasis">{{ total }} إشعار إجمالي</span>
               </div>
-              <VChip
+              <VBadge
                 v-if="unreadCountLocal > 0"
+                :content="unreadCountLocal"
                 color="error"
-                size="small"
-                variant="flat"
-              >
-                {{ unreadCountLocal }} غير مقروء
-              </VChip>
+                inline
+              />
             </div>
 
-            <!-- Actions -->
-            <div class="d-flex flex-column align-end gap-3">
-              <!-- Filter Tabs -->
-              <VBtnToggle
-                v-model="filterStatus"
-                mandatory
-                density="comfortable"
-                variant="outlined"
-                color="primary"
-                rounded="xl"
-                class="filter-toggle"
-              >
-                <VBtn value="all" class="filter-btn px-5">
-                  <VIcon icon="ri-list-check-3" size="16" class="me-1" />
-                  الكل
-                </VBtn>
-                <VBtn value="unread" class="filter-btn px-5">
-                  <VIcon icon="ri-mail-unread-line" size="16" class="me-1" />
-                  غير مقروء
-                  <VChip
-                    v-if="unreadCountLocal > 0"
-                    size="x-small"
-                    color="error"
-                    variant="flat"
-                    class="ms-2"
-                  >{{ unreadCountLocal }}</VChip>
-                </VBtn>
-                <VBtn value="read" class="filter-btn px-5">
-                  <VIcon icon="ri-mail-check-line" size="16" class="me-1" />
-                  مقروء
-                </VBtn>
-              </VBtnToggle>
+            <!-- Right Side Actions -->
+            <div class="d-flex align-center gap-2 flex-wrap">
 
-              <!-- Action Buttons -->
-              <div class="d-flex align-center gap-2">
-                <VBtn
-                  v-if="unreadCountLocal > 0"
-                  variant="tonal"
-                  color="success"
-                  size="small"
-                  prepend-icon="ri-check-double-line"
-                  rounded="lg"
-                  @click="handleMarkAllRead"
-                >
-                  تحديد الكل مقروء
-                </VBtn>
-
-                <VBtn
-                  v-if="total > 0"
-                  variant="tonal"
-                  color="error"
-                  size="small"
-                  prepend-icon="ri-delete-bin-line"
-                  rounded="lg"
-                  @click="confirmDeleteAllDialog = true"
-                >
-                  حذف الكل
-                </VBtn>
+              <!-- Filter Buttons (manual tabs style) -->
+              <div class="custom-tab-group">
+                <button
+                  class="custom-tab"
+                  :class="{ active: filterStatus === 'all' }"
+                  @click="filterStatus = 'all'"
+                >الكل</button>
+                <button
+                  class="custom-tab"
+                  :class="{ active: filterStatus === 'unread' }"
+                  @click="filterStatus = 'unread'"
+                >غير مقروء</button>
+                <button
+                  class="custom-tab"
+                  :class="{ active: filterStatus === 'read' }"
+                  @click="filterStatus = 'read'"
+                >مقروء</button>
               </div>
+
+              <!-- Mark All Read -->
+              <VBtn
+                v-if="unreadCountLocal > 0"
+                variant="tonal"
+                color="success"
+                size="small"
+                prepend-icon="ri-check-double-line"
+                rounded="lg"
+                @click="handleMarkAllRead"
+              >تحديد الكل مقروء</VBtn>
+
+              <!-- Delete All -->
+              <VBtn
+                v-if="total > 0"
+                variant="tonal"
+                color="error"
+                size="small"
+                prepend-icon="ri-delete-bin-line"
+                rounded="lg"
+                @click="confirmDeleteAllDialog = true"
+              >حذف الكل</VBtn>
+
             </div>
           </div>
         </VCardText>
@@ -397,22 +381,40 @@ onMounted(() => fetchNotifications(1))
   background-color: rgba(var(--v-theme-primary), 0.06) !important;
 }
 
-.filter-toggle {
-  border: 1.5px solid rgba(var(--v-theme-primary), 0.35) !important;
+/* Custom Tab Group */
+.custom-tab-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--v-theme-primary), 0.3);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(var(--v-theme-primary), 0.08);
+  background: transparent;
 }
 
-.filter-btn {
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  transition: all 0.2s ease !important;
+.custom-tab {
+  padding: 6px 18px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 }
 
-.filter-btn.v-btn--active {
-  background-color: rgb(var(--v-theme-primary)) !important;
-  color: #fff !important;
+.custom-tab:not(:last-child) {
+  border-left: 1px solid rgba(var(--v-theme-primary), 0.2);
+}
+
+.custom-tab:hover {
+  background: rgba(var(--v-theme-primary), 0.07);
+  color: rgb(var(--v-theme-primary));
+}
+
+.custom-tab.active {
+  background: rgb(var(--v-theme-primary));
+  color: #ffffff;
+  font-weight: 600;
 }
 </style>
