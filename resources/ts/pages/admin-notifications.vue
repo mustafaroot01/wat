@@ -172,43 +172,64 @@ onMounted(() => fetchNotifications(1))
             </div>
 
             <!-- Actions -->
-            <div class="d-flex align-center gap-2 flex-wrap">
+            <div class="d-flex flex-column align-end gap-3">
+              <!-- Filter Tabs -->
               <VBtnToggle
                 v-model="filterStatus"
                 mandatory
-                density="compact"
+                density="comfortable"
                 variant="outlined"
-                divided
-                rounded="lg"
+                color="primary"
+                rounded="xl"
+                class="filter-toggle"
               >
-                <VBtn value="all" size="small">الكل</VBtn>
-                <VBtn value="unread" size="small">غير مقروء</VBtn>
-                <VBtn value="read" size="small">مقروء</VBtn>
+                <VBtn value="all" class="filter-btn px-5">
+                  <VIcon icon="ri-list-check-3" size="16" class="me-1" />
+                  الكل
+                </VBtn>
+                <VBtn value="unread" class="filter-btn px-5">
+                  <VIcon icon="ri-mail-unread-line" size="16" class="me-1" />
+                  غير مقروء
+                  <VChip
+                    v-if="unreadCountLocal > 0"
+                    size="x-small"
+                    color="error"
+                    variant="flat"
+                    class="ms-2"
+                  >{{ unreadCountLocal }}</VChip>
+                </VBtn>
+                <VBtn value="read" class="filter-btn px-5">
+                  <VIcon icon="ri-mail-check-line" size="16" class="me-1" />
+                  مقروء
+                </VBtn>
               </VBtnToggle>
 
-              <VBtn
-                v-if="unreadCountLocal > 0"
-                variant="tonal"
-                color="success"
-                size="small"
-                prepend-icon="ri-check-double-line"
-                rounded="lg"
-                @click="handleMarkAllRead"
-              >
-                تحديد الكل مقروء
-              </VBtn>
+              <!-- Action Buttons -->
+              <div class="d-flex align-center gap-2">
+                <VBtn
+                  v-if="unreadCountLocal > 0"
+                  variant="tonal"
+                  color="success"
+                  size="small"
+                  prepend-icon="ri-check-double-line"
+                  rounded="lg"
+                  @click="handleMarkAllRead"
+                >
+                  تحديد الكل مقروء
+                </VBtn>
 
-              <VBtn
-                v-if="total > 0"
-                variant="tonal"
-                color="error"
-                size="small"
-                prepend-icon="ri-delete-bin-line"
-                rounded="lg"
-                @click="confirmDeleteAllDialog = true"
-              >
-                حذف الكل
-              </VBtn>
+                <VBtn
+                  v-if="total > 0"
+                  variant="tonal"
+                  color="error"
+                  size="small"
+                  prepend-icon="ri-delete-bin-line"
+                  rounded="lg"
+                  @click="confirmDeleteAllDialog = true"
+                >
+                  حذف الكل
+                </VBtn>
+              </div>
             </div>
           </div>
         </VCardText>
@@ -374,5 +395,24 @@ onMounted(() => fetchNotifications(1))
 
 .unread-row:hover {
   background-color: rgba(var(--v-theme-primary), 0.06) !important;
+}
+
+.filter-toggle {
+  border: 1.5px solid rgba(var(--v-theme-primary), 0.35) !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(var(--v-theme-primary), 0.08);
+}
+
+.filter-btn {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.filter-btn.v-btn--active {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
 }
 </style>
