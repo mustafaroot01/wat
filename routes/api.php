@@ -10,7 +10,7 @@ Route::get('/user', function (Request $request) {
 // مسارات لوحة التحكم للإدارة
 Route::prefix('admin')->group(function () {
     // Admin Login
-    Route::post('login', [\App\Http\Controllers\Api\AdminAuthController::class, 'login']);
+    Route::middleware('throttle:5,1')->post('login', [\App\Http\Controllers\Api\AdminAuthController::class, 'login']);
 
     // محمية بصلاحيات الدخول
     Route::middleware(['auth:sanctum', 'admin.role'])->group(function () {
@@ -174,7 +174,7 @@ Route::prefix('app')->group(function () {
         return response()->json([
             'store_name'           => $s['store_name']           ?? 'امواج ديالى',
             'about_us_description' => $s['about_us_description'] ?? '',
-            'logo_url'             => isset($s['logo']) ? url('storage/' . $s['logo']) : null,
+            'logo_url'             => isset($s['logo']) ? asset('media/' . $s['logo']) : null,
             'contact_phone'        => $s['store_phone']          ?? '',
             'contact_phone2'       => $s['contact_phone2']       ?? '',
             'contact_instagram'    => $s['contact_instagram']    ?? '',
@@ -212,7 +212,7 @@ Route::prefix('app')->group(function () {
         $settings = \App\Models\StoreSetting::allAsArray();
         return response()->json([
             'store_name' => $settings['store_name'] ?? 'امواج ديالى',
-            'logo_url'   => isset($settings['logo']) ? url('storage/' . $settings['logo']) : null,
+            'logo_url'   => isset($settings['logo']) ? asset('media/' . $settings['logo']) : null,
         ]);
     });
 

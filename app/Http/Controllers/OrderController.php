@@ -249,43 +249,46 @@ class OrderController extends Controller
         }
         // ────────────────────────────────────────────────────
 
-        $order = Order::create([
-            'user_id'          => $request->user()->id,
-            'customer_name'    => $request->customer_name,
-            'customer_phone'   => $request->customer_phone,
-            'province'         => $request->province,
-            'district'         => $request->district,
-            'nearest_landmark' => $request->nearest_landmark ?? $request->user()->nearest_landmark,
-            'status'           => Order::STATUS_SENT,
-            'total_amount'     => $request->total_amount,
-            'discount_amount'  => $request->discount_amount ?? 0,
-            'final_amount'     => $request->final_amount,
-            'coupon_id'        => $request->coupon_id,
-            'notes'            => $request->notes,
-        ]);
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $order = Order::create([
+                'user_id'          => $request->user()->id,
+                'customer_name'    => $request->customer_name,
+                'customer_phone'   => $request->customer_phone,
+                'province'         => $request->province,
+                'district'         => $request->district,
+                'nearest_landmark' => $request->nearest_landmark ?? $request->user()->nearest_landmark,
+                'status'           => Order::STATUS_SENT,
+                'total_amount'     => $request->total_amount,
+                'discount_amount'  => $request->discount_amount ?? 0,
+                'final_amount'     => $request->final_amount,
+                'coupon_id'        => $request->coupon_id,
+                'notes'            => $request->notes,
+            ]);
 
-        foreach ($request->items as $item) {
-            $order->items()->create($item);
-        }
+            foreach ($request->items as $item) {
+                $order->items()->create($item);
+            }
 
-        // ─── تسجيل استخدام الكوبون (إذا أُرسل في body الطلب) ──
-        if ($request->coupon_id) {
-            $coupon = \App\Models\Coupon::find($request->coupon_id);
-            if ($coupon) {
-                $alreadyUsed = \App\Models\CouponUsage::where('coupon_id', $coupon->id)
-                    ->where('user_id', $request->user()->id)
-                    ->exists();
-                if (!$alreadyUsed) {
-                    \App\Models\CouponUsage::create([
-                        'coupon_id'       => $coupon->id,
-                        'user_id'         => $request->user()->id,
-                        'discount_amount' => $request->discount_amount ?? 0,
-                    ]);
-                    $coupon->increment('used_count');
+            // ─── تسجيل استخدام الكوبون مع قفل لمنع الاستخدام المزدوج ──
+            if ($request->coupon_id) {
+                $coupon = \App\Models\Coupon::lockForUpdate()->find($request->coupon_id);
+                if ($coupon) {
+                    $alreadyUsed = \App\Models\CouponUsage::where('coupon_id', $coupon->id)
+                        ->where('user_id', $request->user()->id)
+                        ->exists();
+                    if (!$alreadyUsed) {
+                        \App\Models\CouponUsage::create([
+                            'coupon_id'       => $coupon->id,
+                            'user_id'         => $request->user()->id,
+                            'discount_amount' => $request->discount_amount ?? 0,
+                        ]);
+                        $coupon->increment('used_count');
+                    }
                 }
             }
-        }
-        // ────────────────────────────────────────────────────
+
+            return $order;
+        });
 
         // إنشاء إشعار للوحة التحكم
         try {

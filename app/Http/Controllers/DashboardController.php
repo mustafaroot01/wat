@@ -7,11 +7,19 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Setting;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
+    {
+        return Cache::remember('dashboard_data', 60, function () {
+            return $this->buildDashboard();
+        });
+    }
+
+    private function buildDashboard()
     {
         $today     = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();

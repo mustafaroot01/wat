@@ -156,13 +156,13 @@ class CategoryController extends Controller
     public function toggleFeatured(Category $category)
     {
         if ($category->is_featured) {
-            // إلغاء التمييز إذا كان مميزاً بالفعل
             $category->update(['is_featured' => false]);
         } else {
-            // إلغاء التمييز عن القسم القديم ثم تعيين الجديد
             Category::where('is_featured', true)->update(['is_featured' => false]);
             $category->update(['is_featured' => true]);
         }
+
+        \Illuminate\Support\Facades\Cache::forget('api_featured_category');
 
         return response()->json([
             'success'     => true,
@@ -192,6 +192,8 @@ class CategoryController extends Controller
         }
 
         $category->update($data);
+
+        \Illuminate\Support\Facades\Cache::forget('api_featured_category');
 
         return response()->json([
             'success' => true,

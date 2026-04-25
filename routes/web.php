@@ -35,7 +35,8 @@ Route::get('privacy-policy', function () {
     $content   = \App\Models\StoreSetting::get('privacy_policy', '<p>لا توجد سياسة خصوصية محددة حتى الآن.</p>');
     $storeName = \App\Models\StoreSetting::get('store_name', 'امواج ديالى');
     $logoPath  = \App\Models\StoreSetting::get('logo');
-    $logoUrl   = $logoPath ? url('storage/' . $logoPath) : null;
+    $logoUrl   = $logoPath ? asset('media/' . $logoPath) : null;
+    $logoHtml  = $logoUrl ? "<img src=\"{$logoUrl}\" alt=\"{$storeName}\">" : "<h2 style='font-size:1.8rem'>{$storeName}</h2>";
     $html = <<<HTML
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -73,8 +74,6 @@ Route::get('privacy-policy', function () {
 </body>
 </html>
 HTML;
-    $logoHtml = $logoUrl ? "<img src=\"{$logoUrl}\" alt=\"{$storeName}\">" : "<h2 style='font-size:1.8rem'>{$storeName}</h2>";
-    $html = str_replace('{$logoHtml}', $logoHtml, $html);
     return response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 

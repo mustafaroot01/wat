@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Brand;
 use App\Http\Requests\StoreBrandRequest;
 use App\Http\Requests\UpdateBrandRequest;
@@ -66,7 +67,7 @@ class BrandController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('brands', 'public');
+                $path = ImageHelper::compressAndStore($request->file('image'), 'brands');
                 $data['image'] = $path;
             }
 
@@ -121,7 +122,7 @@ class BrandController extends Controller
             if ($brand->image) {
                 Storage::disk('public')->delete($brand->image);
             }
-            $data['image'] = $request->file('image')->store('brands', 'public');
+            $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'brands');
         }
 
         $brand->update($data);

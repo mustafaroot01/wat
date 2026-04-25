@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class StoreSetting extends Model
 {
@@ -12,18 +13,25 @@ class StoreSetting extends Model
 
     public static function get(string $key, $default = null)
     {
-        $setting = static::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        $value = Cache::remember('store_setting_' . $key, 3600, function () use ($key) {
+            return static::where('key', $key)->first()?->value;
+        });
+
+        return $value ?? $default;
     }
 
     public static function set(string $key, $value): void
     {
         static::updateOrCreate(['key' => $key], ['value' => $value]);
+        Cache::forget('store_setting_' . $key);
+        Cache::forget('store_settings_all');
     }
 
     public static function allAsArray(): array
     {
-        return static::all()->pluck('value', 'key')->toArray();
+        return Cache::remember('store_settings_all', 3600, function () {
+            return static::all()->pluck('value', 'key')->toArray();
+        });
     }
 
     public static function isOpenNow(): bool

@@ -52,19 +52,17 @@ class Order extends Model
         parent::boot();
 
         static::creating(function (Order $order) {
-            if (empty($order->invoice_code)) {
-                $order->invoice_code = self::generateInvoiceCode();
-            }
             if (empty($order->invoice_token)) {
                 $order->invoice_token = Str::random(64);
             }
         });
-    }
 
-    private static function generateInvoiceCode(): string
-    {
-        $last = self::max('id') ?? 0;
-        return 'INV-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+        static::created(function (Order $order) {
+            if (empty($order->invoice_code)) {
+                $order->invoice_code = 'INV-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                $order->saveQuietly();
+            }
+        });
     }
 
     public function user()

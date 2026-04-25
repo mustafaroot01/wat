@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use Illuminate\Http\Request;
 use App\Models\AppNotification;
 use App\Http\Requests\StoreNotificationRequest;
@@ -49,7 +50,7 @@ class NotificationController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('notifications', 'public');
+                $path = ImageHelper::compressAndStore($request->file('image'), 'notifications');
                 $data['image'] = $path;
                 $imageUrl = asset('media/' . ltrim($path, '/'));
             }

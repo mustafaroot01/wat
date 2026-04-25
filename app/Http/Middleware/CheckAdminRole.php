@@ -16,10 +16,20 @@ class CheckAdminRole
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!($request->user() instanceof Admin)) {
+        $user = $request->user();
+
+        if (!($user instanceof Admin)) {
             return response()->json([
                 'success' => false,
                 'message' => 'ليس لديك صلاحيات الوصول لهذه الصفحة.',
+            ], 403);
+        }
+
+        if (!$user->is_active) {
+            $user->currentAccessToken()?->delete();
+            return response()->json([
+                'success' => false,
+                'message' => 'حساب الإدارة هذا معطل.',
             ], 403);
         }
 
