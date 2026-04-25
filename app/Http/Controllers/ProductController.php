@@ -196,7 +196,15 @@ class ProductController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'products');
+            try {
+                $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'products');
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Product image upload failed: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'فشل رفع الصورة.',
+                    'errors'  => ['image' => ['فشل معالجة الصورة. جرب صورة أخرى.']],
+                ], 422);
+            }
         }
 
         $product = Product::create($data);
@@ -226,10 +234,19 @@ class ProductController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            try {
+                $newImage = ImageHelper::compressAndStore($request->file('image'), 'products');
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                $data['image'] = $newImage;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Product image update failed: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'فشل رفع الصورة.',
+                    'errors'  => ['image' => ['فشل معالجة الصورة. جرب صورة أخرى.']],
+                ], 422);
             }
-            $data['image'] = ImageHelper::compressAndStore($request->file('image'), 'products');
         }
 
         $product->update($data);

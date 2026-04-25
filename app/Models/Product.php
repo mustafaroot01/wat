@@ -25,7 +25,7 @@ class Product extends Model
         'is_active'            => 'boolean',
         'in_stock'             => 'boolean',
         'price'                => 'decimal:2',
-        'discount_percentage'  => 'integer',
+        'discount_percentage'  => 'decimal:2',
         'brand_id'             => 'integer',
     ];
 

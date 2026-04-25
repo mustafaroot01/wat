@@ -18,7 +18,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price'               => (float) $this->price,
-            'discount_percentage' => (int) $this->discount_percentage,
+            'discount_percentage' => (float) $this->discount_percentage,
             'discounted_price'    => $this->discount_percentage > 0
                 ? round($this->price * (1 - $this->discount_percentage / 100), 2)
                 : null,

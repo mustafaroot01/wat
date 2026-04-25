@@ -119,6 +119,7 @@ const fieldError = (key: string) => formErrors.value[key]?.[0] ?? formErrors.val
 // Image Preview
 const imagePreviewUrl = ref<string | null>(null)
 const fileInputRef = ref<HTMLElement | null>(null)
+let rawImageFile: File | null = null
 
 const formData = ref<Product>({
   id: null,
@@ -161,6 +162,7 @@ const fetchOptions = async () => {
 const handleImageSelection = (event: any) => {
   const file = event.target.files[0]
   if (file) {
+    rawImageFile = file
     formData.value.image = file
     imagePreviewUrl.value = URL.createObjectURL(file)
   }
@@ -171,6 +173,7 @@ const triggerFileInput = () => {
 }
 
 const removeImage = () => {
+  rawImageFile = null
   formData.value.image = null
   imagePreviewUrl.value = formData.value.image_url 
 }
@@ -183,6 +186,7 @@ const openAddDialog = () => {
     is_active: true, sort_order: 0, image: null, image_url: null 
   }
   filters.value = []
+  rawImageFile = null
   imagePreviewUrl.value = null
   formErrors.value = {}
   generalError.value = ''
@@ -192,6 +196,7 @@ const openAddDialog = () => {
 const openEditDialog = async (item: Product) => {
   suppressFilterReset.value = true
   dialogMode.value = 'edit'
+  rawImageFile = null
   formData.value = { ...item, image: null }
   imagePreviewUrl.value = item.image_url
   formErrors.value = {}
@@ -219,7 +224,8 @@ const saveProduct = async () => {
   payload.append('in_stock', formData.value.in_stock ? '1' : '0')
   payload.append('is_active', formData.value.is_active ? '1' : '0')
   payload.append('sort_order', String(formData.value.sort_order))
-  if (formData.value.image instanceof File) payload.append('image', formData.value.image)
+  const imageFile = rawImageFile || (formData.value.image instanceof File ? formData.value.image : null)
+  if (imageFile) payload.append('image', imageFile)
 
   try {
     const url = dialogMode.value === 'add' ? '/api/admin/products' : `/api/admin/products/${formData.value.id}`

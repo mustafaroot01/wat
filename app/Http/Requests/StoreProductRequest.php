@@ -21,9 +21,9 @@ class StoreProductRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price'               => 'required|numeric|min:0',
-            'discount_percentage' => 'integer|min:0|max:99',
+            'discount_percentage' => 'numeric|min:0|max:99.99',
             'in_stock'            => 'boolean',
-            'image'               => 'nullable|image|mimes:jpeg,png,jpg,gif|max:30720',
+            'image'               => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:30720',
             'is_active'           => 'boolean',
             'sort_order'          => 'integer',
         ];
