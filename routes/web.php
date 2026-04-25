@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Response;
 // جسر الصور (Media Proxy) لحل مشكلة 403 مع البادئة /storage/ في السيرفر
 Route::get('media/{path}', function ($path) {
     try {
-        $basePath = storage_path('app/public/');
+        $basePath = realpath(storage_path('app/public'));
+        if (!$basePath) abort(404);
+        $basePath .= '/';
         $fullPath = realpath($basePath . $path);
         
         // التحقق من أن الملف موجود وأنه فعلاً داخل مجلد الـ public (حماية من Path Traversal)

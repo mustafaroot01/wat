@@ -54,21 +54,36 @@ class ImageHelper
             $src = $dst;
         }
 
+        $uuid = Str::uuid();
+        $data = null;
+
         // حفظ كـ WebP إذا كان مدعوماً
         if (function_exists('imagewebp')) {
-            $path = $folder . '/' . Str::uuid() . '.webp';
             ob_start();
-            imagewebp($src, null, $quality);
-            $data = ob_get_clean();
-        } else {
-            // fallback: JPEG
-            $path = $folder . '/' . Str::uuid() . '.jpg';
-            ob_start();
-            imagejpeg($src, null, $quality);
+            @imagewebp($src, null, $quality);
             $data = ob_get_clean();
         }
 
+        // إذا WebP فشل أو أنتج ملف فاضي → fallback لـ JPEG
+        if (!$data || strlen($data) < 100) {
+            ob_start();
+            @imagejpeg($src, null, $quality);
+            $data = ob_get_clean();
+            $path = $folder . '/' . $uuid . '.jpg';
+        } else {
+            $path = $folder . '/' . $uuid . '.webp';
+        }
+
         imagedestroy($src);
+
+        // إذا كلاهما فشل → حفظ الملف الأصلي
+        if (!$data || strlen($data) < 100) {
+            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'png';
+            $path = $folder . '/' . $uuid . '.' . $ext;
+            Storage::disk('public')->put($path, $contents);
+            return $path;
+        }
+
         Storage::disk('public')->put($path, $data);
 
         return $path;
