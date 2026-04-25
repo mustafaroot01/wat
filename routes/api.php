@@ -14,100 +14,11 @@ Route::prefix('admin')->group(function () {
 
     // محمية بصلاحيات الدخول
     Route::middleware(['auth:sanctum', 'admin.role'])->group(function () {
-        Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
-        Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
-        Route::patch('categories/{category}/toggle-featured', [\App\Http\Controllers\CategoryController::class, 'toggleFeatured']);
-        Route::post('categories/{category}/featured-settings', [\App\Http\Controllers\CategoryController::class, 'updateFeaturedSettings']);
-        
-        // Banners
-        Route::apiResource('banners', \App\Http\Controllers\BannerController::class);
-        Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\BannerController::class, 'toggle']);
-        // Notifications
-        Route::apiResource('notifications', \App\Http\Controllers\NotificationController::class)->only(['index', 'store', 'destroy']);
-        
-        // Firebase Settings
-        Route::get('firebase-settings', [\App\Http\Controllers\FirebaseSettingsController::class, 'index']);
-        Route::post('firebase-settings/save', [\App\Http\Controllers\FirebaseSettingsController::class, 'storeSettings']);
-        Route::post('firebase-settings/upload', [\App\Http\Controllers\FirebaseSettingsController::class, 'uploadJson']);
-        Route::post('firebase-settings/test', [\App\Http\Controllers\FirebaseSettingsController::class, 'sendTest']);
 
-        // Districts & Areas
-        Route::apiResource('districts', \App\Http\Controllers\DistrictController::class);
-        Route::patch('districts/{district}/toggle', [\App\Http\Controllers\DistrictController::class, 'toggleActive']);
-        Route::apiResource('areas', \App\Http\Controllers\AreaController::class);
-        Route::patch('areas/{area}/toggle', [\App\Http\Controllers\AreaController::class, 'toggleActive']);
-
-        // Brands
-        Route::apiResource('brands', \App\Http\Controllers\BrandController::class);
-        Route::patch('brands/{brand}/toggle', [\App\Http\Controllers\BrandController::class, 'toggleActive']);
-
-        // Category Filters
-        Route::get('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'index']);
-        Route::post('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'store']);
-        Route::put('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'update']);
-        Route::delete('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'destroy']);
-        Route::patch('category-filters/{categoryFilter}/toggle', [\App\Http\Controllers\CategoryFilterController::class, 'toggleActive']);
-
-        // Products
-        Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discounted']);
-        Route::apiResource('products', \App\Http\Controllers\ProductController::class);
-        Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
-        Route::patch('products/{product}/toggle-stock', [\App\Http\Controllers\ProductController::class, 'toggleInStock']);
-
-        // Customers
-        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);
-        Route::get('customers/{id}/orders', [\App\Http\Controllers\CustomerController::class, 'orders']);
-        Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
-        Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
-        Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
-        Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
-        Route::delete('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'destroy']);
-        // Coupons
-        Route::get('coupons', [\App\Http\Controllers\CouponController::class, 'index']);
-        Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
-        Route::get('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'show']);
-        Route::get('coupons/{coupon}/usages', [\App\Http\Controllers\CouponController::class, 'usages']);
-        Route::get('coupons/{coupon}/export', [\App\Http\Controllers\CouponController::class, 'exportExcel']);
-        Route::put('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'update']);
-        Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
-        Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);
-
-        // Dashboard
-        Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
-
-        // General Settings
-        Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
-        Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
-
-        // Credits
-        Route::get('credits', [\App\Http\Controllers\CreditController::class, 'index']);
-        Route::post('credits', [\App\Http\Controllers\CreditController::class, 'store']);
-        Route::get('credits/{creditTransaction}', [\App\Http\Controllers\CreditController::class, 'show']);
-
-        // Orders (admin)
-        Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);
-        Route::get('orders/bulk-invoice', [\App\Http\Controllers\OrderController::class, 'bulkInvoice']);
-        Route::get('orders/{id}', [\App\Http\Controllers\OrderController::class, 'show']);
-        Route::patch('orders/{id}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus']);
-        Route::delete('orders/{id}', [\App\Http\Controllers\OrderController::class, 'destroy']);
-        Route::patch('invoice/{token}/status', [\App\Http\Controllers\OrderController::class, 'updateStatusByToken']);
-
-        // Store Settings
-        Route::get('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'index']);
-        Route::post('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'update']);
-        Route::post('store-settings/test-telegram', [\App\Http\Controllers\StoreSettingsController::class, 'testTelegramConnection']);
-
-        // Current admin info + permissions
+        // Current admin info + permissions (no extra permission needed)
         Route::get('me', [\App\Http\Controllers\AdminController::class, 'me']);
 
-        // Admins Management (super admin only — enforced in controller)
-        Route::get('admins', [\App\Http\Controllers\AdminController::class, 'index']);
-        Route::post('admins', [\App\Http\Controllers\AdminController::class, 'store']);
-        Route::put('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'update']);
-        Route::delete('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'destroy']);
-        Route::patch('admins/{admin}/toggle', [\App\Http\Controllers\AdminController::class, 'toggleActive']);
-
-        // Admin Notifications (order alerts)
+        // Admin Notifications — all admins can see order alerts
         Route::get('admin-notifications', [\App\Http\Controllers\AdminNotificationController::class, 'index']);
         Route::get('admin-notifications/unread', [\App\Http\Controllers\AdminNotificationController::class, 'unread']);
         Route::patch('admin-notifications/{id}/read', [\App\Http\Controllers\AdminNotificationController::class, 'markAsRead']);
@@ -115,10 +26,138 @@ Route::prefix('admin')->group(function () {
         Route::delete('admin-notifications/delete-all', [\App\Http\Controllers\AdminNotificationController::class, 'destroyAll']);
         Route::delete('admin-notifications/{id}', [\App\Http\Controllers\AdminNotificationController::class, 'destroy']);
 
+        // Dashboard
+        Route::middleware('permission:dashboard')->group(function () {
+            Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
+        });
+
+        // Categories
+        Route::middleware('permission:categories')->group(function () {
+            Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
+            Route::patch('categories/{category}/toggle', [\App\Http\Controllers\CategoryController::class, 'toggleActive']);
+            Route::patch('categories/{category}/toggle-featured', [\App\Http\Controllers\CategoryController::class, 'toggleFeatured']);
+            Route::post('categories/{category}/featured-settings', [\App\Http\Controllers\CategoryController::class, 'updateFeaturedSettings']);
+            Route::get('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'index']);
+            Route::post('category-filters', [\App\Http\Controllers\CategoryFilterController::class, 'store']);
+            Route::put('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'update']);
+            Route::delete('category-filters/{categoryFilter}', [\App\Http\Controllers\CategoryFilterController::class, 'destroy']);
+            Route::patch('category-filters/{categoryFilter}/toggle', [\App\Http\Controllers\CategoryFilterController::class, 'toggleActive']);
+        });
+
+        // Banners
+        Route::middleware('permission:banners')->group(function () {
+            Route::apiResource('banners', \App\Http\Controllers\BannerController::class);
+            Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\BannerController::class, 'toggle']);
+        });
+
+        // Notifications
+        Route::middleware('permission:notifications')->group(function () {
+            Route::apiResource('notifications', \App\Http\Controllers\NotificationController::class)->only(['index', 'store', 'destroy']);
+        });
+
+        // Firebase Settings
+        Route::middleware('permission:settings')->group(function () {
+            Route::get('firebase-settings', [\App\Http\Controllers\FirebaseSettingsController::class, 'index']);
+            Route::post('firebase-settings/save', [\App\Http\Controllers\FirebaseSettingsController::class, 'storeSettings']);
+            Route::post('firebase-settings/upload', [\App\Http\Controllers\FirebaseSettingsController::class, 'uploadJson']);
+            Route::post('firebase-settings/test', [\App\Http\Controllers\FirebaseSettingsController::class, 'sendTest']);
+        });
+
+        // Districts & Areas
+        Route::middleware('permission:districts')->group(function () {
+            Route::apiResource('districts', \App\Http\Controllers\DistrictController::class);
+            Route::patch('districts/{district}/toggle', [\App\Http\Controllers\DistrictController::class, 'toggleActive']);
+            Route::apiResource('areas', \App\Http\Controllers\AreaController::class);
+            Route::patch('areas/{area}/toggle', [\App\Http\Controllers\AreaController::class, 'toggleActive']);
+        });
+
+        // Brands
+        Route::middleware('permission:brands')->group(function () {
+            Route::apiResource('brands', \App\Http\Controllers\BrandController::class);
+            Route::patch('brands/{brand}/toggle', [\App\Http\Controllers\BrandController::class, 'toggleActive']);
+        });
+
+        // Products
+        Route::middleware('permission:products')->group(function () {
+            Route::get('products/discounted', [\App\Http\Controllers\ProductController::class, 'discounted']);
+            Route::apiResource('products', \App\Http\Controllers\ProductController::class);
+            Route::patch('products/{product}/toggle', [\App\Http\Controllers\ProductController::class, 'toggleActive']);
+            Route::patch('products/{product}/toggle-stock', [\App\Http\Controllers\ProductController::class, 'toggleInStock']);
+        });
+
+        // Customers
+        Route::middleware('permission:customers')->group(function () {
+            Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index']);
+            Route::get('customers/{id}/orders', [\App\Http\Controllers\CustomerController::class, 'orders']);
+            Route::put('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'update']);
+            Route::patch('customers/{id}/toggle', [\App\Http\Controllers\CustomerController::class, 'toggleActive']);
+            Route::put('customers/{id}/password', [\App\Http\Controllers\CustomerController::class, 'updatePassword']);
+            Route::post('customers/{id}/restore', [\App\Http\Controllers\CustomerController::class, 'restore']);
+            Route::delete('customers/{id}', [\App\Http\Controllers\CustomerController::class, 'destroy']);
+        });
+
+        // Coupons
+        Route::middleware('permission:coupons')->group(function () {
+            Route::get('coupons', [\App\Http\Controllers\CouponController::class, 'index']);
+            Route::post('coupons', [\App\Http\Controllers\CouponController::class, 'store']);
+            Route::get('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'show']);
+            Route::get('coupons/{coupon}/usages', [\App\Http\Controllers\CouponController::class, 'usages']);
+            Route::get('coupons/{coupon}/export', [\App\Http\Controllers\CouponController::class, 'exportExcel']);
+            Route::put('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'update']);
+            Route::delete('coupons/{coupon}', [\App\Http\Controllers\CouponController::class, 'destroy']);
+            Route::patch('coupons/{coupon}/toggle', [\App\Http\Controllers\CouponController::class, 'toggleActive']);
+        });
+
+        // Orders
+        Route::middleware('permission:orders')->group(function () {
+            Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index']);
+            Route::get('orders/bulk-invoice', [\App\Http\Controllers\OrderController::class, 'bulkInvoice']);
+            Route::get('orders/{id}', [\App\Http\Controllers\OrderController::class, 'show']);
+            Route::patch('orders/{id}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus']);
+            Route::delete('orders/{id}', [\App\Http\Controllers\OrderController::class, 'destroy']);
+            Route::patch('invoice/{token}/status', [\App\Http\Controllers\OrderController::class, 'updateStatusByToken']);
+        });
+
+        // General Settings
+        Route::middleware('permission:settings')->group(function () {
+            Route::get('settings', [\App\Http\Controllers\SettingController::class, 'index']);
+            Route::post('settings', [\App\Http\Controllers\SettingController::class, 'store']);
+        });
+
+        // Store Settings
+        Route::middleware('permission:store-settings')->group(function () {
+            Route::get('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'index']);
+            Route::post('store-settings', [\App\Http\Controllers\StoreSettingsController::class, 'update']);
+            Route::post('store-settings/test-telegram', [\App\Http\Controllers\StoreSettingsController::class, 'testTelegramConnection']);
+        });
+
+        // Credits
+        Route::middleware('permission:credits')->group(function () {
+            Route::get('credits', [\App\Http\Controllers\CreditController::class, 'index']);
+            Route::post('credits', [\App\Http\Controllers\CreditController::class, 'store']);
+            Route::get('credits/{creditTransaction}', [\App\Http\Controllers\CreditController::class, 'show']);
+        });
+
+        // Discounts
+        Route::middleware('permission:discounts')->group(function () {
+            // discounts routes are handled via products discounted endpoint above
+        });
+
+        // Admins Management
+        Route::middleware('permission:admins')->group(function () {
+            Route::get('admins', [\App\Http\Controllers\AdminController::class, 'index']);
+            Route::post('admins', [\App\Http\Controllers\AdminController::class, 'store']);
+            Route::put('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'update']);
+            Route::delete('admins/{admin}', [\App\Http\Controllers\AdminController::class, 'destroy']);
+            Route::patch('admins/{admin}/toggle', [\App\Http\Controllers\AdminController::class, 'toggleActive']);
+        });
+
         // Activity Logs (super admin only)
-        Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index']);
-        Route::get('activity-logs/filter-options', [\App\Http\Controllers\ActivityLogController::class, 'filterOptions']);
-        Route::get('activity-logs/{log}', [\App\Http\Controllers\ActivityLogController::class, 'show']);
+        Route::middleware('super_admin')->group(function () {
+            Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index']);
+            Route::get('activity-logs/filter-options', [\App\Http\Controllers\ActivityLogController::class, 'filterOptions']);
+            Route::get('activity-logs/{log}', [\App\Http\Controllers\ActivityLogController::class, 'show']);
+        });
     });
 });
 

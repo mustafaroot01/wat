@@ -35,7 +35,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Public routes that don't require auth
-  const isPublic = to.path === '/login' || to.path === '/register' || to.path === '/403'
+  const isPublic = to.path === '/login' || to.path === '/register' || to.path === '/403' || to.path.startsWith('/invoice')
 
   // If the user is NOT logged in and trying to access a restricted page
   if (!isPublic && !isLoggedIn) {
@@ -47,11 +47,10 @@ router.beforeEach(async (to, from, next) => {
     return next('/')
   }
 
-  // Permission check for protected routes
-  if (isLoggedIn && to.meta?.permission) {
+  // Always load permissions for authenticated users
+  if (isLoggedIn && !isPublic) {
     const { can, permissionsLoaded, fetchPermissions, adminInfo } = useAdminPermissions()
 
-    // Load permissions if not yet loaded
     if (!permissionsLoaded.value) {
       await fetchPermissions()
     }
@@ -61,8 +60,8 @@ router.beforeEach(async (to, from, next) => {
       return next()
     }
 
-    if (!can(to.meta.permission as string)) {
-      // إذا كان التحويل لصفحة الداشبورد (تحويل بعد تسجيل الدخول)، ابحث عن أول صفحة متاحة
+    // Permission check for protected routes
+    if (to.meta?.permission && !can(to.meta.permission as string)) {
       if (to.path === '/dashboard') {
         for (const r of ROUTE_PRIORITY) {
           if (can(r.permission)) return next(r.path)

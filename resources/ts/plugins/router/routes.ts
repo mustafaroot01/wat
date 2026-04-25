@@ -119,6 +119,7 @@ export const routes = [
       },
       {
         path: 'activity-logs',
+        meta: { permission: 'admins' },
         component: () => import('@/pages/activity-logs.vue'),
       },
     ],

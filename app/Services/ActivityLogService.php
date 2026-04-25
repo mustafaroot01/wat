@@ -21,7 +21,6 @@ class ActivityLogService
         array $context = [],
         ?Request $request = null
     ): void {
-        // Skip logging for super admins
         if ($admin->is_super_admin) {
             return;
         }
