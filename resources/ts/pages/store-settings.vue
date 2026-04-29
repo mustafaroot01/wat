@@ -180,7 +180,7 @@ const saveSettings = async () => {
             <div class="text-subtitle-2 font-weight-bold mb-3">📷 شعار المتجر</div>
             <div v-if="logoPreview || currentLogo" class="mb-3 d-flex align-center gap-3">
               <img
-                :src="logoPreview ?? `/storage/${currentLogo}`"
+                :src="logoPreview ?? `/media/${currentLogo}`"
                 style="max-height:80px;max-width:200px;border:1px solid #eee;border-radius:8px;padding:4px;"
               />
               <VBtn variant="text" color="error" size="small" @click="removeLogo">
@@ -342,7 +342,7 @@ const saveSettings = async () => {
               <div>
                 <img
                   v-if="logoPreview || currentLogo"
-                  :src="logoPreview ?? `/storage/${currentLogo}`"
+                  :src="logoPreview ?? `/media/${currentLogo}`"
                   style="max-height:60px;max-width:140px;"
                 />
                 <div v-else class="text-h6 font-weight-bold">{{ form.store_name || 'اسم المتجر' }}</div>

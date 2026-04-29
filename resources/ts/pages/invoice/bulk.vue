@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import { formatIQD } from '@/utils/currency'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
@@ -140,7 +140,7 @@ const printPage = () => window.print()
           <!-- Header -->
           <div class="inv-header">
             <div class="inv-brand">
-              <img v-if="settings.logo" :src="`/storage/${settings.logo}`" :alt="settings.store_name" class="inv-logo" />
+              <img v-if="settings.logo" :src="`/media/${settings.logo}`" :alt="settings.store_name" class="inv-logo" />
               <div v-else class="inv-logo d-flex align-center justify-center font-weight-bold" style="background:rgba(255,255,255,.15);color:#fff;font-size:24px;">
                 {{ (settings.store_name?.charAt(0) || 'م') }}
               </div>

@@ -567,7 +567,7 @@ const copyPhone = async (phone: string) => {
           <!-- Header -->
           <div class="d-flex align-center justify-space-between mb-4">
             <div>
-              <img v-if="invoiceSettings.logo" :src="`/storage/${invoiceSettings.logo}`" style="max-height:70px;max-width:160px;" />
+              <img v-if="invoiceSettings.logo" :src="`/media/${invoiceSettings.logo}`" style="max-height:70px;max-width:160px;" />
               <div v-else class="text-h6 font-weight-bold">{{ invoiceSettings.store_name || 'المتجر' }}</div>
               <div class="text-body-2 text-medium-emphasis mt-1">{{ invoiceSettings.store_phone }}</div>
               <div class="text-body-2 text-medium-emphasis">{{ invoiceSettings.store_address }}</div>
