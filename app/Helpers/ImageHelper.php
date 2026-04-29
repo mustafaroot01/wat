@@ -24,16 +24,30 @@ class ImageHelper
         int $maxWidth = 1200
     ): string {
         $mimeType = $file->getMimeType();
-        $contents = file_get_contents($file->getRealPath());
+        $realPath = $file->getRealPath();
 
-        // إنشاء GD resource من محتوى الملف
-        $src = @imagecreatefromstring($contents);
-
-        // إذا فشل GD أو الملف SVG نحفظه مباشرةً
-        if (!$src || $mimeType === 'image/svg+xml') {
-            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'png';
+        // SVG: حفظ مباشر بدون معالجة
+        if ($mimeType === 'image/svg+xml') {
+            $ext  = 'svg';
             $path = $folder . '/' . Str::uuid() . '.' . $ext;
-            Storage::disk('public')->put($path, $contents);
+            Storage::disk('public')->put($path, file_get_contents($realPath));
+            return $path;
+        }
+
+        // إنشاء GD resource مباشرة من الملف بدون تحميله كاملاً بالذاكرة
+        $src = match($mimeType) {
+            'image/jpeg' => @imagecreatefromjpeg($realPath),
+            'image/png'  => @imagecreatefrompng($realPath),
+            'image/gif'  => @imagecreatefromgif($realPath),
+            'image/webp' => @imagecreatefromwebp($realPath),
+            default      => @imagecreatefromstring(file_get_contents($realPath)),
+        };
+
+        // إذا فشل GD نحفظ الملف الأصلي مباشرةً
+        if (!$src) {
+            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+            $path = $folder . '/' . Str::uuid() . '.' . $ext;
+            Storage::disk('public')->put($path, file_get_contents($realPath));
             return $path;
         }
 
@@ -78,9 +92,9 @@ class ImageHelper
 
         // إذا كلاهما فشل → حفظ الملف الأصلي
         if (!$data || strlen($data) < 100) {
-            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'png';
+            $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
             $path = $folder . '/' . $uuid . '.' . $ext;
-            Storage::disk('public')->put($path, $contents);
+            Storage::disk('public')->put($path, file_get_contents($realPath));
             return $path;
         }
 
