@@ -20,6 +20,7 @@ const form = ref({
   telegram_bot_token:    '',
   telegram_chat_id:      '',
   telegram_enabled:      false,
+  always_open:           false,
 })
 
 const testingTelegram = ref(false)
@@ -74,6 +75,7 @@ const loadSettings = async () => {
     form.value.telegram_bot_token    = data.telegram_bot_token    ?? ''
     form.value.telegram_chat_id      = data.telegram_chat_id      ?? ''
     form.value.telegram_enabled      = Boolean(data.telegram_enabled ?? false)
+    form.value.always_open           = Boolean(Number(data.always_open ?? 0))
     currentLogo.value                = data.logo                  ?? null
     if (data.weekly_schedule) {
       try { weeklySchedule.value = { ...defaultSchedule(), ...JSON.parse(data.weekly_schedule) } }
@@ -139,6 +141,7 @@ const saveSettings = async () => {
     fd.append('telegram_bot_token',   form.value.telegram_bot_token)
     fd.append('telegram_chat_id',     form.value.telegram_chat_id)
     fd.append('telegram_enabled',     form.value.telegram_enabled ? '1' : '0')
+    fd.append('always_open',          form.value.always_open ? '1' : '0')
     fd.append('weekly_schedule', JSON.stringify(weeklySchedule.value))
     if (logoFile.value) fd.append('logo', logoFile.value)
 
@@ -284,6 +287,21 @@ const saveSettings = async () => {
           <div class="text-caption text-medium-emphasis mb-4">
             خارج أوقات الدوام يظهر للعميل: <strong>المتجر مغلق حالياً</strong>
           </div>
+
+          <!-- Always Open Toggle -->
+          <VAlert :type="form.always_open ? 'success' : 'warning'" variant="tonal" class="mb-4">
+            <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+              <div>
+                <div class="font-weight-bold">
+                  {{ form.always_open ? '🟢 المتجر مفتوح دائماً (24/7)' : '⏰ يعمل حسب الجدول الأسبوعي' }}
+                </div>
+                <div class="text-caption mt-1">
+                  {{ form.always_open ? 'المتجر يقبل طلبات طول الوقت بغض النظر عن الجدول' : 'يُفعّل للإيقاف المؤقت للجدول وفتح المتجر دائماً' }}
+                </div>
+              </div>
+              <VSwitch v-model="form.always_open" color="success" hide-details inset label="تفعيل الفتح الدائم" />
+            </div>
+          </VAlert>
 
           <div v-for="day in days" :key="day.key" class="day-row mb-2 pa-3 rounded-lg"
             :class="weeklySchedule[day.key]?.enabled ? 'day-open' : 'day-closed'">

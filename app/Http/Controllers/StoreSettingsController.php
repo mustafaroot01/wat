@@ -42,6 +42,7 @@ class StoreSettingsController extends Controller
             'telegram_bot_token'    => ['nullable', 'string', 'max:500'],
             'telegram_chat_id'      => ['nullable', 'string', 'max:255'],
             'telegram_enabled'      => ['nullable', 'in:0,1'],
+            'always_open'           => ['nullable', 'in:0,1'],
         ]);
 
         $keys = [
@@ -49,7 +50,7 @@ class StoreSettingsController extends Controller
             'contact_phone2', 'contact_instagram', 'contact_facebook', 'about_us_description', 'privacy_policy',
             'min_version_android', 'current_version_android', 'update_url_android', 'force_update_android',
             'min_version_ios', 'current_version_ios', 'update_url_ios', 'force_update_ios',
-            'telegram_bot_token', 'telegram_chat_id', 'telegram_enabled',
+            'telegram_bot_token', 'telegram_chat_id', 'telegram_enabled', 'always_open',
         ];
 
         foreach ($keys as $key) {

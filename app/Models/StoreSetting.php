@@ -36,6 +36,11 @@ class StoreSetting extends Model
 
     public static function isOpenNow(): bool
     {
+        // Always open override
+        if (static::get('always_open') === '1') {
+            return true;
+        }
+
         $now      = now()->timezone('Asia/Baghdad');
         $dayKey   = strtolower($now->englishDayOfWeek); // monday, tuesday...
         $timeNow  = $now->format('H:i');
