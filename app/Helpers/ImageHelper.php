@@ -34,6 +34,10 @@ class ImageHelper
             return $path;
         }
 
+        // رفع حد الذاكرة مؤقتاً لمعالجة الصور الكبيرة
+        $prevMemoryLimit = ini_get('memory_limit');
+        ini_set('memory_limit', '512M');
+
         // إنشاء GD resource مباشرة من الملف بدون تحميله كاملاً بالذاكرة
         $src = match($mimeType) {
             'image/jpeg' => @imagecreatefromjpeg($realPath),
@@ -45,6 +49,7 @@ class ImageHelper
 
         // إذا فشل GD نحفظ الملف الأصلي مباشرةً
         if (!$src) {
+            ini_set('memory_limit', $prevMemoryLimit);
             $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
             $path = $folder . '/' . Str::uuid() . '.' . $ext;
             Storage::disk('public')->put($path, file_get_contents($realPath));
@@ -99,6 +104,8 @@ class ImageHelper
         }
 
         Storage::disk('public')->put($path, $data);
+
+        ini_set('memory_limit', $prevMemoryLimit);
 
         return $path;
     }
