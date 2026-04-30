@@ -197,6 +197,82 @@ class AuthController extends Controller
     }
 
     /**
+     * نسيان كلمة المرور (خطوة 2): التحقق من OTP فقط → إرجاع reset_token
+     */
+    public function forgotPasswordVerifyOtp(Request $request)
+    {
+        $request->validate([
+            'message_id' => 'required|string',
+            'otp'        => 'required|string',
+        ]);
+
+        $verify = $this->otp->verifyOtp($request->message_id, $request->otp);
+
+        if (!($verify['success'] ?? false)) {
+            return response()->json(['success' => false, 'message' => 'رمز التحقق غير صحيح أو منتهي الصلاحية.'], 422);
+        }
+
+        $normalizedPhone = OtpService::normalizePhone($request->message_id);
+        $user = User::where('phone', $normalizedPhone)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'رقم الهاتف غير مسجل لدينا.'], 404);
+        }
+
+        // إنشاء reset_token مؤقت صالح 10 دقائق
+        $resetToken = Str::random(64);
+        Cache::put('pwd_reset_' . $resetToken, $normalizedPhone, now()->addMinutes(10));
+
+        return response()->json([
+            'success'     => true,
+            'message'     => 'تم التحقق بنجاح.',
+            'reset_token' => $resetToken,
+        ]);
+    }
+
+    /**
+     * نسيان كلمة المرور (خطوة 3): تغيير الباسورد باستخدام reset_token
+     */
+    public function forgotPasswordReset(Request $request)
+    {
+        $request->validate([
+            'reset_token' => 'required|string',
+            'password'    => ['required', 'confirmed', Password::min(6)],
+        ]);
+
+        $phone = Cache::get('pwd_reset_' . $request->reset_token);
+
+        if (!$phone) {
+            return response()->json(['success' => false, 'message' => 'انتهت صلاحية جلسة إعادة التعيين، يرجى البدء من جديد.'], 422);
+        }
+
+        $user = User::where('phone', $phone)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'رقم الهاتف غير مسجل لدينا.'], 404);
+        }
+
+        if ($user->is_self_deleted) {
+            return response()->json(['success' => false, 'message' => 'تم حذف هذا الحساب، تواصل مع الإدارة.', 'code' => 'account_deleted'], 403);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['success' => false, 'message' => 'حسابك معطل من قبل الإدارة.', 'code' => 'account_disabled'], 403);
+        }
+
+        $user->update(['password' => Hash::make($request->password)]);
+        $user->tokens()->delete();
+        Cache::forget('pwd_reset_' . $request->reset_token);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم تغيير كلمة المرور بنجاح.',
+            'user'    => new CustomerResource($user->load(['district', 'area'])),
+            'token'   => $user->createToken('mobile')->plainTextToken,
+        ]);
+    }
+
+    /**
      * نسيان كلمة المرور: التحقق وتعيين الباسورد والدخول التلقائي
      */
     public function forgotPasswordVerifyAndReset(Request $request)

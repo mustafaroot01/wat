@@ -266,6 +266,8 @@ Route::prefix('app')->group(function () {
 
         // Forgot Password
         Route::middleware('throttle:otp-send')->post('forgot-password/send-otp', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordSendOtp']);
+        Route::middleware('throttle:otp-verify')->post('forgot-password/verify-otp', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordVerifyOtp']);
+        Route::middleware('throttle:10,1')->post('forgot-password/reset-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordReset']);
         Route::middleware('throttle:otp-verify')->post('forgot-password/verify', [\App\Http\Controllers\Api\AuthController::class, 'forgotPasswordVerifyAndReset']);
     });
 
