@@ -216,8 +216,10 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'رمز التحقق غير صحيح.'], 422);
         }
 
-        $user = User::where('phone', $request->phone)->first();
-        
+        // message_id هو الرقم المعيار الذي أُرسل إليه الـ OTP — نستخدمه مباشرة
+        $normalizedPhone = OtpService::normalizePhone($request->message_id);
+        $user = User::where('phone', $normalizedPhone)->first();
+
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'رقم الهاتف هذا غير مسجل لدينا.'], 404);
         }
